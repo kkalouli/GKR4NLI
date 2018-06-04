@@ -10,12 +10,11 @@ import java.io.Serializable;
  *
  * @param <T>
  */
-public class SemanticNode<T extends NodeContent> implements Serializable, Comparable<SemanticNode<?>> {
+public class SemanticNode<T extends NodeContent> implements Comparable<SemanticNode<?>> {
 
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = -5358870829854126063L;
 	protected String label;
 	protected T content;
 	
@@ -64,28 +63,4 @@ public class SemanticNode<T extends NodeContent> implements Serializable, Compar
 		}
 		return retval;
 	}
-
-	/*
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + id;
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SemanticNode other = (SemanticNode) obj;
-		if (id != other.id)
-			return false;
-		return true;
-	}
-	*/
 }

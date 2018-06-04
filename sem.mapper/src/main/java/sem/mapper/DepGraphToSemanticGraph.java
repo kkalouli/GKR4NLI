@@ -2,6 +2,7 @@ package sem.mapper;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
@@ -78,7 +79,7 @@ public class DepGraphToSemanticGraph {
 		this.stanGraph = null;
 		this.traversed = new ArrayList<SemanticGraphEdge>();
 		this.parser = new StanfordParser();
-		this.retriever = new SenseMappingsRetriever();
+		this.retriever = new SenseMappingsRetriever(new File("gkr.properties"));
 
 	}
 

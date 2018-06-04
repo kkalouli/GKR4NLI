@@ -7,16 +7,10 @@ import java.util.Set;
 import java.awt.Color;
 
 /**
- * Interface for basic graph structure to back up semantic graphs
- * Allow for both JGraphT and Grph implementations
-
+ * Interface for basic graph structure for both JGraphT and Grph implementations
  *
  */
 public interface SemGraph {
-	
-	//public int registerNode(SemanticNode<?> node);
-	
-	//public int registerEdge(SemanticEdge edge);
 	
 	public void addNode(SemanticNode<?> node);
 	
