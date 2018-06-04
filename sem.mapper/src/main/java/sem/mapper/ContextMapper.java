@@ -71,6 +71,8 @@ public class ContextMapper {
 		//store the file in a hashmap. key: the stem of the word and its complement (that/to). Value: the truth value
 		try {
 			while ((strLine = br.readLine()) != null) { 
+				if (strLine.startsWith("#"))
+					continue;
 				String sign = strLine.substring(0,strLine.lastIndexOf("_"));
 				String words = strLine.substring(strLine.indexOf("= ")+2);
 				String comple = strLine.substring(strLine.lastIndexOf("_"), strLine.indexOf("=")-1);

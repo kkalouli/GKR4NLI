@@ -35,11 +35,10 @@ import semantic.graph.vetypes.ValueNode;
  * The class can be extended to include further graph layers
  *
  */
-public class SemanticGraph implements Serializable {
+public class SemanticGraph {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 3300274667044499203L;
 	protected SemGraph graph;
 	protected SemGraph roleGraph;
 	protected SemGraph contextGraph;
@@ -146,35 +145,6 @@ public class SemanticGraph implements Serializable {
 		this.dependencyGraph = new SemJGraphT();
 		this.rootNode = null;
 		this.name = "";
-	}
-	
-	/**
-	 * Create a semantic graph from a graph specification
-	 * @param specification
-	 */
-	public SemanticGraph(SemanticGraphSpecification specification) {
-		this();
-		Map<String, SemanticNode<?>> nodeMap = specification.getNodeMap();
-		for (SemanticEdge edge : specification.roleEdges) {
-			addSpecifiedEdge(edge, nodeMap, SemanticSubGraph.ROLE);
-		}
-		for (SemanticEdge edge : specification.contextEdges) {
-			addSpecifiedEdge(edge, nodeMap, SemanticSubGraph.CONTEXT);
-		}
-		for (SemanticEdge edge : specification.propertyEdges) {
-			addSpecifiedEdge(edge, nodeMap, SemanticSubGraph.PROPERTY);
-		}
-		for (SemanticEdge edge : specification.lexEdges) {
-			addSpecifiedEdge(edge, nodeMap, SemanticSubGraph.LEX);
-		}
-		for (SemanticEdge edge : specification.linkEdges) {
-			addSpecifiedEdge(edge, nodeMap, SemanticSubGraph.LINK);
-		}
-		for (SemanticEdge edge : specification.dependencyEdges) {
-			addSpecifiedEdge(edge, nodeMap, SemanticSubGraph.DEPENDENCY);
-		}
-		this.rootNode = specification.rootNode;
-		this.name = specification.name;
 	}
 	
 	private void addSpecifiedEdge(SemanticEdge edge,

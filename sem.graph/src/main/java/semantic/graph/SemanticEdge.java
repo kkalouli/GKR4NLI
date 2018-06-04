@@ -1,7 +1,6 @@
 package semantic.graph;
 
 
-import java.io.Serializable;
 
 /**
  * A general class for representing edges connecting {@link SemanticNode}s.
@@ -10,11 +9,10 @@ import java.io.Serializable;
  * {@link SemanticGraph#getFinishNode(SemanticEdge)}for retrieving the actual nodes
  *
  */
-public class SemanticEdge implements Serializable, Comparable<SemanticEdge> {
+public class SemanticEdge implements Comparable<SemanticEdge> {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 5871682058629224402L;
 	//protected int id;
 	protected String sourceVertexId;
 	protected String destVertexId;
@@ -110,27 +108,5 @@ public class SemanticEdge implements Serializable, Comparable<SemanticEdge> {
 		return retval;
 	}
 
-	/*
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + id;
-		return result;
-	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SemanticEdge other = (SemanticEdge) obj;
-		if (id != other.id)
-			return false;
-		return true;
-	}
-	*/
 }
