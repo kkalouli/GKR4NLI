@@ -10,6 +10,8 @@ dependencies {
     
     // https://mvnrepository.com/artifact/edu.stanford.nlp/stanford-corenlp
 	compile group: 'edu.stanford.nlp', name: 'stanford-corenlp', version: '3.8.0'
+	compile group: 'edu.stanford.nlp', name: 'stanford-corenlp', version: '3.8.0', classifier: 'models'
+	
 	
 	// https://mvnrepository.com/artifact/org.apache.opennlp/opennlp-tools
 	// JIGSAW uses the 1.5.0 version which does not exist in the rep so imported it
@@ -35,12 +37,6 @@ dependencies {
 	compile project(':sem.graph')
 	
 	
-	
-	
-	
-
-    
-    
 
 }
 
