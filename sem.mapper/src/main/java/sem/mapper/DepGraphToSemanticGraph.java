@@ -475,6 +475,16 @@ public class DepGraphToSemanticGraph {
 		return graph;
 	}
 
+	/***
+	 * Process a testsuite of sentences with GKR. One sentence per line.
+	 * Lines starting with # are considered comments.
+	 * The output is formatted as string: in this format only the dependency graph, the
+	 * concepts graph, the contextual graph and the properties graph are displayed
+	 * @param file
+	 * @param semConverter
+	 * @throws IOException
+	 */
+	
 	public void processTestsuite(String file, DepGraphToSemanticGraph semConverter) throws IOException{
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 		// true stands for append = true (dont overwrite)
@@ -497,16 +507,16 @@ public class DepGraphToSemanticGraph {
 		writer.close();
 		br.close();
 	}
-
-
-	public static void main(String args[]) throws IOException {
-		//DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
-		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/mixed_testsuite.txt", semConverter);
-		DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
-		semantic.graph.SemanticGraph graph = semGraph.sentenceToGraph("The boy faked the illness.", semGraph);
+	
+	/***
+	 * Process a unique sentence with GKR. 
+	 * You can comment in or out the subgraphs that you want to have displayed.
+	 */
+	public void processSentence(String sentence, DepGraphToSemanticGraph semConverter) throws FileNotFoundException, UnsupportedEncodingException{
+		semantic.graph.SemanticGraph graph = semConverter.sentenceToGraph(sentence, semConverter);
 		graph.displayDependencies();
 		graph.displayProperties();
-		//graph.displayLex();
+		graph.displayLex();
 		graph.displayContexts();
 		graph.displayRoles();
 		graph.generalDisplay();
@@ -515,5 +525,13 @@ public class DepGraphToSemanticGraph {
 		for (SemanticNode<?> node : graph.getDependencyGraph().getNodes()){
 				System.out.println(node.getLabel()+((SkolemNodeContent) node.getContent()).getContext());
 		}
+	}
+
+
+	public static void main(String args[]) throws IOException {
+		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
+		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/mixed_testsuite.txt", semConverter);		
+		semConverter.processSentence("The boy faked the illness.", semConverter);		
+		
 	}
 }
