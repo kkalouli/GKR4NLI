@@ -543,6 +543,14 @@ public class SemanticGraph {
 	}
 	
 	/**
+	 * Open a window displaying the link graph
+	 */
+	public void displayLinks() {
+		this.linkGraph.display();
+	}
+	
+	
+	/**
 	 * Open a window displaying the role and context graphs.
 	 * This is generally the most readable/useful display
 	 */

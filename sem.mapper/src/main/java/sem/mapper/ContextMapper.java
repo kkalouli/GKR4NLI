@@ -58,7 +58,7 @@ public class ContextMapper {
 		// read the file with the implicative/factive signatures
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new InputStreamReader(new FileInputStream("implicatives3.txt"), "UTF-8"));
+			br = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/kkalouli/Documents/project/sem.mapper/implicatives3.txt"), "UTF-8"));
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -133,10 +133,13 @@ public class ContextMapper {
 			}
 
 		}		
-		// if the conGraph does not have any ndoes up until now, add the predNode as ctx
+		// if the conGraph does not have any nodes up until now, add the predNode as ctx
 		if (conGraph.getNodes().isEmpty() && predNode != null){
 			addSelfContextNodeAndEdgeToGraph(predNode);
 		}
+		
+		integrateImperativeContexts();
+		integrateInterrogativeContexts();
 		// make sure that the context graph is left with one top context; if there are more than one "tops", then
 		//merge the two tops to one
 		int noOfTops = 0;
@@ -269,6 +272,87 @@ public class ContextMapper {
 		// remove the negation node
 		graph.removeContextNode(toRemove);
 	}
+	
+	/**
+	 * Integrates imperative contexts if they exist. 
+	 */
+	private void integrateImperativeContexts(){
+		SemGraph roleGraph = graph.getRoleGraph();
+		Set<SemanticEdge> edges = roleGraph.getEdges();
+		SemGraph conGraph = graph.getContextGraph();
+		SemanticNode<?> topNode = null;
+		for (SemanticEdge edge : edges){
+			// see if thre is a subject in the role graph with the label you_0 (means it is the subj of an imperative verb)
+			if (edge.getLabel().equals("sem_subj") && graph.getRoleGraph().getEndNode(edge).getLabel().contains("you_0")){
+				// find ot what is the top node of the context graph
+				for (SemanticNode<?> ctxN : conGraph.getNodes()){
+					if (conGraph.getInEdges(ctxN).isEmpty()){
+						topNode = ctxN;
+					}
+				}
+			}
+			// hang an imperative context on top of the until now top context. 
+			ContextHeadEdge impEdge = new ContextHeadEdge(GraphLabels.IMPERATIVE, new  RoleEdgeContent());
+			SemanticNode<?> start = new ContextNode("ctx(imperative)", new ContextNodeContent());
+			graph.addContextEdge(impEdge, start, topNode);
+		}
+	}
+	
+	/**
+	 * Integrates interrogative contexts if they exist. 
+	 */
+	private void integrateInterrogativeContexts(){
+		//list of verbs that introduce indirect questions (TODO: expand list)
+		ArrayList<String> interrVerbs = new ArrayList<String>();
+		interrVerbs.add("ask");
+		interrVerbs.add("wonder");
+		interrVerbs.add("inquire");
+		interrVerbs.add("query");
+		SemanticNode<?> ctxFinish = null;
+		SemanticNode<?> ctxStart = null;
+		SemGraph conGraph = graph.getContextGraph();
+		SemGraph roleGraph = graph.getRoleGraph();
+		Set<SemanticNode<?>> rNodes = roleGraph.getNodes();
+		// go through the role graph and see if there is one of the interrogative verbs
+		// check this only if the interrogative var is set to false: if it is already true, it means there is a direct question and we dont need this step 
+		for (SemanticNode<?> rNode : rNodes){
+			SemanticNode<?> child = null;
+			if (rNode instanceof SkolemNode && DepGraphToSemanticGraph.interrogative == false && interrVerbs.contains(((SkolemNodeContent) rNode.getContent()).getStem())){
+				Set<SemanticEdge> childrenEdges = roleGraph.getOutEdges(rNode);
+				// get the children of that node: the sem_comp child is the one that is in the interrogative context 
+				for (SemanticEdge e : childrenEdges){
+					if (e.getLabel().equals("sem_comp")){
+						child = graph.getFinishNode(e);
+					}
+				}
+				// add the self ctx of the child only if it doesnt already exist
+				if (!conGraph.getNodes().contains(child))
+					ctxFinish = addSelfContextNodeAndEdgeToGraph(child);
+				else
+					ctxFinish = conGraph.getInNeighbors(child).iterator().next(); // othwerise, get the existing one
+				// add the self node of the start
+				ctxStart = addSelfContextNodeAndEdgeToGraph(rNode);
+				DepGraphToSemanticGraph.interrogative = true;
+			}
+		}
+		// do the following if the interrogative var is set to true
+		if (DepGraphToSemanticGraph.interrogative == true){
+			// if the above hasnt been executed, then we have a direct question and we still need to figure out the interrogative ctx
+			if (ctxFinish == null){
+				for (SemanticNode<?> ctxN : conGraph.getNodes()){
+					if (conGraph.getInEdges(ctxN).isEmpty()){
+						ctxFinish = ctxN;
+					}
+				}
+			}
+			// add an interrogative context 
+			ContextHeadEdge interEdge = new ContextHeadEdge(GraphLabels.INTERROGATIVE, new  RoleEdgeContent());
+			if (ctxStart == null)
+				ctxStart = new ContextNode("ctx(interrogative)", new ContextNodeContent());
+			graph.addContextEdge(interEdge, ctxStart, ctxFinish);
+		}
+	}
+	
 
 	/**
 	 * Integrates any modal contexts of the sentence. 
@@ -481,7 +565,6 @@ public class ContextMapper {
 		if (head instanceof SkolemNode)
 			((SkolemNodeContent) head.getContent()).setContext(ctxHead.getLabel());
 		setContextsRecursively(head, head);
-		graph.displayContexts();
 	}
 	
 	/**

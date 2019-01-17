@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,12 +52,20 @@ import edu.stanford.nlp.process.CoreLabelTokenFactory;
 import edu.stanford.nlp.process.PTBTokenizer;
 import jigsaw.JIGSAW;
 import jigsaw.data.TokenGroup;
+import semantic.graph.SemanticEdge;
+import semantic.graph.SemanticGraph;
+import semantic.graph.vetypes.SkolemNode;
+
 
 public class SenseMappingsRetriever {
 	
 	HashMap<String,String> hashOfPOS = new HashMap<String,String>();
 	public Map<String, Integer> subConcepts = new HashMap<String,Integer>();
 	public Map<String, Integer> superConcepts =new HashMap<String,Integer>();
+	public ArrayList<String> synonyms = new ArrayList<String>();
+	public ArrayList<String> hypernyms = new ArrayList<String>();
+	public ArrayList<String> hyponyms = new ArrayList<String>();
+	public ArrayList<String> antonyms = new ArrayList<String>();
 	private JIGSAW jigsaw;
 	private Properties props;
 	private String wnInstall;
@@ -146,6 +155,65 @@ public class SenseMappingsRetriever {
 	    return listOfSenses;		
 	}
 	
+	/**
+	 * Gets the synonyms, hypernyms, hyponyms, antonyms of the specified synset of the word lemma with the corresponding pos
+	 * @param lemma
+	 * @param posInitial
+	 * @return
+	 * @throws IOException
+	 */
+	public void getLexRelationsOfSynset(String lemma, String synsetID, String pos) throws IOException {
+		// constructs the URL to the Wordnet dictionary directory
+		URL url = new URL("file", null, wnInstall);	
+		// constructs the dictionary object and opens it
+		IDictionary dict = new Dictionary(url);
+		dict.open ();
+		IIndexWord idxWord = null;
+		if (hashOfPOS.containsKey(pos))
+			// look up the given word within dict
+			idxWord = dict.getIndexWord (lemma, POS.valueOf(hashOfPOS.get(pos)));
+		// if the word is found:
+		if (idxWord != null) {
+			List<IWordID> wordIDs = idxWord.getWordIDs();
+			for (IWordID id : wordIDs){
+				// from all ids (=synsets) only take the one that is the same as the specified synset
+				if (id.getSynsetID().toString().substring(4,id.getSynsetID().toString().lastIndexOf("-")).equals(synsetID)){
+					IWord word = dict.getWord(id);
+					ISynset synset = word.getSynset();
+					// iterate over words associated with the synset and get the synonyms
+					for(IWord w : synset.getWords()){
+						synonyms.add(w.getLemma());
+					}
+					// get the hypernyms
+					for(ISynsetID sid : synset.getRelatedSynsets(Pointer.HYPERNYM)){
+						List <IWord > words ;
+				    	words = dict.getSynset(sid).getWords();
+				    	for(Iterator<IWord>i = words.iterator(); i.hasNext() ;) {
+				    		hypernyms.add(i.next().getLemma());
+				    	 }
+			    	}
+					// get the hyponyms
+					for(ISynsetID sid : synset.getRelatedSynsets(Pointer.HYPONYM)){
+						List <IWord > words ;
+				    	words = dict.getSynset(sid).getWords();
+				    	for(Iterator<IWord>i = words.iterator(); i.hasNext() ;) {
+				    		hyponyms.add(i.next().getLemma());
+				    	 }
+			    	}
+					/* get the antonyms (for the lexical relations we need the method getRelatedWords
+					instead of getRelatedSynsets() */
+					for(IWordID w : word.getRelatedWords(Pointer.ANTONYM)){
+						IWord anto = dict.getWord(w);		
+						antonyms.add(anto.getLemma());
+					}
+					break;
+				}
+			}
+		} 
+		
+		dict.close();	
+	}
+	
 	/** 
 	 * Extracts the SUMO mappings from the local SUMO files. It needs a synset and the pos of the synset.
 	 * 
@@ -159,7 +227,7 @@ public class SenseMappingsRetriever {
 		String senseToReturn = "";
 		String pos = "";
 		String sumo = "";
-	
+		
 		if (hashOfPOS.containsKey(posInitial))
 			pos = hashOfPOS.get(posInitial);
 		
@@ -274,5 +342,62 @@ public class SenseMappingsRetriever {
        return listOfSenses;
 	}
 
+	/**
+	 * Maps the given node to a sense (PWN) and a concept (SUMO). Returns a hash with the 
+	 * sense as key and the concept as value. It also checks if the node is involved in a 
+	 * compound and in that case it gives back the sense and the concept of the compound as well.
+	 * In that case, it does not overwrite the original sense and concept of the node but it adds an extra
+	 * pair to the hashmap which contains the sense and the concept of the compound.  
+	 * @param node
+	 * @param retriever
+	 * @return
+	 */
+	public HashMap<String, String> mapNodeToSenseAndConcept(SkolemNode node, SemanticGraph graph,HashMap <String, String> senses){
+		HashMap<String,String> lexSem = new HashMap<String,String>();
+		String sense = "";
+		String concept = "";
+		
+		sense = senses.get(((SkolemNode) node).getSurface());
+		if ( sense != null && !sense.equals("U")){
+			sense = sense.substring(1,senses.get(((SkolemNode) node).getSurface()).indexOf(":"));
+			try {
+				concept = extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}				
+
+		lexSem.put(sense,concept);
+		// check if there is a compound involved and find the sense/concept of the compound as well. Find the sense/concepts
+		// of the separate words anyway in case the compound is not found or does not help for the further processing
+		Set<SemanticEdge> edges = graph.getDependencyGraph().getOutEdges(node);
+		for (SemanticEdge inEdge : edges){
+			if (inEdge.getLabel().equals("compound")){
+				String compound = inEdge.getDestVertexId().substring(0,inEdge.getDestVertexId().indexOf("_"))+ " "+ inEdge.getSourceVertexId().substring(0,inEdge.getSourceVertexId().indexOf("_"));
+				String pos = ((SkolemNode) graph.getDependencyGraph().getStartNode(inEdge)).getPartOfSpeech();
+				try {
+					ArrayList<String> compSenses = accessPWNDBAndExtractSenses(compound,pos);
+					if (compSenses != null && !compSenses.isEmpty()){
+						sense = compSenses.get(0).substring(4, compSenses.get(0).lastIndexOf("-"));		
+						concept = extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());				
+						lexSem.put(sense,concept);
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}	
+		return lexSem;	
+	}
+	
+	
+	//public HashMap<String, String> mapNodeToEmbed(SkolemNode node, SemanticGraph graph){
+		//WordEmbeddingRelatedness.wordVectors = WordVectorSerializer.loadTxtVectors(new File(wePath));
+	//}
 
 }

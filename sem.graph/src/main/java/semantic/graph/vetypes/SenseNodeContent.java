@@ -24,8 +24,12 @@ public class SenseNodeContent extends NodeContent implements Serializable {
 	 */
 	private static final long serialVersionUID = -5405041614966233844L;
 	private String senseId;
+	private Double[] embed;
 	private List<String> concepts;
-	//private List<Integer> racs;
+	private List<String> synonyms;
+	private List<String> hypernyms;
+	private List<String> hyponyms;
+	private List<String> antonyms;
 	private boolean hierarchyPrecomputed = false;
 	private Map<String, Integer> subConcepts;
 	private Map<String, Integer> superConcepts;
@@ -35,9 +39,12 @@ public class SenseNodeContent extends NodeContent implements Serializable {
 	 */
 	public SenseNodeContent() {
 		senseId = "";
+		embed = new Double[300];
 		concepts = new ArrayList<String>();
-		//racs = new ArrayList<Integer>();
-		// We don't always include sub and super concepts
+		synonyms = new ArrayList<String>();
+		hypernyms = new ArrayList<String>();
+		hyponyms = new ArrayList<String>();
+		antonyms = new ArrayList<String>();
 		// Use null to indicate that they have not been added
 		subConcepts = null;
 		superConcepts = null;
@@ -50,7 +57,11 @@ public class SenseNodeContent extends NodeContent implements Serializable {
 	public SenseNodeContent(String senseId) {
 		this.senseId = senseId;
 		concepts = new ArrayList<String>();
-		//racs = new ArrayList<Integer>();
+		synonyms = new ArrayList<String>();
+		hypernyms = new ArrayList<String>();
+		hyponyms = new ArrayList<String>();
+		antonyms = new ArrayList<String>();
+
 	}
 
 	public String getSenseId() {
@@ -73,6 +84,64 @@ public class SenseNodeContent extends NodeContent implements Serializable {
 		this.concepts = concepts;
 	}
 	
+	public Double[] getEmbed() {
+		return embed;
+	}
+
+	public void setEmbed(Double[] embed) {
+		this.embed = embed;
+	}
+	
+	/**
+	 * Get the list of synonyms associated with the sense
+	 * @return
+	 */
+	public List<String> getSynonyms() {
+		return synonyms;
+	}
+
+	public void setSynonyms(List<String> synonyms) {
+		this.synonyms = synonyms;
+	}
+	
+	/**
+	 * Get the list of hypernyms associated with the sense
+	 * @return
+	 */
+	public List<String> getHypernyms() {
+		return hypernyms;
+	}
+
+	public void setHypernyms(List<String> hypernyms) {
+		this.hypernyms = hypernyms;
+	}
+	
+	/**
+	 * Get the list of hyponyms associated with the sense
+	 * @return
+	 */
+	public List<String> getHyponyms() {
+		return hyponyms;
+	}
+
+	public void setHyponyms(List<String> hyponyms) {
+		this.hyponyms = hyponyms;
+	}
+	
+	/**
+	 * Get the list of antonyms associated with the sense
+	 * @return
+	 */
+	public List<String> getAntonyms() {
+		return antonyms;
+	}
+
+	public void setAntonyms(List<String> antonyms) {
+		this.antonyms = antonyms;
+	}
+	
+	
+	
 	/**
 	 * Add a new concept id to the sense's taxonomic concepts
 	 * @param concept
@@ -81,26 +150,6 @@ public class SenseNodeContent extends NodeContent implements Serializable {
 		this.concepts.add(concept);
 	}
 
-	/**
-	 * Get the RAC (referentially anchored concept) ids for the sense
-	 * @return
-	 */
-	/*public List<Integer> getRacs() {
-		return racs;
-	}
-
-	public void setRacs(List<Integer> racs) {
-		this.racs = racs;
-	}*/
-
-	/** 
-	 * Add a RAC id to the sense;
-	 * @param rac
-	 */
-	/*public void addRac(int rac) {
-		this.racs.add(rac);		
-	}
-	*/
 	
 	public boolean isHierarchyPrecomputed() {
 		return hierarchyPrecomputed;

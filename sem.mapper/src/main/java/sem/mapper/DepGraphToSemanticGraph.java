@@ -10,17 +10,23 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import edu.stanford.nlp.coref.data.CorefChain;
+import edu.stanford.nlp.coref.data.CorefChain.CorefMention;
 import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.semgraph.SemanticGraph;
 import edu.stanford.nlp.semgraph.SemanticGraphEdge;
 import edu.stanford.nlp.trees.GrammaticalRelation;
+import edu.stanford.nlp.util.IntPair;
 import edu.stanford.nlp.util.Pair;
 import semantic.graph.EdgeContent;
 import semantic.graph.NodeContent;
@@ -31,9 +37,11 @@ import semantic.graph.SemanticNode;
 import semantic.graph.vetypes.ContextHeadEdge;
 import semantic.graph.vetypes.ContextNode;
 import semantic.graph.vetypes.ContextNodeContent;
+import semantic.graph.vetypes.DefaultEdgeContent;
 import semantic.graph.vetypes.GraphLabels;
 import semantic.graph.vetypes.LexEdge;
 import semantic.graph.vetypes.LexEdgeContent;
+import semantic.graph.vetypes.LinkEdge;
 import semantic.graph.vetypes.PropertyEdge;
 import semantic.graph.vetypes.PropertyEdgeContent;
 import semantic.graph.vetypes.RoleEdge;
@@ -54,6 +62,8 @@ public class DepGraphToSemanticGraph {
 	public ArrayList<String> verbalForms = new ArrayList<String>();
 	public ArrayList<String> nounForms = new ArrayList<String>();
 	public ArrayList<String> quantifiers = new ArrayList<String>();
+	public ArrayList<String> whinterrogatives = new ArrayList<String>();
+	static public boolean interrogative;
 	private List<SemanticGraphEdge> traversed;
 	private StanfordParser parser;
 	private SenseMappingsRetriever retriever;
@@ -75,11 +85,23 @@ public class DepGraphToSemanticGraph {
 		quantifiers.add("few");
 		quantifiers.add("plenty");
 		quantifiers.add("several");
+		whinterrogatives.add("who");
+		whinterrogatives.add("when");
+		whinterrogatives.add("where");
+		whinterrogatives.add("why");
+		whinterrogatives.add("how");
+		whinterrogatives.add("which");
+		whinterrogatives.add("what");
+		whinterrogatives.add("whose");
+		whinterrogatives.add("whom");
+		whinterrogatives.add("whether");
+		whinterrogatives.add("if");
 		this.graph = null;
 		this.stanGraph = null;
 		this.traversed = new ArrayList<SemanticGraphEdge>();
 		this.parser = new StanfordParser();
-		this.retriever = new SenseMappingsRetriever(new File("gkr.properties"));
+		this.retriever = new SenseMappingsRetriever(new File("/Users/kkalouli/Documents/project/sem.mapper/gkr.properties"));
+		this.interrogative = false;
 
 	}
 
@@ -88,7 +110,7 @@ public class DepGraphToSemanticGraph {
 	 * @param stanGraph
 	 * @return
 	 */
-	public semantic.graph.SemanticGraph getGraph(SemanticGraph stanGraph) {
+	public semantic.graph.SemanticGraph getGraph(SemanticGraph stanGraph, String sentence) {
 		this.stanGraph = stanGraph;
 		this.graph = new semantic.graph.SemanticGraph();
 		this.graph.setName(stanGraph.toRecoveredSentenceString());
@@ -98,7 +120,8 @@ public class DepGraphToSemanticGraph {
 		integrateRoles();
 		integrateContexts();
 		integrateProperties();
-		integrateLexicalFeatures();			
+		integrateLexicalFeatures();		
+		integrateCoRefLinks(sentence);
 		return this.graph;
 	}
 
@@ -185,8 +208,13 @@ public class DepGraphToSemanticGraph {
 		SkolemNode root = new SkolemNode(rootContent.getSkolem(), rootContent);
 		// add the node as root node to the graph
 		graph.setRootNode(root);
-		// based on the root node, go and find all children (and children of children)
-		stanChildrenToSemGraphChildren(rootN, root);
+		// if there are no children of the root node at all (sentence only with imperative intransitive verb), just add this node the dep graph
+		if (stanGraph.outgoingEdgeList(rootN).isEmpty()){
+			graph.getDependencyGraph().addNode(root);
+		} else {
+			// based on the root node, go and find all children (and children of children)
+			stanChildrenToSemGraphChildren(rootN, root);
+		}
 		
 		/*
 		 * Go through the finished dep graph and fix any cases that are dealt differently by CoreNLP than by us.
@@ -351,60 +379,32 @@ public class DepGraphToSemanticGraph {
 					graph.addPropertyEdge(partOfEdge, node, new ValueNode(part_of, new ValueNodeContent()));
 				}
 			} 
+			// check if there is a direct or indirect question and add property for wh-interrogatives
+			else if (interrogative == true && whinterrogatives.contains(((SkolemNodeContent) node.getContent()).getStem())){
+				String stem = (String) ((SkolemNodeContent) node.getContent()).getStem();
+				String label = "unk";
+				if (stem.equals("who"))
+					label = "personal";
+				else if (stem.equals("where"))
+					label = "locative";
+				else if (stem.equals("when"))
+					label = "temporal";
+				else if (stem.equals("why"))
+					label = "causal";
+				else if (stem.equals("what"))
+					label = "object";
+				else if (stem.equals("which"))
+					label = "group";
+				else if (stem.equals("how"))
+					label = "manner";
+				else if (stem.equals("whose"))
+					label = "possessive";
+				else if (stem.equals("whom"))
+					label = "pers.acc.";
+				PropertyEdge interrEdge = new PropertyEdge(GraphLabels.SPECIFIER, new PropertyEdgeContent());
+				graph.addPropertyEdge(interrEdge, node, new ValueNode(label, new ValueNodeContent()));
+			}
 		}
-	}
-	
-	/**
-	 * Maps the given node to a sense (PWN) and a concept (SUMO). Returns a hash with the 
-	 * sense as key and the concept as value. It also checks if the node is involved in a 
-	 * compound and in that case it gives back the sense and the concept of the compound as well.
-	 * In that case, it does not overwrite the original sense and concept of the node but it adds an extra
-	 * pair to the hashmap which contains the sense and the concept of the compound.  
-	 * @param node
-	 * @param retriever
-	 * @return
-	 */
-	private HashMap<String, String> mapNodeToSenseAndConcept(SkolemNode node, SenseMappingsRetriever retriever,HashMap <String, String> senses){
-		HashMap<String,String> lexSem = new HashMap<String,String>();
-		String sense = "";
-		String concept = "";
-		
-		sense = senses.get(((SkolemNode) node).getSurface());
-		if ( sense != null && !sense.equals("U")){
-			sense = sense.substring(1,senses.get(((SkolemNode) node).getSurface()).indexOf(":"));
-			try {
-				concept = retriever.extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}				
-
-		lexSem.put(sense,concept);
-		// check if there is a compound involved and find the sense/concept of the compound as well. Find the sense/concepts
-		// of the separate words anyway in case the compound is not found or does not help for the further processing
-		Set<SemanticEdge> edges = graph.getDependencyGraph().getOutEdges(node);
-		for (SemanticEdge inEdge : edges){
-			if (inEdge.getLabel().equals("compound")){
-				String compound = inEdge.getDestVertexId().substring(0,inEdge.getDestVertexId().indexOf("_"))+ " "+ inEdge.getSourceVertexId().substring(0,inEdge.getSourceVertexId().indexOf("_"));
-				String pos = ((SkolemNode) graph.getDependencyGraph().getStartNode(inEdge)).getPartOfSpeech();
-				try {
-					ArrayList<String> compSenses = retriever.accessPWNDBAndExtractSenses(compound,pos);
-					if (compSenses != null && !compSenses.isEmpty()){
-						sense = compSenses.get(0).substring(4, compSenses.get(0).lastIndexOf("-"));		
-						concept = retriever.extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());				
-						lexSem.put(sense,concept);
-					}
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		}	
-		return lexSem;	
 	}
 	
 	/**
@@ -423,14 +423,19 @@ public class DepGraphToSemanticGraph {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-			
 		SemGraph roleGraph = graph.getRoleGraph();
 		Set<SemanticNode<?>> roleNodes = roleGraph.getNodes();
 		for (SemanticNode<?> node: roleNodes){
 			if (node instanceof SkolemNode){
-				HashMap<String,String> lexSem = mapNodeToSenseAndConcept((SkolemNode) node, retriever, senses); 
+				HashMap<String,String> lexSem = retriever.mapNodeToSenseAndConcept((SkolemNode) node, graph, senses); 
 				for (String key : lexSem.keySet()){
 					String sense = key;
+					try {
+						retriever.getLexRelationsOfSynset(((SkolemNode) node).getStem(), sense, ((SkolemNode) node).getPartOfSpeech());
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					String concept = lexSem.get(key);
 					// create new sense Content
 					SenseNodeContent senseContent = new SenseNodeContent(sense);
@@ -438,8 +443,17 @@ public class DepGraphToSemanticGraph {
 					senseContent.setHierarchyPrecomputed(true);
 					senseContent.setSubConcepts(retriever.subConcepts);
 					senseContent.setSuperConcepts(retriever.superConcepts);
+					senseContent.setSynonyms(retriever.synonyms);
+					senseContent.setHypernyms(retriever.hypernyms);
+					senseContent.setHyponyms(retriever.hyponyms);
+					senseContent.setAntonyms(retriever.antonyms);
+					//senseContent.setEmbed(retriever.embed);
 					retriever.subConcepts.clear();
 					retriever.superConcepts.clear();
+					retriever.synonyms.clear();
+					retriever.hypernyms.clear();
+					retriever.hyponyms.clear();
+					retriever.antonyms.clear();
 					
 					// create new Sense Node
 					SenseNode senseNode = new SenseNode(sense, senseContent);
@@ -461,6 +475,50 @@ public class DepGraphToSemanticGraph {
 		ctxMapper.integrateAllContexts();
 	}
 	
+	/***
+	 * Create the link graph by resolving the coreferences. Uses the stanford CoreNLP software but also the stanford dependencies directly.
+	 * @param sentence
+	 */
+	private void integrateCoRefLinks(String sentence){
+		// ge the corefrence chains as those are given by CoreNLP
+		Collection<CorefChain> corefChains = parser.getCoreference(sentence);
+		for (CorefChain cc: corefChains){	
+			SemanticNode<?> startNode = null;
+			SemanticNode<?> finishNode = null;
+			for (IntPair k : cc.getMentionMap().keySet()){
+				// find in the role graph the node with the position equal to the position that the coreference element has
+				for (SemanticNode<?> n : graph.getRoleGraph().getNodes()){
+					if (((SkolemNodeContent) n.getContent()).getPosition() == k.getTarget()){
+						// in the first pass of this chain, set the startNode, in all other ones set the finishNode (the start Node remains the same)
+						if (startNode == null){
+							startNode = n;
+						} else {
+							finishNode = n;
+						}
+					}
+				}
+				// if all passes are over and there is coreference, add the links
+				if (startNode != null && finishNode != null){
+					LinkEdge linkEdge = new LinkEdge(GraphLabels.PRONOUN_RESOLUTION, new DefaultEdgeContent());
+					graph.addLinkEdge(linkEdge, startNode, finishNode);
+				}
+			}
+		}
+		// the coreference CoreNLP does not sow the appositives; these are in the form of dependencies in the dependency graph, so we need to extract them from there
+		// (the appositives are also included in the role graph as restrictions)
+		SemanticNode<?> startNode = null;
+		SemanticNode<?> finishNode = null;
+		for (SemanticEdge depEdge : graph.getDependencyGraph().getEdges()){
+			// check for the existence of appositives and add the coreference link
+			if (depEdge.getLabel().equals("appos")){
+				startNode = graph.getStartNode(depEdge);
+				finishNode = graph.getFinishNode(depEdge);
+				LinkEdge linkEdge = new LinkEdge(GraphLabels.APPOSITIVE_IDENTICAL_TO, new DefaultEdgeContent());
+				graph.addLinkEdge(linkEdge, startNode, finishNode);
+			}
+		}
+	}
+	
 	/**
 	 * Returns the semantic graph of the given sentence. 
 	 * It runs the stanford parser, gets the graph and turns this graph to the semantic graph.
@@ -469,9 +527,11 @@ public class DepGraphToSemanticGraph {
 	 * @throws FileNotFoundException
 	 * @throws UnsupportedEncodingException
 	 */
-	public semantic.graph.SemanticGraph sentenceToGraph(String sentence, DepGraphToSemanticGraph semGraph) throws FileNotFoundException, UnsupportedEncodingException{	
+	public semantic.graph.SemanticGraph sentenceToGraph(String sentence) throws FileNotFoundException, UnsupportedEncodingException{	
+		if (sentence.contains("?"))
+			this.interrogative = true;
 		SemanticGraph stanGraph = parser.parseOnly(sentence);
-		semantic.graph.SemanticGraph graph = semGraph.getGraph(stanGraph);
+		semantic.graph.SemanticGraph graph = this.getGraph(stanGraph, sentence);
 		return graph;
 	}
 
@@ -485,7 +545,7 @@ public class DepGraphToSemanticGraph {
 	 * @throws IOException
 	 */
 	
-	public void processTestsuite(String file, DepGraphToSemanticGraph semConverter) throws IOException{
+	public void processTestsuite(String file) throws IOException{
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 		// true stands for append = true (dont overwrite)
 		BufferedWriter writer = new BufferedWriter( new FileWriter(file.substring(0,file.indexOf(".txt"))+"_processed.csv", true));
@@ -498,7 +558,7 @@ public class DepGraphToSemanticGraph {
 			}
 			String text = strLine.split("\t")[1];
 			SemanticGraph stanGraph = parser.parseOnly(text);
-			semantic.graph.SemanticGraph graph = semConverter.getGraph(stanGraph);
+			semantic.graph.SemanticGraph graph = this.getGraph(stanGraph, text);
 			//System.out.println(graph.displayAsString());
 			writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
 			writer.flush();
@@ -509,18 +569,20 @@ public class DepGraphToSemanticGraph {
 	}
 	
 	/***
-	 * Process a unique sentence with GKR. 
+	 * Process a single sentence with GKR. 
 	 * You can comment in or out the subgraphs that you want to have displayed.
 	 */
-	public void processSentence(String sentence, DepGraphToSemanticGraph semConverter) throws FileNotFoundException, UnsupportedEncodingException{
-		semantic.graph.SemanticGraph graph = semConverter.sentenceToGraph(sentence, semConverter);
+	public void processSentence(String sentence) throws FileNotFoundException, UnsupportedEncodingException{
+		semantic.graph.SemanticGraph graph = this.sentenceToGraph(sentence);
 		graph.displayDependencies();
 		graph.displayProperties();
 		graph.displayLex();
 		graph.displayContexts();
 		graph.displayRoles();
-		graph.generalDisplay();
-		graph.display();
+		graph.displayLinks();
+		//graph.nonLexicalDisplay();
+		//graph.generalDisplay();
+		//graph.display();
 		System.out.println(graph.displayAsString());
 		for (SemanticNode<?> node : graph.getDependencyGraph().getNodes()){
 				System.out.println(node.getLabel()+((SkolemNodeContent) node.getContent()).getContext());
@@ -531,7 +593,6 @@ public class DepGraphToSemanticGraph {
 	public static void main(String args[]) throws IOException {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/mixed_testsuite.txt", semConverter);		
-		semConverter.processSentence("He didn't forget that she had called.", semConverter);		
-		
+		semConverter.processSentence("John loves his wife.");	
 	}
 }

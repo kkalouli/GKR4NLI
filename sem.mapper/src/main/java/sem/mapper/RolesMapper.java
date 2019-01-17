@@ -60,6 +60,8 @@ public class RolesMapper {
 	// plain edges to be added to the role graph
 	private HashMap<String,SemanticEdge> edgesToAdd;
 	private ArrayList<SemanticEdge> edgesToRemove;
+	// boolean whether there was a subj found, otherwise it's imperative and the subj has to be added
+	private boolean foundSubj;
 	
 
 
@@ -141,8 +143,10 @@ public class RolesMapper {
 			passive = false;
 			clausalCoord = false;		
 		}
-		// make sure that the role graph is non-empty in the case of an imperative with you. If empty, fill it in.
-		/*if (graph.getRoleGraph().getNodes().isEmpty()){
+		// make sure that the role graph has a subject in the case of an imperative verb .
+		// first case: role graph is completely empty (intransitive imperative)
+		// second case: only asubject is missing (transitive imperative)
+		if (graph.getRoleGraph().getNodes().isEmpty() || foundSubj == false){
 			RoleEdge roleEdge = new RoleEdge(GraphLabels.SUBJ, new RoleEdgeContent());
 			SkolemNodeContent subjNodeContent = new SkolemNodeContent();
 			subjNodeContent.setSurface("you");
@@ -153,14 +157,21 @@ public class RolesMapper {
 			subjNodeContent.setDerived(false);
 			subjNodeContent.setSkolem(subjNodeContent.getStem()+"_0");
 			SkolemNode subjNode = new SkolemNode(subjNodeContent.getSkolem(), subjNodeContent);
-			
-			graph.addRoleEdge(roleEdge, graph.getRootNode(), subjNode);
+			// set the top node to the root node of the graph unless the role graph os not empty
+			SemanticNode<?> topNode = graph.getRootNode();
+			// if the role graph is not empty, find what is the actual top node 
+			for (SemanticNode<?> roleN : graph.getRoleGraph().getNodes()){
+				if (graph.getRoleGraph().getInEdges(roleN).isEmpty())
+					topNode = roleN;				
+			}
+			// add the subject to the top node, whichever that is.
+			graph.addRoleEdge(roleEdge, topNode, subjNode);
 			if (graph.getRootNode() instanceof SkolemNode && subjNode instanceof SkolemNode){
 				// at this point set the contexts of all words that get involved to the role graph. the context is top at the moment 
 				((SkolemNodeContent) graph.getRootNode().getContent()).setContext("top");
 				((SkolemNodeContent) subjNode.getContent()).setContext("top");
 			}
-		}*/
+		}
 		
 		checkForMoreThanDoubleCoordination();
 		checkForNone();
@@ -242,6 +253,9 @@ public class RolesMapper {
 	private void integratePlainEdges(){
 		// list that holds all edges that have been added already
 		ArrayList<SemanticEdge> traversed = new ArrayList<SemanticEdge>();
+		// check if there are no edges at all: imperative intransitive verb
+		if (edgesToAdd.isEmpty())
+			return;
 		// go through the edges of egdesToAdd and only add those that are not contained in the combEdges and that are not already traversed
 		for (SemanticEdge edge: edgesToAdd.values()){
 			if (combEdges.contains(edge))
@@ -316,7 +330,7 @@ public class RolesMapper {
 	 * @return
 	 */
 	private SemGraph createSubgraph(SemanticNode<?> node, SemanticNode<?> nodeToExclude, Set<SemanticEdge> listOfSubEdges, Set<SemanticNode<?>> listOfSubNodes){
-		graph.displayDependencies();
+		//graph.displayDependencies();
 		// got through all children edges of the specified node
 		for (SemanticEdge subEdge : graph.getOutEdges(node)){	
 			// if the edge finishes with the nodeToEclude, move on
@@ -541,6 +555,7 @@ public class RolesMapper {
 		break;
 		// only add it when the verb coord is false; when true, it will be added later
 		case "nsubj" : role = GraphLabels.SUBJ;
+			foundSubj = true;
 		break;
 		case "auxpass" : passive = true;
 		break;
@@ -572,10 +587,10 @@ public class RolesMapper {
 		case "amod": boolean found = false;
 		// if the word is already included in the property graph as a specifier (e.g. many, few, etc) dont add it here again
 			for (SemanticEdge out : graph.getPropertyGraph().getOutEdges(start)){
-							if (out.getLabel().equals("specifier") && finish.getLabel().contains(out.getDestVertexId())){
-								found = true;						
-							}
-					}
+				if (out.getLabel().equals("specifier") && finish.getLabel().contains(out.getDestVertexId())){
+					found = true;						
+				}
+			}
 			if (found == false)
 				role = GraphLabels.AMOD;
 		break;
