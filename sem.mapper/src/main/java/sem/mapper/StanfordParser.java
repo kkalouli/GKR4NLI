@@ -18,14 +18,19 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
 import org.apache.lucene.util.IOUtils;
 
+import edu.stanford.nlp.coref.CorefCoreAnnotations;
+import edu.stanford.nlp.coref.data.CorefChain;
 import edu.stanford.nlp.coref.data.DocumentPreprocessor;
+import edu.stanford.nlp.coref.data.Mention;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
@@ -67,7 +72,7 @@ public class StanfordParser {
 	public StanfordParser() throws FileNotFoundException, UnsupportedEncodingException{
 		this.pipeline = new StanfordCoreNLP(
 				PropertiesUtils.asProperties(
-						"annotators", "tokenize,ssplit,pos,lemma,depparse",
+						"annotators", "tokenize,ssplit,pos,lemma,ner,depparse,parse,mention,coref,",
 						"depparse.extradependencies", "MAXIMAL",
 						"tokenize.language", "en"));
 	}	
@@ -85,6 +90,23 @@ public class StanfordParser {
 		//stanGraphs.add(sentences.get(0).get(CollapsedCCProcessedDependenciesAnnotation.class));
 		return sentences.get(0).get(EnhancedPlusPlusDependenciesAnnotation.class);
 	}
+	
+	/**
+	 * Return the corefs chains of the sentence, as processed by the CoreNLP software.
+	 * @param sentence
+	 * @return
+	 */
+	public Collection<CorefChain> getCoreference(String sentence){
+		//ArrayList<SemanticGraph> stanGraphs = new ArrayList<SemanticGraph>();
+		Annotation document = new Annotation(sentence.substring(0,sentence.length()-1));
+		// run all Annotators on this text
+		pipeline.annotate(document);
+		Collection<CorefChain> corefs = document.get(CorefCoreAnnotations.CorefChainAnnotation.class).values();
+		System.out.println(corefs);
+		return corefs;
+	}
+	
+
 		
 
 	@SuppressWarnings("resource")
