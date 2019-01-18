@@ -11,11 +11,11 @@ import java.util.Map.Entry;
 
 import java.util.Set;
 
-import com.articulate.sigma.KB;
+/*import com.articulate.sigma.KB;
 import com.articulate.sigma.KBmanager;
 import com.articulate.sigma.EProver;
 import com.articulate.sigma.Formula;
-import com.articulate.sigma.KBcache;
+import com.articulate.sigma.KBcache;*/
 
 import gnli.GNLIGraph;
 import gnli.MatchContent;
@@ -39,7 +39,7 @@ public class InitialTermMatcher {
 	private final List<CheckedTermNode> hypothesisTerms = Collections.synchronizedList(new ArrayList<CheckedTermNode>());
 	private final List<TermNode> textTerms = Collections.synchronizedList(new ArrayList<TermNode>());
 	private final List<TermNode> derivedTextTerms = Collections.synchronizedList(new ArrayList<TermNode>());
-	private KB kb;
+	//private KB kb;
 	
 
 	enum Matched {
@@ -95,8 +95,8 @@ public class InitialTermMatcher {
 			this.textTerms.add(tTerm);
 		}
 		
-		KBmanager.getMgr().initializeOnce();	
-		this.kb = KBmanager.getMgr().getKB("SUMO");
+		//KBmanager.getMgr().initializeOnce();	
+		//this.kb = KBmanager.getMgr().getKB("SUMO");
 	}
 
 
@@ -319,12 +319,16 @@ public class InitialTermMatcher {
 						gnliGraph.addMatchEdge(conceptMatch, hTerm, tTerm);
 						retval.add(conceptMatch);
 						cHTerm.pendMatch();
-					} else {
-						ArrayList<Formula> listOfRel = kb.askWithRestriction(2, "Woman", 1, "Girl");
-						for (Formula f :  listOfRel){
-							f.gatherRelationConstants();
+					} /*else {
+						ArrayList<Formula> listOfRelTH = kb.askWithRestriction(1, tConcept, 2, hConcept);
+						ArrayList<Formula> listOfRelHT = kb.askWithRestriction(1, hConcept, 2, tConcept);
+						for (Formula f :  listOfRelTH){
+							HashSet<String> relation = f.gatherRelationConstants();
 						}
-					}
+						for (Formula f :  listOfRelHT){
+							HashSet<String> relation = f.gatherRelationConstants();
+						}
+					}*/
 				}
 			}
 		}
@@ -338,9 +342,9 @@ public class InitialTermMatcher {
 		}
 		TermNode hTerm = cHTerm.node;
 		for (final SenseNode tSenseNode : gnliGraph.getTextGraph().getSenses(tTerm)) {
-			Double[] tEmbed =  ((SenseNodeContent) tSenseNode.getContent()).getEmbed();
+			double[] tEmbed =  ((SenseNodeContent) tSenseNode.getContent()).getEmbed();
 			for (final SenseNode hSenseNode : gnliGraph.getHypothesisGraph().getSenses(hTerm)) {
-				Double[] hEmbed = ((SenseNodeContent) hSenseNode.getContent()).getEmbed();
+				double[] hEmbed = ((SenseNodeContent) hSenseNode.getContent()).getEmbed();
 				if (tEmbed != null && hEmbed != null && computeCosineSimilarity(hEmbed, tEmbed) > 0.7) {
 					final MatchContent linkContent = new MatchContent(MatchOrigin.MatchType.EMBED, Specificity.EQUALS, 3f);
 					final MatchEdge conceptMatch = new MatchEdge("embed",linkContent);
@@ -353,7 +357,7 @@ public class InitialTermMatcher {
 		return retval;
 	}
 	
-	private double computeCosineSimilarity(Double[] vectorA, Double[] vectorB) {
+	private double computeCosineSimilarity(double[] vectorA, double[] vectorB) {
 	    double dotProduct = 0.0;
 	    double normA = 0.0;
 	    double normB = 0.0;

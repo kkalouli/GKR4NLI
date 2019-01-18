@@ -432,6 +432,7 @@ public class DepGraphToSemanticGraph {
 					String sense = key;
 					try {
 						retriever.getLexRelationsOfSynset(((SkolemNode) node).getStem(), sense, ((SkolemNode) node).getPartOfSpeech());
+						//retriever.mapNodeToEmbed((SkolemNode) node);
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
