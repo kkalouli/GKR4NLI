@@ -37,6 +37,7 @@ public class InferenceComputer {
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli);
 		initialTermMatcher.process();
 		gnli.display();
+		gnli.matchGraph.display();
 		
 
 		// Now look at the arc structure of the premise and hypothesis graphs to
@@ -71,7 +72,7 @@ public class InferenceComputer {
 	
 	public static void main(String args[]) throws IOException {
 		InferenceComputer comp = new InferenceComputer();
-		comp.computeInference("The man is walking.", "The person is walking.");
+		comp.computeInference("The man loves his wife.", "The person loves his wife.");
 
 	}
 

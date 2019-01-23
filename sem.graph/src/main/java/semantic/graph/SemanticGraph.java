@@ -1036,7 +1036,7 @@ public class SemanticGraph {
 					SemanticNode<?> semNode = this.getFinishNode(role);	
 					if (SkolemNode.class.isAssignableFrom(semNode.getClass())) {
 						retval.add((SkolemNode) semNode);
-					} else if (ContextNode.class.isAssignableFrom(semNode.getClass())) {
+					} else if (TermNode.class.isAssignableFrom(semNode.getClass())) {
 						for (SemanticNode<?> headNode : this.roleGraph.getOutNeighbors(semNode)) {
 							if (SkolemNode.class.isAssignableFrom(headNode.getClass())) {
 								retval.add((SkolemNode) headNode);

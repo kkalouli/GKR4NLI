@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import gnli.MatchEdge;
 import sem.mapper.DepGraphToSemanticGraph;
 import semantic.graph.SemGraph;
 import semantic.graph.SemanticEdge;
@@ -145,6 +146,65 @@ public class GNLIGraph {
 		return matchGraph.getLinkedNodes().contains(hTerm);
 	}
 
+	/**
+	 * Get all the matches between premise and conclusion nodes
+	 * 
+	 * @return
+	 */
+	public List<MatchEdge> getMatches() {
+		List<MatchEdge> retval = new ArrayList<MatchEdge>();
+		for (SemanticEdge edge : matchGraph.getLinks()) {
+			if (edge.getClass().equals(MatchEdge.class)) {
+				retval.add((MatchEdge) edge);
+			}
+		}
+		return retval;
+	}
+
+	/**
+	 * Get all the match edges for the conclusion node
+	 * 
+	 * @param node
+	 *            A node in the conclusion graph of the Ecd Graph
+	 * @return
+	 */
+	public List<MatchEdge> getMatches(SemanticNode<?> node) {
+		List<MatchEdge> retval = new ArrayList<MatchEdge>();
+		for (SemanticEdge edge : matchGraph.getLinks(node)) {
+			if (edge.getClass().equals(MatchEdge.class)) {
+				retval.add((MatchEdge) edge);
+			}
+		}
+		return retval;
+	}
+	
+	/**
+	 * Get the start node of an edge
+	 * 
+	 * @param edge
+	 * @return
+	 */
+	public SemanticNode<?> getStartNode(SemanticEdge edge) {
+		return gnliGraph.getStartNode(edge);
+	}
+
+	/**
+	 * Get the end node of an edge
+	 * 
+	 * @param edge
+	 * @return
+	 */
+	public SemanticNode<?> getFinishNode(SemanticEdge edge) {
+		return gnliGraph.getFinishNode(edge);
+	}
+	
+	public SemanticNode<?> getMatchedPremiseTerm(SemanticEdge match) {
+		return this.getStartNode(match);
+	}
+
+	public SemanticNode<?> getMatchedConclusionTerm(SemanticEdge match) {
+		return this.getFinishNode(match);
+	}
 	
 	/**
 	 * Open graphical display of gnliGraph

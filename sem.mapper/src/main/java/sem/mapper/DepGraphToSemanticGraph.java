@@ -432,7 +432,7 @@ public class DepGraphToSemanticGraph {
 					String sense = key;
 					try {
 						retriever.getLexRelationsOfSynset(((SkolemNode) node).getStem(), sense, ((SkolemNode) node).getPartOfSpeech());
-						//retriever.mapNodeToEmbed((SkolemNode) node);
+						retriever.mapNodeToEmbed((SkolemNode) node);
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -442,25 +442,28 @@ public class DepGraphToSemanticGraph {
 					SenseNodeContent senseContent = new SenseNodeContent(sense);
 					senseContent.addConcept(concept);
 					senseContent.setHierarchyPrecomputed(true);
-					senseContent.setSubConcepts(retriever.subConcepts);
-					senseContent.setSuperConcepts(retriever.superConcepts);
-					senseContent.setSynonyms(retriever.synonyms);
-					senseContent.setHypernyms(retriever.hypernyms);
-					senseContent.setHyponyms(retriever.hyponyms);
-					senseContent.setAntonyms(retriever.antonyms);
-					//senseContent.setEmbed(retriever.embed);
-					retriever.subConcepts.clear();
-					retriever.superConcepts.clear();
-					retriever.synonyms.clear();
-					retriever.hypernyms.clear();
-					retriever.hyponyms.clear();
-					retriever.antonyms.clear();
+					senseContent.setSubConcepts(retriever.getSubConcepts());
+					senseContent.setSuperConcepts(retriever.getSuperConcepts());
+					senseContent.setSynonyms(retriever.getSynonyms());
+					senseContent.setHypernyms(retriever.getHypernyms());
+					senseContent.setHyponyms(retriever.getHyponyms());
+					senseContent.setAntonyms(retriever.getAntonyms());
+					senseContent.setEmbed(retriever.getEmbed());
 					
 					// create new Sense Node
 					SenseNode senseNode = new SenseNode(sense, senseContent);
 					// create new LexEdge
+
 					LexEdge edge = new LexEdge(GraphLabels.LEX, new LexEdgeContent());
 					graph.addLexEdge(edge, node, senseNode);
+					
+					retriever.setSubConcepts(new HashMap<String,Integer>());
+					retriever.setSuperConcepts(new HashMap<String,Integer>());
+					retriever.setSynonyms(new ArrayList<String>());
+					retriever.setHypernyms(new ArrayList<String>());
+					retriever.setHyponyms(new ArrayList<String>());
+					retriever.setAntonyms(new ArrayList<String>());
+					retriever.embed = null;
 				}	
 			}
 		}

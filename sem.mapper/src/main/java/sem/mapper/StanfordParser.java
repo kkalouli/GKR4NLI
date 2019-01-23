@@ -102,7 +102,7 @@ public class StanfordParser {
 		// run all Annotators on this text
 		pipeline.annotate(document);
 		Collection<CorefChain> corefs = document.get(CorefCoreAnnotations.CorefChainAnnotation.class).values();
-		System.out.println(corefs);
+		//System.out.println(corefs);
 		return corefs;
 	}
 	

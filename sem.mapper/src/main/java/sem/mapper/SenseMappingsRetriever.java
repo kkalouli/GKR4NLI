@@ -21,10 +21,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
-
-//import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
-//import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
+import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
 
 import edu.mit.jwi.Dictionary;
@@ -61,6 +59,7 @@ public class SenseMappingsRetriever {
 	private String wnInstall;
 	private String sumoInstall;
 	private String jigsawProps;
+	private WordVectors glove;
 	
 	public SenseMappingsRetriever(File configFile){
 		/* fill hash with the POS tags of the Penn treebank. The POS
@@ -93,6 +92,80 @@ public class SenseMappingsRetriever {
         this.sumoInstall = props.getProperty("sumo_location");
         this.jigsawProps = props.getProperty("jigsaw_props");
 		this.jigsaw = new JIGSAW(new File(jigsawProps));
+		this.glove = WordVectorSerializer.readWord2VecModel(new File("/Users/kkalouli/Documents/project/gnli/glove.6B.300d.txt"));
+	}
+	
+	
+	public double[] getEmbed() {
+		return embed;
+	}
+
+	public void setEmbed(double[] embed) {
+		this.embed = embed;
+	}
+	
+	/**
+	 * Get the list of synonyms associated with the sense
+	 * @return
+	 */
+	public List<String> getSynonyms() {
+		return synonyms;
+	}
+
+	public void setSynonyms(ArrayList<String> synonyms) {
+		this.synonyms = synonyms;
+	}
+	
+	/**
+	 * Get the list of hypernyms associated with the sense
+	 * @return
+	 */
+	public List<String> getHypernyms() {
+		return hypernyms;
+	}
+
+	public void setHypernyms(ArrayList<String> hypernyms) {
+		this.hypernyms = hypernyms;
+	}
+	
+	/**
+	 * Get the list of hyponyms associated with the sense
+	 * @return
+	 */
+	public List<String> getHyponyms() {
+		return hyponyms;
+	}
+
+	public void setHyponyms(ArrayList<String> hyponyms) {
+		this.hyponyms = hyponyms;
+	}
+	
+	/**
+	 * Get the list of antonyms associated with the sense
+	 * @return
+	 */
+	public List<String> getAntonyms() {
+		return antonyms;
+	}
+
+	public void setAntonyms(ArrayList<String> antonyms) {
+		this.antonyms = antonyms;
+	}
+	
+	public Map<String, Integer> getSuperConcepts() {
+		return superConcepts;
+	}
+
+	public void setSuperConcepts(Map<String, Integer> superConcepts) {
+		this.superConcepts = superConcepts;
+	}
+	
+	public Map<String, Integer> getSubConcepts() {
+		return subConcepts;
+	}
+
+	public void setSubConcepts(Map<String, Integer> subConcepts) {
+		this.subConcepts = subConcepts;
 	}
 	
 	/** 
@@ -386,12 +459,10 @@ public class SenseMappingsRetriever {
 	}
 	
 	
-	/*public void mapNodeToEmbed(SkolemNode node){
-		WordVectors glove = null;
+	public void mapNodeToEmbed(SkolemNode node){
 		String lemma = node.getStem();
-		glove = WordVectorSerializer.readWord2VecModel(new File("/Users/kkalouli/Documents/project/gnli/glove.840B.300d.txt"));
         double[] wordVector = glove.getWordVector(lemma);
         this.embed = wordVector;
-	}*/
+	}
 
 }

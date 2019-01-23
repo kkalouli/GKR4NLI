@@ -34,34 +34,14 @@ dependencies {
 	// https://mvnrepository.com/artifact/commons-logging/commons-logging
 	compile group: 'commons-logging', name: 'commons-logging', version: '1.1.1'
 	
-	// https://mvnrepository.com/artifact/org.deeplearning4j/deeplearning4j-core
-	//compile group: 'org.deeplearning4j', name: 'deeplearning4j-core', version: '0.9.1'
-	
-	
 	// https://mvnrepository.com/artifact/org.deeplearning4j/deeplearning4j-nlp
-	//compile group: 'org.deeplearning4j', name: 'deeplearning4j-nlp', version: '0.9.1'
+	compile group: 'org.deeplearning4j', name: 'deeplearning4j-nlp', version: '0.9.1'
 	
-	// https://mvnrepository.com/artifact/org.deeplearning4j/dl4j-spark
-	//compile group: 'org.deeplearning4j', name: 'dl4j-spark_2.11', version: '0.9.1_spark_2'
-
-	// https://mvnrepository.com/artifact/org.deeplearning4j/deeplearning4j-nn
-	//compile group: 'org.deeplearning4j', name: 'deeplearning4j-nn', version: '0.9.1'
-
-	// https://mvnrepository.com/artifact/org.deeplearning4j/deeplearning4j-ui
-	//compile group: 'org.deeplearning4j', name: 'deeplearning4j-ui_2.11', version: '0.9.1'
-
-
-	// https://mvnrepository.com/artifact/org.deeplearning4j/dl4j-spark-nlp
-	//compile group: 'org.deeplearning4j', name: 'dl4j-spark-nlp_2.11', version: '0.9.1_spark_2'
-
-
-	// https://mvnrepository.com/artifact/org.deeplearning4j/deeplearning4j-modelimport
-	//compile group: 'org.deeplearning4j', name: 'deeplearning4j-modelimport', version: '0.9.1'
+	// https://mvnrepository.com/artifact/org.nd4j/nd4j-native-platform
+	compile group: 'org.nd4j', name: 'nd4j-native-platform', version: '0.9.1'
 	
-	// https://mvnrepository.com/artifact/xml-apis/xml-apis
-	//compile group: 'xml-apis', name: 'xml-apis', version: '2.0.2'
 	
-
+	
 	
 	compile project(':sem.graph')
 	
