@@ -6,7 +6,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import gnli.GNLIGraph;
 import gnli.InitialTermMatcher;
 import sem.mapper.DepGraphToSemanticGraph;
@@ -14,6 +13,7 @@ import semantic.graph.SemanticGraph;
 
 
 public class InferenceComputer {
+	
 	
 
 	public InferenceComputer() {
@@ -24,9 +24,10 @@ public class InferenceComputer {
 		DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		List<SemanticGraph> texts = new ArrayList<SemanticGraph>();
 		List<SemanticGraph> hypotheses = new ArrayList<SemanticGraph>();
-		SemanticGraph graphT = semGraph.sentenceToGraph(sent1);
+		SemanticGraph graphT = semGraph.sentenceToGraph(sent1,sent1 + " " + sent2);
+		graphT.displayLex();
 		texts.add(graphT);
-		SemanticGraph graphH = semGraph.sentenceToGraph(sent2);
+		SemanticGraph graphH = semGraph.sentenceToGraph(sent2,sent2 + " " + sent2);
 		hypotheses.add(graphH);
 		GNLIGraph gnli = new GNLIGraph(texts, hypotheses);
 		
@@ -42,19 +43,13 @@ public class InferenceComputer {
 
 		// Now look at the arc structure of the premise and hypothesis graphs to
 		// update the specificity relations on the initial term matches
-		/*start = System.currentTimeMillis();
-		final SpecificityUpdater su = new SpecificityUpdater(ecdGraph, pathScorer);
+		final SpecificityUpdater su = new SpecificityUpdater(gnli, new PathScorer(gnli,30f));
 		su.updateSpecifity();
-		end = System.currentTimeMillis();
-		//System.out.println("Specificity update: "
-		//		+ DurationFormatUtils
-			//	.formatDuration(end - start, "HH:mm:ss:SS"));
-		if (debug) {System.out.println(ecdGraph.matchDisplay(true));}
-		if (debug) {ecdGraph.display();}
+		
 		
 		// Now look at the updated matches and context veridicalities to
 		// determine entailment relations
-		start = System.currentTimeMillis();
+		/*start = System.currentTimeMillis();
 		final EntailmentChecker ck = new EntailmentChecker(ecdGraph);
 		EcdResult retval = ck.getEcdResult();
 		end = System.currentTimeMillis();
@@ -72,7 +67,10 @@ public class InferenceComputer {
 	
 	public static void main(String args[]) throws IOException {
 		InferenceComputer comp = new InferenceComputer();
-		comp.computeInference("The man loves his wife.", "The person loves his wife.");
+		// TODO: change label for embed match
+		String text = "All little girls buy dresses.";
+		String hypothesis = "All girls buy dresses.";
+		comp.computeInference(text, hypothesis);
 
 	}
 

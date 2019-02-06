@@ -110,7 +110,7 @@ public class DepGraphToSemanticGraph {
 	 * @param stanGraph
 	 * @return
 	 */
-	public semantic.graph.SemanticGraph getGraph(SemanticGraph stanGraph, String sentence) {
+	public semantic.graph.SemanticGraph getGraph(SemanticGraph stanGraph, String sentence, String wholeCtx) {
 		this.stanGraph = stanGraph;
 		this.graph = new semantic.graph.SemanticGraph();
 		this.graph.setName(stanGraph.toRecoveredSentenceString());
@@ -120,7 +120,7 @@ public class DepGraphToSemanticGraph {
 		integrateRoles();
 		integrateContexts();
 		integrateProperties();
-		integrateLexicalFeatures();		
+		integrateLexicalFeatures(wholeCtx);		
 		integrateCoRefLinks(sentence);
 		return this.graph;
 	}
@@ -303,42 +303,37 @@ public class DepGraphToSemanticGraph {
 			// define the properties for nouns
 			} else if (nounForms.contains(pos) && !node.getLabel().toLowerCase().contains("none")){
 				if (pos.equals("NN")){
-					cardinality = "singular";
+					cardinality = "sg";
 					name = "common";
 				} else if (pos.equals("NNP")){
-					cardinality = "singular";
+					cardinality = "sg";
 					name = "proper";
 				} else if (pos.equals("NNPS")){
-					cardinality = "plural";
+					cardinality = "pl";
 					name = "proper";
 				} else if (pos.equals("NNS")){
-					cardinality = "plural";
+					cardinality = "pl";
 					name = "common";
 				}
-				// checks if there is a quantification with of: five of the seven
+				// checks if there is a quantification with of, e.g. five of the seven
 				boolean existsQMod = false;
 				// going through the out edges of this node to see if there are any specifiers
 				for (SemanticEdge edge: graph.getDependencyGraph().getOutEdges(node)){
 					// depending on the case, define the specifier
 					String depOfDependent = edge.getLabel();			
-					String determiner = edge.getDestVertexId().substring(0,edge.getDestVertexId().indexOf("_"));
+					String determiner = ((SkolemNodeContent) graph.getFinishNode(edge).getContent()).getStem(); //edge.getDestVertexId().substring(0,edge.getDestVertexId().indexOf("_"));
 					if (depOfDependent.equals("det") && existsQMod == false) {					
-						if (determiner.equals("a"))
-							specifier = "indef";
-						else if (determiner.equals("the"))
-							specifier = "def"; 
-						else
 							specifier = determiner; 
 					// only if there is no quantification with of, assign this determiner as the cardinatlity
 					} else if (depOfDependent.equals("nummod") && existsQMod == false){
-						cardinality = determiner;
+						specifier = determiner;
 					// otherwise we introduce the part_of edge
 					} else if (depOfDependent.equals("nummod") && existsQMod == true){
 						part_of = determiner;
 					// if there is det:qmod there is quantification with of. We also check if there is any quantification on the quantification, e.g.
-					// "any five of the seven". In this case, the any becomes the specifier of the five
+					// "any five of the seven". In this case,  any becomes the specifier of the five
 					}else if (depOfDependent.equals("det:qmod")){
-							cardinality = determiner;
+							specifier = determiner;
 							existsQMod = true;
 							// get the outNode (the node corresponding to the string determiner)
 							SemanticNode<?> outNode = graph.getDependencyGraph().getEndNode(edge);
@@ -358,7 +353,7 @@ public class DepGraphToSemanticGraph {
 						specifier = "none";
 					}
 				}
-				// adding the property edge cardinality (singular, plural or exact number)
+				// adding the property edge cardinality (singular, plural)
 				if (!cardinality.equals("")){
 					PropertyEdge cardinalityEdge = new PropertyEdge(GraphLabels.CARDINALITY, new PropertyEdgeContent());
 					graph.addPropertyEdge(cardinalityEdge, node, new ValueNode(cardinality, new ValueNodeContent()));
@@ -368,12 +363,12 @@ public class DepGraphToSemanticGraph {
 					PropertyEdge typeEdge = new PropertyEdge(GraphLabels.NTYPE, new PropertyEdgeContent());
 					graph.addPropertyEdge(typeEdge, node, new ValueNode(name, new ValueNodeContent()));
 				}
-				// adding the property edge specifier (def, indef, many, few, etc)
+				// adding the property edge specifier (the, a, many, few, N, etc)
 				if (!specifier.equals("")){
 					PropertyEdge specifierEdge = new PropertyEdge(GraphLabels.SPECIFIER, new PropertyEdgeContent());
 					graph.addPropertyEdge(specifierEdge, node, new ValueNode(specifier, new ValueNodeContent()));
 				}
-				// adding the property edge part_of (e.g. five of seven, five is the cardinality and seven the part_of)
+				// adding the property edge part_of (e.g. five of seven, five is the specifier and seven the part_of)
 				if (!part_of.equals("")){
 					PropertyEdge partOfEdge = new PropertyEdge(GraphLabels.PART_OF, new PropertyEdgeContent());
 					graph.addPropertyEdge(partOfEdge, node, new ValueNode(part_of, new ValueNodeContent()));
@@ -415,10 +410,10 @@ public class DepGraphToSemanticGraph {
 	 * superConcepts of the node (these are set to be the superconcepts of the SenseContent). At the moment, the
 	 * racs of the SenseNode are left empty. 
 	 */
-	private void integrateLexicalFeatures(){
-		HashMap <String, String> senses = null;
+	private void integrateLexicalFeatures(String wholeCtx){
+		HashMap <String, Map<String,Float>> senses = null;
 		try {
-			senses = retriever.disambiguateSensesWithJIGSAW(stanGraph.toRecoveredSentenceString());
+			senses = retriever.disambiguateSensesWithJIGSAW(wholeCtx); // stanGraph.toRecoveredSentenceString());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -508,7 +503,7 @@ public class DepGraphToSemanticGraph {
 				}
 			}
 		}
-		// the coreference CoreNLP does not sow the appositives; these are in the form of dependencies in the dependency graph, so we need to extract them from there
+		// the coreference CoreNLP does not show the appositives; these are in the form of dependencies in the dependency graph, so we need to extract them from there
 		// (the appositives are also included in the role graph as restrictions)
 		SemanticNode<?> startNode = null;
 		SemanticNode<?> finishNode = null;
@@ -531,11 +526,11 @@ public class DepGraphToSemanticGraph {
 	 * @throws FileNotFoundException
 	 * @throws UnsupportedEncodingException
 	 */
-	public semantic.graph.SemanticGraph sentenceToGraph(String sentence) throws FileNotFoundException, UnsupportedEncodingException{	
+	public semantic.graph.SemanticGraph sentenceToGraph(String sentence, String wholeCtx) throws FileNotFoundException, UnsupportedEncodingException{	
 		if (sentence.contains("?"))
 			this.interrogative = true;
 		SemanticGraph stanGraph = parser.parseOnly(sentence);
-		semantic.graph.SemanticGraph graph = this.getGraph(stanGraph, sentence);
+		semantic.graph.SemanticGraph graph = this.getGraph(stanGraph, sentence, wholeCtx);
 		return graph;
 	}
 
@@ -562,7 +557,7 @@ public class DepGraphToSemanticGraph {
 			}
 			String text = strLine.split("\t")[1];
 			SemanticGraph stanGraph = parser.parseOnly(text);
-			semantic.graph.SemanticGraph graph = this.getGraph(stanGraph, text);
+			semantic.graph.SemanticGraph graph = this.getGraph(stanGraph, text, text);
 			//System.out.println(graph.displayAsString());
 			writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
 			writer.flush();
@@ -576,8 +571,8 @@ public class DepGraphToSemanticGraph {
 	 * Process a single sentence with GKR. 
 	 * You can comment in or out the subgraphs that you want to have displayed.
 	 */
-	public void processSentence(String sentence) throws FileNotFoundException, UnsupportedEncodingException{
-		semantic.graph.SemanticGraph graph = this.sentenceToGraph(sentence);
+	public void processSentence(String sentence, String wholeCtx) throws FileNotFoundException, UnsupportedEncodingException{
+		semantic.graph.SemanticGraph graph = this.sentenceToGraph(sentence, wholeCtx);
 		graph.displayDependencies();
 		graph.displayProperties();
 		graph.displayLex();
@@ -596,7 +591,9 @@ public class DepGraphToSemanticGraph {
 
 	public static void main(String args[]) throws IOException {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
-		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/mixed_testsuite.txt", semConverter);		
-		semConverter.processSentence("John loves his wife.");	
+		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/mixed_testsuite.txt", semConverter);
+		String sentence = "John loves his wife.";
+		String context = "John loves his wife.";
+		semConverter.processSentence(sentence, context);	
 	}
 }

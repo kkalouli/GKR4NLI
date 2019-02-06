@@ -13,7 +13,7 @@ import semantic.graph.vetypes.LinkEdge;
  * This includes
  * The original (term only) specificity of the match
  * The revised specificity of the match after considering modifiers
- * The justifications for the revised specificity: A collection of {@link ModifierChainPair}s
+ * The justifications for the revised specificity: A collection of {@link HeadModifierPathPair}s
  * showing the paths by which the premise and conclusion terms connect to matched modifiers
  *
  */
@@ -65,11 +65,11 @@ public class MatchEdge extends LinkEdge {
 	 * How the premise and conclusion terms connect to the corresponding modifiers
 	 * @return
 	 */
-	public List<ModifierChainPair> getJustification() {
+	public List<HeadModifierPathPair> getJustification() {
 		return ((MatchContent) this.content).getJustification();
 	}
 
-	public void addJustification(ModifierChainPair justification) {
+	public void addJustification(HeadModifierPathPair justification) {
 		((MatchContent) this.content).getJustification().add(justification);
 	}
 

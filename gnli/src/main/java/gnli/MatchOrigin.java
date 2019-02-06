@@ -1,7 +1,7 @@
 package gnli;
 
 public class MatchOrigin { 
-	public enum MatchType {STEM, SURFACE, SENSE, EMBED, CONCEPT, DERIVED, NONE}
+	public enum MatchType {STEM, SURFACE, SENSE, EMBED, CONCEPT, DERIVED, NONE, SENSE_CMP}
 	private MatchType matchType;
 	private String hSense = null;
 	private String tSense = null;

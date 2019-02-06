@@ -19,7 +19,7 @@ public class MatchContent implements EdgeContent {
 	private Map<String, Float> scores;
 	private boolean finalized = false;
 	private List<MatchOrigin> matchOrigin;
-	private List<ModifierChainPair> justification;
+	private List<HeadModifierPathPair> justification;
 	
 	public MatchContent() {
 		this.specificity = Specificity.NONE;
@@ -28,7 +28,7 @@ public class MatchContent implements EdgeContent {
 		this.scores.put("distance", 0f);
 		this.finalized = false;
 		this.matchOrigin = new ArrayList<MatchOrigin>();
-		this.justification = new ArrayList<ModifierChainPair>();
+		this.justification = new ArrayList<HeadModifierPathPair>();
 	}
 	
 	/**
@@ -43,6 +43,7 @@ public class MatchContent implements EdgeContent {
 		case SURFACE:
 		case CONCEPT:
 		case SENSE:
+		case SENSE_CMP:
 		case EMBED:
 			this.specificity = Specificity.EQUALS;
 			this.originalSpecificity = Specificity.EQUALS;
@@ -98,7 +99,7 @@ public class MatchContent implements EdgeContent {
 		this.scores = new HashMap<String, Float>(other.scores);
 		this.finalized = other.finalized;
 		this.matchOrigin = other.matchOrigin;
-		this.justification = new ArrayList<ModifierChainPair>(other.justification);
+		this.justification = new ArrayList<HeadModifierPathPair>(other.justification);
 	}
 	
 	/**
@@ -161,7 +162,7 @@ public class MatchContent implements EdgeContent {
 			this.scores.put(feature, currentScore);
 		}
 		currentScore =+ score;
-	}
+	} 
 	
 	/**
 	 * Have all restrictions on the term been considered in 
@@ -188,10 +189,10 @@ public class MatchContent implements EdgeContent {
 	 * The possible path justifications for the match
 	 * @return
 	 */
-	public List<ModifierChainPair> getJustification() {
+	public List<HeadModifierPathPair> getJustification() {
 		return justification;
 	}
-	public void setJustification(List<ModifierChainPair> justification) {
+	public void setJustification(List<HeadModifierPathPair> justification) {
 		this.justification = justification;
 	}
 	

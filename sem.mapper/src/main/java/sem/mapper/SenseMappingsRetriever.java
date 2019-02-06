@@ -13,6 +13,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -20,6 +21,7 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
@@ -60,6 +62,7 @@ public class SenseMappingsRetriever {
 	private String sumoInstall;
 	private String jigsawProps;
 	private WordVectors glove;
+	private Integer indexOfPunct;
 	
 	public SenseMappingsRetriever(File configFile){
 		/* fill hash with the POS tags of the Penn treebank. The POS
@@ -366,18 +369,21 @@ public class SenseMappingsRetriever {
 	
 	/** 
 	 * Takes a sentence as input and disambiguates each word. It returns a hash containing
-	 * each word with its list of senses in decreasing score order.
+	 * each word mapped to a map of strings and floats. The strings (keys) are the senses of the word and
+	 * the corresponding floats (values) are the probabilities of the senses. The map is sorted based on value before return,
+	 * so that the most probable sense is the fist key of the inner map.
 	 * The method is called from the DepGraphToSemanticGraph() class. 
 	 * @param sentence
 	 * @return
 	 * @throws Exception
 	 */
-	public HashMap <String, String> disambiguateSensesWithJIGSAW(String sentence) throws Exception{
+	public HashMap <String, Map<String,Float>> disambiguateSensesWithJIGSAW(String wholeCtx) throws Exception{
 		HashMap <String, String> listOfSenses = new HashMap<String,String>();
+		HashMap <String, Map<String,Float>> mapOfSensesSorted = new HashMap<String,Map<String,Float>>();
 		// create a file containing the sentence to be tokenized
 		String inString = "untokenized.tmp";
-		BufferedWriter writer = new BufferedWriter( new FileWriter(inString));
-		writer.write(sentence);
+		BufferedWriter writer = new BufferedWriter(new FileWriter(inString));
+		writer.write(wholeCtx);
 		writer.close();
 		// create a file where the tokenized sentence will be written
 		String tmpTokenized= "tokenized.tmp";
@@ -388,7 +394,7 @@ public class SenseMappingsRetriever {
 	        CoreLabel label = ptbt.next();
 	        writerTokenizer.write(label.toString()+"\n");
 	      }
-		writerTokenizer.close();
+		writerTokenizer.close();	
 		// run the disambiguation
 	   TokenGroup tg = null;
        BufferedReader in = new BufferedReader(new FileReader(tmpTokenized));
@@ -397,12 +403,35 @@ public class SenseMappingsRetriever {
     	   list.add(in.readLine());
        }
        in.close();
+       // write each disambiguated sense to the hashmap
        tg = jigsaw.mapText(list.toArray(new String[list.size()]));
        for (int i = 0; i < tg.size(); i++) {
-           listOfSenses.put(tg.get(i).getToken(),tg.get(i).getSyn());
+           listOfSenses.put(Integer.toString(i)+"_"+tg.get(i).getToken(),tg.get(i).getSyn());
        }
-       
-       return listOfSenses;
+       System.out.println(listOfSenses);
+       // go through the hashmap, split each sense to the sense and the probability and create an inner hashmap:
+       // the sense is the key and the probability is the value
+       for (String key: listOfSenses.keySet()){
+    	   String value = listOfSenses.get(key);
+    	   if (value.equals("U")) {
+    		   mapOfSensesSorted.put(key, new HashMap<String,Float>());
+    		   continue; 
+    	   }
+    	   String[] splitSenses = value.split(",");
+    	   HashMap<String,Float> mapSenseProp = new HashMap<String,Float>();
+    	   for (String senseProp : splitSenses){
+    		   String[] sensePropSplit = senseProp.split(":");
+    		   String sense = sensePropSplit[0].substring(1);
+    		   float prop = Float.parseFloat(sensePropSplit[1]);
+    		   mapSenseProp.put(sense, prop);
+    	   }
+    	   // sort this inner hashmap based on the values so that the sense with the highest probability is first
+    	   final Map<String, Float> mapSensePropSorted = mapSenseProp.entrySet().stream().sorted((Map.Entry.<String, Float>comparingByValue().reversed()))
+                   .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+    	   // put this hashmap as value for the current key node
+    	   mapOfSensesSorted.put(key, mapSensePropSorted);
+       }
+       return mapOfSensesSorted;
 	}
 
 	/**
@@ -415,14 +444,16 @@ public class SenseMappingsRetriever {
 	 * @param retriever
 	 * @return
 	 */
-	public HashMap<String, String> mapNodeToSenseAndConcept(SkolemNode node, SemanticGraph graph,HashMap <String, String> senses){
+	public HashMap<String, String> mapNodeToSenseAndConcept(SkolemNode node, SemanticGraph graph,HashMap <String, Map<String,Float>> senses){
 		HashMap<String,String> lexSem = new HashMap<String,String>();
+		int positionOfNode = node.getPosition();
+		String keyToGet = Integer.toString(positionOfNode-1) + "_" + node.getSurface();
+		Map<String,Float> senseProp = senses.get(keyToGet);
 		String sense = "";
 		String concept = "";
-		
-		sense = senses.get(((SkolemNode) node).getSurface());
-		if ( sense != null && !sense.equals("U")){
-			sense = sense.substring(1,senses.get(((SkolemNode) node).getSurface()).indexOf(":"));
+			
+		if (senseProp != null && !senseProp.isEmpty()){
+			sense = (String) senseProp.keySet().toArray()[0];
 			try {
 				concept = extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());
 			} catch (UnsupportedEncodingException e) {
@@ -447,7 +478,7 @@ public class SenseMappingsRetriever {
 					if (compSenses != null && !compSenses.isEmpty()){
 						sense = compSenses.get(0).substring(4, compSenses.get(0).lastIndexOf("-"));		
 						concept = extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());				
-						lexSem.put(sense,concept);
+						lexSem.put("cmp_"+sense,concept);
 					}
 				} catch (IOException e) {
 					// TODO Auto-generated catch block

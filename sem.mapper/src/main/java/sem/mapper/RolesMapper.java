@@ -598,13 +598,14 @@ public class RolesMapper {
 		break;
 		case "acl:relcl": role = GraphLabels.RESTRICTION;
 		break;
-		case "compound":role = GraphLabels.RESTRICTION;
+		case "compound":role = GraphLabels.COMPOUND;
 		break;
-		case "appos":role = GraphLabels.RESTRICTION;
+		// dont know yet if they should be in there, appos is treated in the DepGraphToSemGraph as part of the LinkGraph
+		/*case "appos":role = GraphLabels.RESTRICTION;
 		break;
 		case "case" : if (passive == false){
 			role = GraphLabels.PMOD;
-			}
+			}*/
 		}
 		// nmod can have difefrent subtypes, therefore it is put here and not within the switch 
 		if (role.equals("") && edgeLabel.contains("nmod")){

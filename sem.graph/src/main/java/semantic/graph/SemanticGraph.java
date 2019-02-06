@@ -1077,7 +1077,7 @@ public class SemanticGraph {
 	}
 		
 	/**
-	 * Get all of the non-derived modifiers of the term (i.e. not ones introduced by naive semantics)
+	 * Get all of the non-derived modifiers of the term 
 	 * @param node
 	 * @return
 	 */
@@ -1085,7 +1085,7 @@ public class SemanticGraph {
 		List<SkolemNode> retval = new ArrayList<SkolemNode>();
 		if (this.roleGraph.containsNode(node)) {
 			for (SemanticNode<?> semNode : this.roleGraph.getOutReach(node)) {
-				if (SkolemNode.class.isAssignableFrom(semNode.getClass())) {
+				if (SkolemNode.class.isAssignableFrom(semNode.getClass()) && !semNode.equals(node) && !isRstr((TermNode) semNode)) {
 					retval.add((SkolemNode) semNode);
 				}
 			}
@@ -1179,6 +1179,19 @@ public class SemanticGraph {
 		return retval;
 	}
 	
+	
+	public List<TermNode> getRestrictions(TermNode term){
+		List<TermNode> retval = new ArrayList<TermNode>();
+		if (this.roleGraph.containsNode(term)) {
+			for (SemanticEdge semEdge : this.roleGraph.getOutEdges(term)) {
+				if (semEdge.getLabel().equals("rstr")){
+					retval.add((TermNode) this.getFinishNode(semEdge));
+				}
+			}
+		}
+		return retval;
+	}
+	
 	/**
 	 * Is this node lexically co-referent
 	 * @param node
@@ -1188,6 +1201,22 @@ public class SemanticGraph {
 		if (this.lexGraph.containsNode(node) && this.linkGraph.containsNode(node)) {
 			for (SemanticEdge edge : getInEdges(node)) {
 				if (edge.getLabel().equals("lexCoRef")) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	/**
+	 * Is this node a rstr node (from a relative clause or a compound for now)
+	 * @param node
+	 * @return
+	 */
+	public boolean isRstr(TermNode node) {
+		if (this.roleGraph.containsNode(node)) {
+			for (SemanticEdge edge : getInEdges(node)) {
+				if (edge.getLabel().equals("rstr")) {
 					return true;
 				}
 			}
@@ -1241,7 +1270,7 @@ public class SemanticGraph {
 	 * @return
 	 */
 	public List<SemanticEdge> getShortestPath(SemanticNode<?> start, SemanticNode<?> end) {
-		return this.graph.getShortestPath(start, end);
+		return this.roleGraph.getShortestPath(start, end);
 	}
 
 	/**
@@ -1252,7 +1281,7 @@ public class SemanticGraph {
 	 */
 	public List<SemanticEdge> getShortestUndirectedPath(SemanticNode<?> start,
 			SemanticNode<?> end) {
-		return this.graph.getShortestUndirectedPath(start, end);
+		return this.roleGraph.getShortestUndirectedPath(start, end);
 	}
 
 	public boolean isEmpty() {

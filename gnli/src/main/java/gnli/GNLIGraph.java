@@ -17,6 +17,7 @@ import semantic.graph.SemanticGraph;
 import semantic.graph.SemanticNode;
 import semantic.graph.vetypes.GraphLabels;
 import semantic.graph.vetypes.RoleEdge;
+import semantic.graph.vetypes.SkolemNode;
 import semantic.graph.vetypes.TermNode;
 
 public class GNLIGraph {
@@ -165,12 +166,27 @@ public class GNLIGraph {
 	 * Get all the match edges for the conclusion node
 	 * 
 	 * @param node
-	 *            A node in the conclusion graph of the Ecd Graph
 	 * @return
 	 */
-	public List<MatchEdge> getMatches(SemanticNode<?> node) {
+	public List<MatchEdge> getOutMatches(SemanticNode<?> node) {
 		List<MatchEdge> retval = new ArrayList<MatchEdge>();
-		for (SemanticEdge edge : matchGraph.getLinks(node)) {
+		for (SemanticEdge edge : matchGraph.getOutEdges(node)) {
+			if (edge.getClass().equals(MatchEdge.class)) {
+				retval.add((MatchEdge) edge);
+			}
+		}
+		return retval;
+	}
+	
+	/**
+	 * Get all the match edges for the premise node
+	 * 
+	 * @param node
+	 * @return
+	 */
+	public List<MatchEdge> getInMatches(SemanticNode<?> node) {
+		List<MatchEdge> retval = new ArrayList<MatchEdge>();
+		for (SemanticEdge edge : matchGraph.getInEdges(node)) {
 			if (edge.getClass().equals(MatchEdge.class)) {
 				retval.add((MatchEdge) edge);
 			}
@@ -198,13 +214,24 @@ public class GNLIGraph {
 		return gnliGraph.getFinishNode(edge);
 	}
 	
-	public SemanticNode<?> getMatchedPremiseTerm(SemanticEdge match) {
-		return this.getStartNode(match);
-	}
-
-	public SemanticNode<?> getMatchedConclusionTerm(SemanticEdge match) {
+	public SemanticNode<?> getMatchedTextTerm(SemanticEdge match) {
 		return this.getFinishNode(match);
 	}
+
+	public SemanticNode<?> getMatchedHypothesisTerm(SemanticEdge match) {
+		return this.getStartNode(match);
+	}
+	
+	public List<SkolemNode> getAllHModifiers(SemanticEdge match){	
+		List<SkolemNode> dHMod = this.getHypothesisGraph().getAllModifiers((SkolemNode) this.getMatchedHypothesisTerm(match));
+		return dHMod;
+	}
+	
+	public List<SkolemNode> getAllTModifiers(SemanticEdge match){	
+		List<SkolemNode> dTMod = this.getTextGraph().getAllModifiers((SkolemNode) this.getMatchedTextTerm(match));
+		return dTMod;
+	}
+
 	
 	/**
 	 * Open graphical display of gnliGraph
@@ -256,9 +283,11 @@ public class GNLIGraph {
 		DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		List<SemanticGraph> texts = new ArrayList<SemanticGraph>();
 		List<SemanticGraph> hypotheses = new ArrayList<SemanticGraph>();
-		SemanticGraph graphT = semGraph.sentenceToGraph("The man is riding a bike.");
+		String sent1 = "The man is riding a bike.";
+		String sent2 = "The man is not riding a bike.";
+		SemanticGraph graphT = semGraph.sentenceToGraph(sent1, sent1+" "+sent2);
 		texts.add(graphT);
-		SemanticGraph graphH = semGraph.sentenceToGraph("The man is not riding a bike.");
+		SemanticGraph graphH = semGraph.sentenceToGraph(sent2, sent2+" "+sent1);
 		hypotheses.add(graphH);
 		GNLIGraph gnli = new GNLIGraph(texts, hypotheses);
 		//gnli.display();
