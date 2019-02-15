@@ -1,5 +1,6 @@
 package gnli;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import semantic.graph.SemanticEdge;
@@ -18,11 +19,13 @@ import semantic.graph.vetypes.TermNode;
 public class PathScorer {
 	private GNLIGraph gnliGraph;
 	private float maxCost;
+	private ArrayList<HeadModifierPathPair> allowedRolePaths;
 	
 	public PathScorer(GNLIGraph gnliGraph, float maxCost) {
 		super();
 		this.gnliGraph = gnliGraph;
 		this.maxCost = maxCost;
+		this.allowedRolePaths = new ArrayList<HeadModifierPathPair>();
 	}
 	
 	
@@ -30,7 +33,7 @@ public class PathScorer {
 		this.gnliGraph = null;
 		this.maxCost = maxCost;
 	}
-
+	
 
 	public float getMaxCost() {
 		return maxCost;
@@ -48,6 +51,22 @@ public class PathScorer {
 
 	public void setGNLIGraph(GNLIGraph gnliGraph) {
 		this.gnliGraph = gnliGraph;
+	}
+	
+	public void setAllowedRolePaths(ArrayList<HeadModifierPathPair> allowedRolePaths){
+		this.allowedRolePaths = allowedRolePaths;
+	}
+	
+	public ArrayList<HeadModifierPathPair> getAllowedRolePaths(){
+		return this.allowedRolePaths;
+	}
+	
+	public void addAllowedRolePath(HeadModifierPathPair pathToAdd){
+		this.allowedRolePaths.add(pathToAdd);
+	}
+	
+	public void removeAllowedRolePath(HeadModifierPathPair pathToRemove){
+		this.allowedRolePaths.add(pathToRemove);
 	}
 	
 	/**

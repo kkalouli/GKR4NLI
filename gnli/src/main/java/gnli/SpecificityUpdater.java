@@ -30,8 +30,9 @@ public class SpecificityUpdater {
 		private PathScorer pathScorer;
 		private int initialAgendaSize;
 		private static int MAX_AGENDA_SIZE = 1000;
+		private String correctLabel;
 		
-		public SpecificityUpdater(GNLIGraph gnliGraph, PathScorer pathScorer) {
+		public SpecificityUpdater(GNLIGraph gnliGraph, PathScorer pathScorer, String correctLabel) {
 			this.gnliGraph = gnliGraph;
 			this.pathScorer = pathScorer;
 			this.pathScorer.setGNLIGraph(gnliGraph);
@@ -45,6 +46,7 @@ public class SpecificityUpdater {
 			}
 			Collections.sort(this.matchAgenda);
 			initialAgendaSize = matchAgenda.size();
+			this.correctLabel = correctLabel;
 		}
 
 		
@@ -132,13 +134,14 @@ public class SpecificityUpdater {
 		
 		private boolean hypAndTextHaveMods(HypoTextMatch hypoTextMatch, String mode){			
 			List<SkolemNode> modifiers = null;
-			if (mode.equals("hyp"))
+			if (mode.equals("hyp")){
 				modifiers = hypoTextMatch.hypothesisModifiers;
+			}
 			else
 				modifiers = hypoTextMatch.textModifiers;
 			boolean complete = true;
 			for (SkolemNode restr : modifiers){
-				 List<MatchEdge> tOutMatches = gnliGraph.getOutMatches(restr);
+				 List<MatchEdge> tOutMatches = gnliGraph.getMatches(restr, mode);
 				 /*for (MatchEdge m : tOutMatches){
 					 if (unprocessedTextRestr.contains(gnliGraph.getMatchGraph().getFinishNode(m)))
 						 unprocessedTextRestr.remove(gnliGraph.getMatchGraph().getFinishNode(m));
@@ -201,7 +204,10 @@ public class SpecificityUpdater {
 			SkolemNode finishRestr = (SkolemNode) gnliGraph.getFinishNode(outEdge);
 			SemanticNode<?> startRestr = gnliGraph.getStartNode(outEdge);
 			if (mode.equals("hyp")){
+				// get only direct and indirect modifiers
 				if (!gnliGraph.getTextGraph().getDependencyGraph().getOutReach(hypoTextMatch.textTerm).contains(finishRestr)){
+				// get also any undirected path connecting the term to the modifier
+				//if (gnliGraph.getTextGraph().getDependencyGraph().getShortestUndirectedPath(hypoTextMatch.textTerm,finishRestr).isEmpty()){
 					// H more specific
 					hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUPERCLASS));
 					hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, (SkolemNode) startRestr));
@@ -270,15 +276,15 @@ public class SpecificityUpdater {
 			for (HeadModifierPathPair just : match.getJustification()) {
 				List<SemanticEdge> hPath = just.getConclusionPath();
 				if (hPath != null && !hPath.isEmpty()) {
-					SemanticEdge edge = hPath.get(0);
-					if (edge.getDestVertexId() == mod.getId()) {
+					SemanticEdge edge = hPath.get(hPath.size()-1);
+					if (edge.getDestVertexId().equals(mod.getLabel())) {
 						return true;
 					}
 				}
 				List<SemanticEdge> tPath = just.getPremisePath();
 				if (tPath != null && !tPath.isEmpty()) {
-					SemanticEdge edge = tPath.get(0);
-					if (edge.getDestVertexId() == mod.getId()) {
+					SemanticEdge edge = tPath.get(tPath.size()-1);
+					if (edge.getDestVertexId().equals(mod.getLabel())) {
 						return true;
 					}
 				}
@@ -415,6 +421,8 @@ public class SpecificityUpdater {
 			mcp.setConclusionPath(findModPath(hypothesisTerm, hypothesisMod, gnliGraph.getHypothesisGraph()));
 			mcp.setPremisePath(findModPath(textTerm, textMod, gnliGraph.getTextGraph()));
 			mcp.setCost(this.pathScorer.pathCost(mcp));
+			if (!correctLabel.equals("") && correctLabel.equals("E"))
+				this.pathScorer.addAllowedRolePath(mcp);
 			
 			if (this.pathScorer.pathBelowThreshold(mcp.getCost())) {
 				return mcp;

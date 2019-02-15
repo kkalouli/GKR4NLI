@@ -313,7 +313,7 @@ public class InitialTermMatcher {
 	
 	public Set<Formula> allTermsInFormulas(KB kb, String term) {
 		HashSet<Formula> result = new HashSet<>();
-		Pattern pattern = Pattern.compile("\\s"+term+"\\s");		
+		Pattern pattern = Pattern.compile(term.substring(0,1).toUpperCase()+term.substring(1)+"(\\s|\\))");
 		for (String f : kb.formulaMap.keySet()){
 			Matcher matcher = pattern.matcher(f);
 			if (matcher.find()) {
@@ -345,7 +345,8 @@ public class InitialTermMatcher {
 						listOfRelations.addAll(kb.askWithRestriction(2, hConcept.substring(0,hConcept.length()-1), 1, tConcept.substring(0,tConcept.length()-1)));
 						//ArrayList<Formula> result3 = KButilities.termIntersection(kb,"Pilot","FlyingAircraft");
 						//ArrayList<String> result14 = kb.getNearestRelations("Human"); // gives me the nearest neighbors, e.g. HumanChild
-						//allTermsInFormulas(kb, "Pilot");
+						allTermsInFormulas(kb, "Pilot");
+						allTermsInFormulas(kb, "Kid");
 						Specificity spec = null;	
 						for (Formula f :  listOfRelations){
 							String firstArg = f.getArgument(1);

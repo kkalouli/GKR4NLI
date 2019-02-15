@@ -194,6 +194,13 @@ public class GNLIGraph {
 		return retval;
 	}
 	
+	public List<MatchEdge> getMatches(SemanticNode<?> node, String mode) {
+		if (mode.equals("hyp"))
+			return getOutMatches(node);
+		else
+			return getInMatches(node);
+	}
+	
 	/**
 	 * Get the start node of an edge
 	 * 

@@ -28,17 +28,18 @@ public class InferenceComputer {
 	
 	private static KB kb;
 	private static DepGraphToSemanticGraph semGraph;
-	
+	private boolean learning;
 	
 
 	public InferenceComputer() throws FileNotFoundException, UnsupportedEncodingException {
 		KBmanager.getMgr().initializeOnce("/Users/kkalouli/Documents/.sigmakee/KBs");	
 		this.kb = KBmanager.getMgr().getKB("SUMO");
 		this.semGraph = new DepGraphToSemanticGraph();
+		this.learning = true;
 	}
 	
 
-	public InferenceDecision computeInference(DepGraphToSemanticGraph semGraph, String sent1, String sent2, KB kb) throws FileNotFoundException, UnsupportedEncodingException {	
+	public InferenceDecision computeInference(DepGraphToSemanticGraph semGraph, String sent1, String sent2, String correctLabel, KB kb) throws FileNotFoundException, UnsupportedEncodingException {	
 		List<SemanticGraph> texts = new ArrayList<SemanticGraph>();
 		List<SemanticGraph> hypotheses = new ArrayList<SemanticGraph>();
 		SemanticGraph graphT = semGraph.sentenceToGraph(sent1,sent1 + " " + sent2);
@@ -54,12 +55,15 @@ public class InferenceComputer {
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli, kb);
 		initialTermMatcher.process();
 		//gnli.display();
-		gnli.matchGraph.display();
+		//gnli.matchGraph.display();
 		
 
 		// Now look at the arc structure of the premise and hypothesis graphs to
 		// update the specificity relations on the initial term matches
-		final SpecificityUpdater su = new SpecificityUpdater(gnli, new PathScorer(gnli,30f));
+		String labelToLearn = "";
+		if (learning == true)
+			labelToLearn = correctLabel;
+		final SpecificityUpdater su = new SpecificityUpdater(gnli, new PathScorer(gnli,30f), labelToLearn);
 		su.updateSpecifity();
 		
 		
@@ -87,7 +91,7 @@ public class InferenceComputer {
 			String premise = elements[1];
 			String hypothesis = elements[2];
 			String correctLabel = elements[3];
-			InferenceDecision decision = computeInference(semGraph, premise, hypothesis, kb);
+			InferenceDecision decision = computeInference(semGraph, premise, hypothesis, correctLabel, kb);
 			writer.write(strLine+"\t"+decision.getEntailmentRelation()+"\t"+decision.getMatchStrength()+"\t"+decision.isLooseContr()+
 					"\t"+decision.isLooseEntail()+"\t"+decision.getJustification().getSpecificity()+"\n");
 			writer.flush();
@@ -101,8 +105,8 @@ public class InferenceComputer {
 	 * Process a single pair to find the inference relation. 
 	 * Print the result on the console for now.
 	 */
-	public void computeInferenceOfPair(DepGraphToSemanticGraph semGraph, String premise, String hypothesis, KB kb) throws FileNotFoundException, UnsupportedEncodingException{
-		InferenceDecision decision = computeInference(semGraph, premise, hypothesis, kb);
+	public void computeInferenceOfPair(DepGraphToSemanticGraph semGraph, String premise, String hypothesis, String correctLabel, KB kb) throws FileNotFoundException, UnsupportedEncodingException{
+		InferenceDecision decision = computeInference(semGraph, premise, hypothesis, correctLabel, kb);
 		System.out.println("Relation: "+decision.getEntailmentRelation());
 		System.out.println("Strength of the Match: "+decision.getMatchStrength());
 		System.out.println("It was loose contradiction: "+decision.isLooseContr());
