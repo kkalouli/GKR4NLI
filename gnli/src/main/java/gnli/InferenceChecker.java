@@ -94,6 +94,7 @@ public class InferenceChecker {
 		
 		if (looseContra == false && looseEntail == false){
 			this.entailmentRelation = EntailmentRelation.NEUTRAL;
+			justification = null;
 		}
 		
 	}

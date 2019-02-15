@@ -21,6 +21,8 @@ import com.articulate.sigma.EProver;
 import com.articulate.sigma.Formula;
 import com.articulate.sigma.KBcache;
 
+
+
 import gnli.GNLIGraph;
 import gnli.MatchContent;
 import gnli.MatchEdge;
@@ -29,6 +31,7 @@ import gnli.Specificity;
 import semantic.graph.SemanticEdge;
 import semantic.graph.SemanticGraph;
 import semantic.graph.SemanticNode;
+
 import semantic.graph.vetypes.SenseNode;
 import semantic.graph.vetypes.SenseNodeContent;
 import semantic.graph.vetypes.SkolemNodeContent;
@@ -47,6 +50,7 @@ public class InitialTermMatcher {
 	private final List<TermNode> textTerms = Collections.synchronizedList(new ArrayList<TermNode>());
 	private KB kb;
 	private double highestCosSimil;
+
 	
 
 	enum Matched {
@@ -109,6 +113,7 @@ public class InitialTermMatcher {
 	
 	
 
+
 	/**
 	 * Apply initial term matches
 	 */
@@ -117,7 +122,6 @@ public class InitialTermMatcher {
 		//gnliGraph.display();
 		//matchDerivedTerms();
 		matchCoreferences();
-		
 	}
 
 	/**
@@ -162,7 +166,6 @@ public class InitialTermMatcher {
 			checkEmbedMatch(hTerm, similHTerm, similTTerm);
 		}
 		updatePendingMatches();
-
 		
 	
 	}
@@ -322,7 +325,7 @@ public class InitialTermMatcher {
 		}
 		return result;
 	}
-	
+
 	protected List<MatchEdge> checkConceptMatch(CheckedTermNode cHTerm,TermNode tTerm) {
 		List<MatchEdge> retval = new ArrayList<MatchEdge>();
 		if (cHTerm.isMatched()) {
@@ -388,6 +391,7 @@ public class InitialTermMatcher {
 		return retval;
 	}
 	
+
 	protected List<TermNode> getBestEmbedMatches(CheckedTermNode cHTerm,TermNode tTerm, TermNode bestSimilHTerm,TermNode bestSimilTTerm) {
 		List<TermNode> bestMatches = new ArrayList<TermNode>();
 		if (cHTerm.isMatched() ) {

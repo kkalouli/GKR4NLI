@@ -254,7 +254,6 @@ public class ContextMapper {
 			ContextHeadEdge ctxEdge = new ContextHeadEdge(connector.getLabel(), new RoleEdgeContent());
 			graph.addContextEdge(ctxEdge, top, nodeToEmbed);		
 		}
-			
 		// remove all things to remove
 		for (SemanticNode<?> n:  nodesToRemove){
 			graph.removeContextNode(n);
@@ -1190,6 +1189,7 @@ public class ContextMapper {
 			}
 		}
 	}
+	
 	
 	/***
 	 * Depending on the polarity value given (N, P, U), create the correct edge

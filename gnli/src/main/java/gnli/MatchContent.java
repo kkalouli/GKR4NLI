@@ -20,6 +20,7 @@ public class MatchContent implements EdgeContent {
 	private boolean finalized = false;
 	private List<MatchOrigin> matchOrigin;
 	private List<HeadModifierPathPair> justification;
+
 	
 	public MatchContent() {
 		this.specificity = Specificity.NONE;
@@ -162,7 +163,8 @@ public class MatchContent implements EdgeContent {
 			this.scores.put(feature, currentScore);
 		}
 		currentScore =+ score;
-	} 
+	}
+
 	
 	/**
 	 * Have all restrictions on the term been considered in 
@@ -189,6 +191,7 @@ public class MatchContent implements EdgeContent {
 	 * The possible path justifications for the match
 	 * @return
 	 */
+
 	public List<HeadModifierPathPair> getJustification() {
 		return justification;
 	}

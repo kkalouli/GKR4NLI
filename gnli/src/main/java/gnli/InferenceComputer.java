@@ -7,6 +7,8 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,10 +24,14 @@ import sem.mapper.DepGraphToSemanticGraph;
 import semantic.graph.SemanticGraph;
 import semantic.graph.SemanticNode;
 import semantic.graph.vetypes.SkolemNodeContent;
+import gnli.GNLIGraph;
+import gnli.InitialTermMatcher;
+import sem.mapper.DepGraphToSemanticGraph;
+import semantic.graph.SemanticGraph;
 
 
 public class InferenceComputer {
-	
+
 	private static KB kb;
 	private static DepGraphToSemanticGraph semGraph;
 	private boolean learning;
@@ -42,9 +48,9 @@ public class InferenceComputer {
 	public InferenceDecision computeInference(DepGraphToSemanticGraph semGraph, String sent1, String sent2, String correctLabel, KB kb) throws FileNotFoundException, UnsupportedEncodingException {	
 		List<SemanticGraph> texts = new ArrayList<SemanticGraph>();
 		List<SemanticGraph> hypotheses = new ArrayList<SemanticGraph>();
-		SemanticGraph graphT = semGraph.sentenceToGraph(sent1,sent1 + " " + sent2);
+		SemanticGraph graphT = semGraph.sentenceToGraph(sent1, sent1+" "+sent2);
 		texts.add(graphT);
-		SemanticGraph graphH = semGraph.sentenceToGraph(sent2,sent2 + " " + sent2);
+		SemanticGraph graphH = semGraph.sentenceToGraph(sent2, sent2+" "+sent1);
 		hypotheses.add(graphH);
 		GNLIGraph gnli = new GNLIGraph(texts, hypotheses);
 		
@@ -56,6 +62,7 @@ public class InferenceComputer {
 		initialTermMatcher.process();
 		//gnli.display();
 		//gnli.matchGraph.display();
+
 		
 
 		// Now look at the arc structure of the premise and hypothesis graphs to
@@ -129,7 +136,7 @@ public class InferenceComputer {
 		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/test.txt"; //AeBBnA_and_PWN_annotated_checked_only_correcetd_labels_split_pairs.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);
-
 	}
+	
 
 }
