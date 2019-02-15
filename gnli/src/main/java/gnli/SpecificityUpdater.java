@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+
 import static java.util.stream.Collectors.*;
 import static java.util.Map.Entry.*;
 import semantic.graph.SemanticEdge;
@@ -54,7 +55,7 @@ public class SpecificityUpdater {
 		 */
 		public void updateSpecifity() {
 			while (update());
-			gnliGraph.getMatchGraph().display();
+			//gnliGraph.getMatchGraph().display();
 		}
 		
 
@@ -95,7 +96,7 @@ public class SpecificityUpdater {
 				finalizeMatch(match);
 				match.setComplete(true);
 				updateComplete = true;
-			} else if (hypAndTextHaveMods(hypoTextMatch)){
+			} else if (hypAndTextHaveMods(hypoTextMatch, "hyp") && hypAndTextHaveMods(hypoTextMatch, "tex")){
 				finalizeMatch(match);
 				match.setComplete(true);
 				updateComplete = true;
@@ -129,23 +130,30 @@ public class SpecificityUpdater {
 				return false;
 		}
 		
-		private boolean hypAndTextHaveMods(HypoTextMatch hypoTextMatch){			
-			List<SkolemNode> unprocessedTextRestr = hypoTextMatch.textModifiers;
+		private boolean hypAndTextHaveMods(HypoTextMatch hypoTextMatch, String mode){			
+			List<SkolemNode> modifiers = null;
+			if (mode.equals("hyp"))
+				modifiers = hypoTextMatch.hypothesisModifiers;
+			else
+				modifiers = hypoTextMatch.textModifiers;
 			boolean complete = true;
-			for (SkolemNode hRestr : hypoTextMatch.hypothesisModifiers){
-				 List<MatchEdge> tOutMatches = gnliGraph.getOutMatches(hRestr);
-				 for (MatchEdge m : tOutMatches){
+			for (SkolemNode restr : modifiers){
+				 List<MatchEdge> tOutMatches = gnliGraph.getOutMatches(restr);
+				 /*for (MatchEdge m : tOutMatches){
 					 if (unprocessedTextRestr.contains(gnliGraph.getMatchGraph().getFinishNode(m)))
 						 unprocessedTextRestr.remove(gnliGraph.getMatchGraph().getFinishNode(m));
-				 }
+				 }*/
+				if (modAlreadyProcessed(restr,hypoTextMatch.match)) {
+					continue;
+				}
 				switch (tOutMatches.size()){
 				 case 0:
-					updateWithUnmatchedModifier(hypoTextMatch);
+					updateWithUnmatchedModifier(hypoTextMatch, mode);
 					break;
 				case 1:
 					complete = tOutMatches.get(0).isComplete();
 					if (complete) {
-						updateWithOneMatchedModifier(hypoTextMatch, tOutMatches.get(0));
+						updateWithOneMatchedModifier(hypoTextMatch, tOutMatches.get(0), mode);
 					} else {
 					// otherwise, wait until the tOutMatches is completed before updating with it
 						complete = false;
@@ -153,7 +161,7 @@ public class SpecificityUpdater {
 					break;
 				default:
 					// More than one possible modifier match for the cmod.
-					complete = updateWithMultipleMatchedModifiers(hypoTextMatch, tOutMatches);
+					complete = updateWithMultipleMatchedModifiers(hypoTextMatch, tOutMatches, mode);
 					break;
 				}
 				if (doesNotNeedUpdating(hypoTextMatch)) {
@@ -162,53 +170,71 @@ public class SpecificityUpdater {
 					complete = true;
 				}
 			}
-			if (!unprocessedTextRestr.isEmpty()){
+			/*if (!unprocessedTextRestr.isEmpty()){
 				for (SkolemNode n : unprocessedTextRestr){
-					hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUBCLASS));
-					hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, n));
+					if (modAlreadyProcessed(n,hypoTextMatch.match) == false){
+						hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUBCLASS));
+						hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, n));
+					}
 				}
-			}
+			}*/
 			return complete;
 		}
 		
 		// hypothesis modifier has no corresponding match in the text graph
-		private void updateWithUnmatchedModifier(HypoTextMatch hypoTextMatch){
-			hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUPERCLASS));
-			hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, hypoTextMatch.hypothesisModifiers.get(0)));
+		private void updateWithUnmatchedModifier(HypoTextMatch hypoTextMatch, String mode){
+			if (mode.equals("hyp")){
+				// H more specific
+				hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, hypoTextMatch.hypothesisModifiers.get(0)));
+				hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUPERCLASS));
+			} else{
+				// T more specific
+				hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, hypoTextMatch.textModifiers.get(0)));
+				hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUBCLASS));
+			}
 		}
 		
 		// // hypothesis modifier has exactly one corresponding match in the text graph: 
 		// the match can be to a text modifier which is not dominated from the text match term
 		// or the match can be to a text modifier which is dominated by the text match term
-		private void updateWithOneMatchedModifier(HypoTextMatch hypoTextMatch, MatchEdge outEdge){
-			SkolemNode tRestr = (SkolemNode) gnliGraph.getFinishNode(outEdge);
-			SemanticNode<?> hMod = gnliGraph.getStartNode(outEdge);
-			if (!gnliGraph.getTextGraph().getDependencyGraph().getOutReach(hypoTextMatch.textTerm).contains(tRestr)){
-				// H more specific
-				hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUPERCLASS));
-				hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, (SkolemNode) hMod));
-			} else{
-				Specificity spec = outEdge.getSpecificity();
-				HeadModifierPathPair justification = justificationOfSpecificityUpdate(hypoTextMatch.hypothesisTerm, hMod,
-						hypoTextMatch.textTerm, tRestr, hypoTextMatch.match, outEdge);
-				if (justification != null){
-					hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),spec));
-					hypoTextMatch.match.addJustification(justification);
-				} else{
-					gnliGraph.removeMatchEdge(hypoTextMatch.match);
-					matchAgenda.remove(hypoTextMatch);
+		private void updateWithOneMatchedModifier(HypoTextMatch hypoTextMatch, MatchEdge outEdge, String mode){
+			SkolemNode finishRestr = (SkolemNode) gnliGraph.getFinishNode(outEdge);
+			SemanticNode<?> startRestr = gnliGraph.getStartNode(outEdge);
+			if (mode.equals("hyp")){
+				if (!gnliGraph.getTextGraph().getDependencyGraph().getOutReach(hypoTextMatch.textTerm).contains(finishRestr)){
+					// H more specific
+					hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUPERCLASS));
+					hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, (SkolemNode) startRestr));
+					return;
 				}
+			} else{
+				if (!gnliGraph.getHypothesisGraph().getDependencyGraph().getOutReach(hypoTextMatch.hypothesisTerm).contains(startRestr)){
+					// T more specific
+					hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUBCLASS));
+					hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, (SkolemNode) finishRestr));
+					return;
+				}		
+			}
+			Specificity spec = outEdge.getSpecificity();
+			HeadModifierPathPair justification = justificationOfSpecificityUpdate(hypoTextMatch.hypothesisTerm, startRestr,
+					hypoTextMatch.textTerm, finishRestr, hypoTextMatch.match, outEdge);
+			if (justification != null){
+				hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),spec));
+				hypoTextMatch.match.addJustification(justification);
+			} else{
+				gnliGraph.removeMatchEdge(hypoTextMatch.match);
+				matchAgenda.remove(hypoTextMatch);
 			}
 		}
 		
-		private boolean updateWithMultipleMatchedModifiers(HypoTextMatch hypoTextMatch, List<MatchEdge> tOutMatches){
+		private boolean updateWithMultipleMatchedModifiers(HypoTextMatch hypoTextMatch, List<MatchEdge> tOutMatches, String mode){
 			boolean complete = true;
 			MatchEdge match = hypoTextMatch.match;
 			List<HypoTextMatch> newMatches = new ArrayList<HypoTextMatch>();
 			for (MatchEdge edg : tOutMatches){
 				// make a new copy of the match and update it
 				HypoTextMatch newMatch = new HypoTextMatch(match);
-				updateWithOneMatchedModifier(newMatch, edg);
+				updateWithOneMatchedModifier(newMatch, edg, mode);
 				newMatches.add(newMatch);
 			}
 			
@@ -232,27 +258,36 @@ public class SpecificityUpdater {
 			}
 			match.setContent(bestMatch.match.getContent());
 		}
-
-		// Given that oldSpec is one of the best we've seen, should we keep newSpec
-		private boolean keepSpecificity(Specificity newSpec, Specificity oldSpec) {
-			switch (newSpec) {
-			case DISJOINT:
-				return oldSpec != Specificity.EQUALS;
-			case EQUALS:
-				return true;
-			case NONE:
-				return false;
-			case SUBCLASS:
-				return oldSpec != Specificity.EQUALS;
-			case SUPERCLASS:
-				return oldSpec != Specificity.EQUALS;
-			default:
-				return false;		
+		
+		
+		/**
+		 * This modifier has already been taken into account while recalculating the match specificity
+		 * @param mod
+		 * @param match
+		 * @return
+		 */
+		private boolean modAlreadyProcessed(SemanticNode<?> mod, MatchEdge match) {	
+			for (HeadModifierPathPair just : match.getJustification()) {
+				List<SemanticEdge> hPath = just.getConclusionPath();
+				if (hPath != null && !hPath.isEmpty()) {
+					SemanticEdge edge = hPath.get(0);
+					if (edge.getDestVertexId() == mod.getId()) {
+						return true;
+					}
+				}
+				List<SemanticEdge> tPath = just.getPremisePath();
+				if (tPath != null && !tPath.isEmpty()) {
+					SemanticEdge edge = tPath.get(0);
+					if (edge.getDestVertexId() == mod.getId()) {
+						return true;
+					}
+				}
 			}
+			return false;
 		}
 
-		
-		
+
+			
 		private void finalizeMatch(MatchEdge match) {
 			applyRestrictions(match);
 			applyProperties(match);
@@ -392,6 +427,7 @@ public class SpecificityUpdater {
 		private HeadModifierPathPair justificationOfSpecificityUpdateNoHypothesis(SemanticNode<?> textTerm, SemanticNode<?> textMod) {
 			HeadModifierPathPair mcp = new HeadModifierPathPair();
 			mcp.setBasePair(null);
+			mcp.setModifiersPair(null);
 			mcp.setConclusionPath(null);
 			mcp.setPremisePath(findModPath(textTerm, textMod, gnliGraph.getTextGraph()));
 			mcp.setCost(this.pathScorer.pathCost(mcp));
@@ -402,6 +438,7 @@ public class SpecificityUpdater {
 		private HeadModifierPathPair justificationOfSpecificityUpdateNoText(SemanticNode<?> hypothesisTerm, SemanticNode<?> hypothesisMod) {
 			HeadModifierPathPair mcp = new HeadModifierPathPair();
 			mcp.setBasePair(null);
+			mcp.setModifiersPair(null);
 			mcp.setConclusionPath(findModPath(hypothesisTerm, hypothesisMod, gnliGraph.getHypothesisGraph()));
 			mcp.setPremisePath(null);
 			mcp.setCost(this.pathScorer.pathCost(mcp));
@@ -585,9 +622,6 @@ public class SpecificityUpdater {
 					texMods.add((SkolemNode) key);
 				}			
 			}
-		}
-		
-		
-		
+		}		
 		
 }

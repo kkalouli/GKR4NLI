@@ -408,7 +408,7 @@ public class SenseMappingsRetriever {
        for (int i = 0; i < tg.size(); i++) {
            listOfSenses.put(Integer.toString(i)+"_"+tg.get(i).getToken(),tg.get(i).getSyn());
        }
-       System.out.println(listOfSenses);
+       //System.out.println(listOfSenses);
        // go through the hashmap, split each sense to the sense and the probability and create an inner hashmap:
        // the sense is the key and the probability is the value
        for (String key: listOfSenses.keySet()){

@@ -177,20 +177,23 @@ public class ContextMapper {
 	 * In such cases there are still two top contexts involved: the top context of the implicative verb and the top context of the 
 	 * negated verb. Thus, the negated context has to be embedded into the implicative context. 
 	 * Case 2: there is an implicative verb with negation. In these cases an extra node has been added, called "negation". This node is only "storing" what is the
-	 * instantiability relation of the child to the negated context because this relation needs to be added at the end. This node gets deleted then.
+	 * instantiability relation of the child to the negated context because this relation needs to be added at the end. This node gets deleted then. not used now:
+	 * only use if we want to add the direct relation of the child of the implicative to the negated node.
 	 */
 	private void checkForPostIntegrationMistakes(){
 		// Case 1
 		HashMap<String, SemanticNode<?>> nodeLabels = new HashMap<String, SemanticNode<?>>();
-		ArrayList<SemanticNode<?>> sameNodes = new ArrayList<SemanticNode<?>>();	
+		ArrayList<ArrayList<SemanticNode<?>>> sameNodes = new ArrayList<ArrayList<SemanticNode<?>>>();	
 		// find any ctx nodes that are exactly the same because those are going to be merged into one
 		for (SemanticNode<?> cNode: graph.getContextGraph().getNodes()){
 			if (!nodeLabels.containsKey(cNode.getLabel())){
 				nodeLabels.put(cNode.getLabel(), cNode);
 			}
 			else {
-				sameNodes.add(cNode);
-				sameNodes.add(nodeLabels.get(cNode.getLabel()));
+				ArrayList<SemanticNode<?>> listOfSame = new ArrayList<SemanticNode<?>>();
+				listOfSame.add(cNode);
+				listOfSame.add(nodeLabels.get(cNode.getLabel()));
+				sameNodes.add(listOfSame);
 			}
 		}
 		// initialize the nodes and edges that are going to be added
@@ -199,45 +202,59 @@ public class ContextMapper {
 		SemanticNode<?> nodeToEmbed = null;
 		ArrayList<SemanticNode<?>> nodesToRemove = new ArrayList<SemanticNode<?>>();
 		ArrayList<SemanticEdge> edgesToRemove = new ArrayList<SemanticEdge>();
+		HashMap<SemanticNode<?>,ArrayList<String>> mapWithNegations = new HashMap<SemanticNode<?>,ArrayList<String>>();
 		if (sameNodes.isEmpty())
 			return;
-		// go through the same nodes
-		for (SemanticNode<?> node : sameNodes){
-			// find the context in which they belong
-			if (graph.getContextGraph().getInNeighbors(node).isEmpty()){
-				nodeToEmbed = node;
-				continue;
-			}
-			SemanticNode<?> ctx = graph.getContextGraph().getInNeighbors(node).iterator().next();
-			SemanticNode<?> ctxHead = null;
-			// get the head of the context they belong
-			for (SemanticEdge out : graph.getContextGraph().getOutEdges(ctx)){
-				if (out.getLabel().equals("ctx_hd"))
-					ctxHead = graph.getFinishNode(out);
-			}	
-			// if this head is implicative, then this is the head to be taken as the top context (and the other one will be embedded into that)
-			if (implCtxs.containsKey(ctxHead) || ctxHead.getLabel().contains("not_") ){
-				top = ctx;
-				connector = graph.getContextGraph().getEdges(ctx,node).iterator().next();
-				// do not put the head node of this node to the nodesToRemove
-				for (SemanticEdge out : graph.getContextGraph().getOutEdges(node)){
-					if (out.getLabel().equals("ctx_hd"))
+		// go through each list of same nodes and keep one of the nodes
+		for (ArrayList<SemanticNode<?>> listOfSame : sameNodes){
+			for (SemanticNode<?> node : listOfSame){
+				// find the context in which it belongs
+				if (graph.getContextGraph().getInNeighbors(node).isEmpty()){
+					nodeToEmbed = node;
+					continue;
+				}
+				Set<SemanticNode<?>> ctxs = graph.getContextGraph().getInNeighbors(node);
+				for (SemanticNode<?> ctx : ctxs){
+					if (ctx.getLabel().equals("negation")){
+						String edgeLabel = graph.getContextGraph().getEdges(ctx,node).iterator().next().getLabel();
+						ArrayList<String> edgeAndFinishNode = new ArrayList<String>();	
+						edgeAndFinishNode.add(edgeLabel);
+						edgeAndFinishNode.add(node.getLabel());
+						mapWithNegations.put(ctx, edgeAndFinishNode);
 						continue;
-					else
-						nodesToRemove.add(graph.getFinishNode(out));
-				}			
-				edgesToRemove.addAll(graph.getContextGraph().getOutEdges(node));
-				nodesToRemove.add(node);
-				edgesToRemove.add(connector);
-			// if it's not implicative, then it's gonna be the one to be embedded
-			} else {
-				nodeToEmbed = ctx;
-			}		
+					}
+					SemanticNode<?> ctxHead = null;
+					// get the head of the context they belong
+					for (SemanticEdge out : graph.getContextGraph().getOutEdges(ctx)){
+						if (out.getLabel().equals("ctx_hd"))
+							ctxHead = graph.getFinishNode(out);
+					}	
+					// if this head is implicative, then this is the head to be taken as the top context (and the other one will be embedded into that)
+					if (implCtxs.containsKey(ctxHead) || ctxHead.getLabel().contains("not_") ){
+						top = ctx;
+						connector = graph.getContextGraph().getEdges(ctx,node).iterator().next();
+						// do not put the head node of this node to the nodesToRemove
+						for (SemanticEdge out : graph.getContextGraph().getOutEdges(node)){
+							if (out.getLabel().equals("ctx_hd"))
+								continue;
+							else
+								nodesToRemove.add(graph.getFinishNode(out));
+						}			
+						edgesToRemove.addAll(graph.getContextGraph().getOutEdges(node));
+						nodesToRemove.add(node);
+						edgesToRemove.add(connector);
+					// if it's not implicative, then it's gonna be the one to be embedded
+					// if it is, then the next node to be traversed will give the nodeToEmbed
+					} else {
+						nodeToEmbed = ctx;
+					}
+				}
+			}
+			// add the new edge between top and nodeToEmbed (one edge is added per pair of same nodes)
+			ContextHeadEdge ctxEdge = new ContextHeadEdge(connector.getLabel(), new RoleEdgeContent());
+			graph.addContextEdge(ctxEdge, top, nodeToEmbed);		
 		}
-		// add the new edge between top and nodeToEmbed
-		ContextHeadEdge ctxEdge = new ContextHeadEdge(connector.getLabel(), new RoleEdgeContent());
-		graph.addContextEdge(ctxEdge, top, nodeToEmbed);
-		
+			
 		// remove all things to remove
 		for (SemanticNode<?> n:  nodesToRemove){
 			graph.removeContextNode(n);
@@ -246,8 +263,21 @@ public class ContextMapper {
 			graph.removeContextEdge(e);
 		}
 		
+		// add [negation] nodes to the correct nodes that have remained: comment out for now: might not need it
+		/*for (SemanticNode<?> negNode : mapWithNegations.keySet()){
+			ArrayList<String> value = mapWithNegations.get(negNode);
+			String edge = value.get(0);
+			String finishNodeString = value.get(1);
+			// have to create a new edge with this edge label because the other one has already been removed
+			ContextHeadEdge newCtxEdge = new ContextHeadEdge(edge, new RoleEdgeContent());
+			// have to find the node that is still in the graph and has the same name as the finishNode
+			SemanticNode<?> finish = nodeLabels.get(finishNodeString); 
+			graph.addContextEdge(newCtxEdge, negNode, finish);	
+		}*/
+		
 		// Case 2
 		SemanticNode<?> toRemove = null;
+		//graph.displayContexts();
 		for (SemanticNode<?> n : graph.getContextGraph().getNodes()){
 			// check if there is a node called negation: this node comes with implicative contexts and the edge between this node and its child
 			// is the instatiability relation of that child node in the top context
@@ -565,6 +595,7 @@ public class ContextMapper {
 		if (head instanceof SkolemNode)
 			((SkolemNodeContent) head.getContent()).setContext(ctxHead.getLabel());
 		setContextsRecursively(head, head);
+		//graph.displayContexts();
 	}
 	
 	/**
@@ -1113,10 +1144,11 @@ public class ContextMapper {
 			// get the truth condition of that stem+comple from the hash: take the positive truth condition even if it's a negated context for now 
 			String truth = mapOfImpl.get(stem+comple).split("_")[0];
 			ContextNode negation = null;
-			// if there is negation create a new node which will be added to the graph to hold the truth condition of the negation
-			if (isNeg == true){
+			// if there is negation create a new node which will be added to the graph to hold the truth condition of the negation: comment out for now: might not need it
+			// this adds the instantiability of the child of the implicative to the parent of the implicative, i.e. the negation in this case
+			/*if (isNeg == true){
 				negation = new ContextNode("negation", new ContextNodeContent());
-			} 
+			} */
 			// put the node into the hash with the implicatives
 			implCtxs.put(node, "impl");
 			ContextHeadEdge labelEdge = getEdgeLabelAccordingToTruthCondition(truth);
@@ -1155,7 +1187,7 @@ public class ContextMapper {
 						}
 					}
 				}	
-			}	
+			}
 		}
 	}
 	

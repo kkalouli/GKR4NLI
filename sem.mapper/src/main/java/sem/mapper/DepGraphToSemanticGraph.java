@@ -592,8 +592,8 @@ public class DepGraphToSemanticGraph {
 	public static void main(String args[]) throws IOException {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/mixed_testsuite.txt", semConverter);
-		String sentence = "John loves his wife.";
-		String context = "John loves his wife.";
-		semConverter.processSentence(sentence, context);	
+		String sentence = "John faked the illness.";
+		String context = "John faked the illness.";
+		semConverter.processSentence(sentence, sentence+" "+context);	
 	}
 }

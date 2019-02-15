@@ -4,6 +4,9 @@ package semantic.graph;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.jgrapht.Graph;
+
 import java.awt.Color;
 
 /**
@@ -46,7 +49,7 @@ public interface SemGraph {
 	
 	public Set<SemanticNode<?>> getOutReach(SemanticNode<?> node);
 	
-	public List<SemanticNode<?>> breadthFirstTraversal(SemanticNode<?> node);
+	public List<SemanticNode<?>> breadthFirstTraversal(Graph<SemanticNode<?>, SemanticEdge> graph, SemanticNode<?> node);
 	
 	public Set<SemanticNode<?>> getInReach(SemanticNode<?> node);
 	

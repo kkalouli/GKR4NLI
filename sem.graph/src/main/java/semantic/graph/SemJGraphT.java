@@ -18,12 +18,14 @@ import org.jgraph.JGraph;
 import org.jgraph.graph.DefaultGraphCell;
 import org.jgraph.graph.GraphConstants;
 import org.jgrapht.DirectedGraph;
+import org.jgrapht.Graph;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.ext.JGraphModelAdapter;
 import org.jgrapht.graph.AsUndirectedGraph;
 import org.jgrapht.graph.DirectedMultigraph;
 import org.jgrapht.graph.DirectedSubgraph;
+import org.jgrapht.graph.EdgeReversedGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;
 
 import com.jgraph.layout.JGraphFacade;
@@ -190,16 +192,16 @@ public class SemJGraphT implements SemGraph {
 
 	@Override
 	public Set<SemanticNode<?>> getOutReach(SemanticNode<?> node) {
-		return new HashSet<SemanticNode<?>>(breadthFirstTraversal(node));
+		return new HashSet<SemanticNode<?>>(breadthFirstTraversal(this.graph, node));
 	}
 
 	
 	@Override
-	public List<SemanticNode<?>> breadthFirstTraversal(SemanticNode<?> node) {
+	public List<SemanticNode<?>> breadthFirstTraversal(Graph<SemanticNode<?>, SemanticEdge> graph, SemanticNode<?> node) {
 		List<SemanticNode<?>> retval = new ArrayList<SemanticNode<?>>();
 		if (graph.containsVertex(node)) {
 			BreadthFirstIterator<SemanticNode<?>, SemanticEdge> bfi 
-				= new BreadthFirstIterator<SemanticNode<?>, SemanticEdge>(this.graph, node);
+				= new BreadthFirstIterator<SemanticNode<?>, SemanticEdge>(graph, node);
 			while (bfi.hasNext()) {
 				SemanticNode<?> rnode = bfi.next();
 				retval.add(rnode);
@@ -210,10 +212,14 @@ public class SemJGraphT implements SemGraph {
 
 	@Override
 	public Set<SemanticNode<?>> getInReach(SemanticNode<?> node) {
-		System.out.println("SemJGraphT.getInReach ::: Not Implemented");
-		return null;
+		//protected static List getAllParents(DefaultDirectedWeightedGraph<Vertex, IACEdge> graph, Vertex vertex) {
+		//List parents = new ArrayList<>();
+		EdgeReversedGraph<SemanticNode<?>, SemanticEdge> reversedGraph = new EdgeReversedGraph<>(graph);
+		return new HashSet<SemanticNode<?>>(breadthFirstTraversal(reversedGraph, node));
 	}
 
+	
+	
 	@Override
 	public SemanticNode<?> getStartNode(SemanticEdge edge) {
 		if (graph.containsEdge(edge)) {

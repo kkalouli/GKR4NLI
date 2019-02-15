@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.articulate.sigma.KB;
 import com.articulate.sigma.KBmanager;
@@ -90,7 +93,7 @@ public class InitialTermMatcher {
 	 * 
 	 * @param ecdGraph
 	 */
-	public InitialTermMatcher(GNLIGraph gnliGraph) {
+	public InitialTermMatcher(GNLIGraph gnliGraph, KB kb) {
 		this.gnliGraph = gnliGraph;
 		for (TermNode hTerm : gnliGraph.getHypothesisGraph().getSkolems()) {
 			if (gnliGraph.getHypothesisGraph().isLexCoRef(hTerm) == false && gnliGraph.getHypothesisGraph().isRstr(hTerm) == false)
@@ -99,10 +102,8 @@ public class InitialTermMatcher {
 		for (TermNode tTerm : gnliGraph.getTextGraph().getSkolems()) {
 			if (gnliGraph.getTextGraph().isLexCoRef(tTerm) == false && gnliGraph.getTextGraph().isRstr(tTerm) == false)
 				this.textTerms.add(tTerm);
-		}
-		
-		KBmanager.getMgr().initializeOnce("/Users/kkalouli/Documents/.sigmakee/KBs");	
-		this.kb = KBmanager.getMgr().getKB("SUMO");
+		}	
+		this.kb = kb;
 		this.highestCosSimil = 0.0;
 	}
 	
@@ -309,6 +310,19 @@ public class InitialTermMatcher {
 		return retval;
 	}
 	
+	
+	public Set<Formula> allTermsInFormulas(KB kb, String term) {
+		HashSet<Formula> result = new HashSet<>();
+		Pattern pattern = Pattern.compile("\\s"+term+"\\s");		
+		for (String f : kb.formulaMap.keySet()){
+			Matcher matcher = pattern.matcher(f);
+			if (matcher.find()) {
+				result.add(kb.formulaMap.get(f));
+			}
+		}
+		return result;
+	}
+	
 	protected List<MatchEdge> checkConceptMatch(CheckedTermNode cHTerm,TermNode tTerm) {
 		List<MatchEdge> retval = new ArrayList<MatchEdge>();
 		if (cHTerm.isMatched()) {
@@ -329,8 +343,10 @@ public class InitialTermMatcher {
 					} else {
 						ArrayList<Formula> listOfRelations = kb.askWithRestriction(2, tConcept.substring(0,tConcept.length()-1), 1, hConcept.substring(0,hConcept.length()-1));
 						listOfRelations.addAll(kb.askWithRestriction(2, hConcept.substring(0,hConcept.length()-1), 1, tConcept.substring(0,tConcept.length()-1)));
-						ArrayList<Formula> result3 = KButilities.termIntersection(kb,"Pilot","FlyingAircraft");
-						Specificity spec = null;
+						//ArrayList<Formula> result3 = KButilities.termIntersection(kb,"Pilot","FlyingAircraft");
+						//ArrayList<String> result14 = kb.getNearestRelations("Human"); // gives me the nearest neighbors, e.g. HumanChild
+						//allTermsInFormulas(kb, "Pilot");
+						Specificity spec = null;	
 						for (Formula f :  listOfRelations){
 							String firstArg = f.getArgument(1);
 							String secondArg = f.getArgument(2);						
@@ -347,6 +363,15 @@ public class InitialTermMatcher {
 										spec = Specificity.SUPERCLASS;
 								}
 							}
+						}
+						// if there is no listOfRelations, check if there is some kind of sub/super class relation.
+						if (listOfRelations.isEmpty()){
+							boolean isSubclassTH = kb.isSubclass(tConcept.substring(0,tConcept.length()-1), hConcept.substring(0,hConcept.length()-1));
+							boolean isSubclassHT = kb.isSubclass(hConcept.substring(0,hConcept.length()-1), tConcept.substring(0,tConcept.length()-1));
+							if (isSubclassTH == true)
+								spec = Specificity.SUBCLASS;
+							else if (isSubclassHT == true)
+								spec = Specificity.SUPERCLASS;
 						}
 						if (spec != null){
 							final MatchContent linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, spec, 0f);
