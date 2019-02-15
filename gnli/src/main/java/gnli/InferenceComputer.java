@@ -92,8 +92,11 @@ public class InferenceComputer {
 			String hypothesis = elements[2];
 			String correctLabel = elements[3];
 			InferenceDecision decision = computeInference(semGraph, premise, hypothesis, correctLabel, kb);
+			Specificity spec = null;
+			if (decision.getJustification() != null)
+				spec = decision.getJustification().getSpecificity();	
 			writer.write(strLine+"\t"+decision.getEntailmentRelation()+"\t"+decision.getMatchStrength()+"\t"+decision.isLooseContr()+
-					"\t"+decision.isLooseEntail()+"\t"+decision.getJustification().getSpecificity()+"\n");
+					"\t"+decision.isLooseEntail()+"\t"+spec+"\n");
 			writer.flush();
 			System.out.println("Processed pair "+ id);
 		}
