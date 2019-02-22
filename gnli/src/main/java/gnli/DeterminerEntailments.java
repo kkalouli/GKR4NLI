@@ -5,10 +5,11 @@ import java.util.Map;
 
 /** 
  * Monotonicity properties of determiners
- * TODO: complete this
  *
  */
 public class DeterminerEntailments {
+	
+	private static String n = "";
 	
 	// Different specifiers/determiners have different monotonicity properties
 	// + + some, at least N: some old men are keen gardeners  ⊨ some men are gardeners
@@ -732,7 +733,17 @@ public class DeterminerEntailments {
 		eMap.put("N_sg_N_pl_EQUALS",Specificity.NONE);  					// 1 man =/=> N men
 		eMap.put("N_pl_N_sg_SUPERCLASS",Specificity.NONE);  				// N men =/=> 1 man
 		eMap.put("N_pl_N_sg_SUBCLASS",Specificity.NONE);  					// N old men =/=> 1 man
-		eMap.put("N_pl_N_sg_EQUALS",Specificity.NONE);  					// N men =/=> 1 man		
+		eMap.put("N_pl_N_sg_EQUALS",Specificity.NONE);  					// N men =/=> 1 man
+		// N-M 
+		eMap.put("N_pl_M_pl_SUPERCLASS",Specificity.NONE);  				// N men =/=> M old men
+		eMap.put("N_pl_M_pl_SUBCLASS",Specificity.NONE);  					// N old men =/=> M men
+		eMap.put("N_pl_K_pl_EQUALS",Specificity.NONE);  					// N men =/=> M men
+		eMap.put("N_sg_M_pl_SUPERCLASS",Specificity.NONE);  				// 1 man =/=> M old men
+		eMap.put("N_sg_M_pl_SUBCLASS",Specificity.NONE);  					// 1 old man =/=> M men
+		eMap.put("N_sg_M_pl_EQUALS",Specificity.NONE);  					// 1 man =/=> M men
+		eMap.put("N_pl_M_sg_SUPERCLASS",Specificity.NONE);  				// N men =/=> 1 man
+		eMap.put("N_pl_M_sg_SUBCLASS",Specificity.NONE);  					// N old men =/=> 1 man
+		eMap.put("N_pl_M_sg_EQUALS",Specificity.NONE);  					// N men =/=> 1 man			
 		// N-few & few-N
 		eMap.put("N_sg_few_pl_SUPERCLASS",Specificity.NONE); 				// 1 man =/=> few old men
 		eMap.put("N_sg_few_pl_SUBCLASS",Specificity.NONE); 					// 1 old man =/=> few men

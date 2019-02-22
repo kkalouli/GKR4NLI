@@ -35,7 +35,11 @@ import semantic.graph.vetypes.ValueNode;
  * The class can be extended to include further graph layers
  *
  */
-public class SemanticGraph {
+public class SemanticGraph implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -9123051244729449638L;
 	/**
 	 * 
 	 */

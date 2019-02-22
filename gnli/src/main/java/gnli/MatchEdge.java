@@ -1,5 +1,6 @@
 package gnli;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -13,15 +14,13 @@ import semantic.graph.vetypes.LinkEdge;
  * This includes
  * The original (term only) specificity of the match
  * The revised specificity of the match after considering modifiers
-<<<<<<< HEAD
  * The justifications for the revised specificity: A collection of {@link HeadModifierPathPair}s
-=======
- * The justifications for the revised specificity: A collection of {@link ModifierChainPair}s
->>>>>>> 914c8b9e59421d2e1a8dcfc557261e5950d6069c
  * showing the paths by which the premise and conclusion terms connect to matched modifiers
  *
  */
-public class MatchEdge extends LinkEdge {
+public class MatchEdge extends LinkEdge implements Serializable {
+
+	private static final long serialVersionUID = 6536396542192865602L;
 
 	public MatchEdge(String label, MatchContent content) {
 		super(label, content);

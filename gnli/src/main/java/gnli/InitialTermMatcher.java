@@ -285,7 +285,8 @@ public class InitialTermMatcher {
 					tSenseId = tSenseId.substring(4);
 					matchType = MatchOrigin.MatchType.SENSE_CMP;
 				}
-				if (tSenseId != null && hSenseId != null && !tSenseId.equals("U") && !hSenseId.equals("U")){
+				if (tSenseId != null && hSenseId != null && !tSenseId.equals("U") && !hSenseId.equals("U") && !((SkolemNodeContent) tTerm.getContent()).getStem().equals("be")
+						&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be")){
 					if (tSenseId.equals(hSenseId)) {
 						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.EQUALS, 0f);
 					} else if (tSynonyms.contains(hTerm.getLabel().substring(0,hTerm.getLabel().indexOf("_"))) || hSynonyms.contains(tTerm.getLabel().substring(0,tTerm.getLabel().indexOf("_")))){
@@ -316,7 +317,7 @@ public class InitialTermMatcher {
 	
 	public Set<Formula> allTermsInFormulas(KB kb, String term) {
 		HashSet<Formula> result = new HashSet<>();
-		Pattern pattern = Pattern.compile(term.substring(0,1).toUpperCase()+term.substring(1)+"(\\s|\\))");
+		Pattern pattern = Pattern.compile("(\\s|\\()" + term + "(\\s|\\))");
 		for (String f : kb.formulaMap.keySet()){
 			Matcher matcher = pattern.matcher(f);
 			if (matcher.find()) {
@@ -336,7 +337,8 @@ public class InitialTermMatcher {
 			String tConcept = ((SenseNodeContent) tSenseNode.getContent()).getConcepts().get(0);
 			for (final SenseNode hSenseNode : gnliGraph.getHypothesisGraph().getSenses(hTerm)) {
 				String hConcept = ((SenseNodeContent) hSenseNode.getContent()).getConcepts().get(0);
-				if (tConcept != null && hConcept != null && tConcept != "" && hConcept != ""){
+				if (tConcept != null && hConcept != null && tConcept != "" && hConcept != "" && !((SkolemNodeContent) tTerm.getContent()).getStem().equals("be")
+						&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be")){
 					if (tConcept.equals(hConcept)) {
 						final MatchContent linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, Specificity.EQUALS, 0f);
 						final MatchEdge conceptMatch = new MatchEdge("concept",linkContent);
@@ -421,7 +423,7 @@ public class InitialTermMatcher {
 	
 	protected  List<MatchEdge> checkEmbedMatch(CheckedTermNode cHTerm, TermNode similHTerm,TermNode similTTerm ) {
 		List<MatchEdge> retval = new ArrayList<MatchEdge>();
-		if (similHTerm != null && similTTerm != null && highestCosSimil > 0.5){
+		if (similHTerm != null && similTTerm != null ){ //&& highestCosSimil > 0.5
 			final MatchContent linkContent = new MatchContent(MatchOrigin.MatchType.EMBED, Specificity.EQUALS, 20f);
 			final MatchEdge conceptMatch = new MatchEdge("embed",linkContent);
 			gnliGraph.addMatchEdge(conceptMatch, similHTerm, similTTerm);

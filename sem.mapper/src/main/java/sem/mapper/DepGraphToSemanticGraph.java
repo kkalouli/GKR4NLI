@@ -5,9 +5,11 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,7 +71,7 @@ public class DepGraphToSemanticGraph {
 	private SenseMappingsRetriever retriever;
 
 
-	public DepGraphToSemanticGraph() throws FileNotFoundException, UnsupportedEncodingException {
+	public DepGraphToSemanticGraph() {
 		verbalForms.add("MD");
 		verbalForms.add("VB");
 		verbalForms.add("VBD");
@@ -99,7 +101,15 @@ public class DepGraphToSemanticGraph {
 		this.graph = null;
 		this.stanGraph = null;
 		this.traversed = new ArrayList<SemanticGraphEdge>();
-		this.parser = new StanfordParser();
+		try {
+			this.parser = new StanfordParser();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		this.retriever = new SenseMappingsRetriever(new File("/Users/kkalouli/Documents/project/sem.mapper/gkr.properties"));
 		this.interrogative = false;
 
@@ -239,6 +249,20 @@ public class DepGraphToSemanticGraph {
 					// remove all out edges of the modal
 					graph.removeDependencyEdge(out);
 				}		
+			} else if ( (((SkolemNodeContent) node.getContent()).getStem().equals("few"))){
+				RoleEdge depEdge = new RoleEdge("neg", new RoleEdgeContent());
+				SemanticNode<?> head = graph.getOutNeighbors(node).iterator().next();
+				SkolemNodeContent notContent = new SkolemNodeContent();
+				notContent.setSurface("not");
+				notContent.setStem("not");
+				notContent.setPosTag("RB");
+				notContent.setPartOfSpeech("RB");
+				int position = 0;
+				notContent.setPosition(position);
+				notContent.setDerived(false);
+				notContent.setSkolem("not_0");
+				SkolemNode not = new SkolemNode(notContent.getSkolem(), notContent);
+				graph.addDependencyEdge(depEdge, head, not);	
 			}
 		}
 	}
@@ -345,7 +369,13 @@ public class DepGraphToSemanticGraph {
 							}
 					} else if (depOfDependent.equals("amod") && (quantifiers.contains(determiner.toLowerCase()) )  ){
 						specifier = determiner;
-					} 
+					} else if (determiner.equals("no")){
+						specifier = "some";
+					} else if (determiner.equals("few")){
+						specifier = "many";
+					} else if (determiner.equals("little")){
+						specifier = "much";
+					}
 				}
 				// check if there is a "none" involved: "none" is not recognized as a det:qmod so we have to look for it separately
 				for (SemanticEdge edge: graph.getDependencyGraph().getInEdges(node)){
@@ -526,7 +556,7 @@ public class DepGraphToSemanticGraph {
 	 * @throws FileNotFoundException
 	 * @throws UnsupportedEncodingException
 	 */
-	public semantic.graph.SemanticGraph sentenceToGraph(String sentence, String wholeCtx) throws FileNotFoundException, UnsupportedEncodingException{	
+	public semantic.graph.SemanticGraph sentenceToGraph(String sentence, String wholeCtx){	
 		if (sentence.contains("?"))
 			this.interrogative = true;
 		SemanticGraph stanGraph = parser.parseOnly(sentence);
@@ -548,6 +578,7 @@ public class DepGraphToSemanticGraph {
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 		// true stands for append = true (dont overwrite)
 		BufferedWriter writer = new BufferedWriter( new FileWriter(file.substring(0,file.indexOf(".txt"))+"_processed.csv", true));
+		ObjectOutputStream writerSer = null;
 		String strLine;
 		while ((strLine = br.readLine()) != null) {
 			if (strLine.startsWith("####")){
@@ -562,9 +593,24 @@ public class DepGraphToSemanticGraph {
 			writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
 			writer.flush();
 			System.out.println("Processed sentence "+ strLine.split("\t")[0]);
+			
+			// serialize and write to file
+			FileOutputStream fileSer;	
+			try {
+				fileSer = new FileOutputStream("serialized_SemanticGraphs.ser");
+				writerSer = new ObjectOutputStream(fileSer); 
+				writerSer.writeObject(graph); 				
+			} catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
 		}
 		writer.close();
 		br.close();
+		writerSer.close();
 	}
 	
 	/***
@@ -592,7 +638,7 @@ public class DepGraphToSemanticGraph {
 	public static void main(String args[]) throws IOException {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/mixed_testsuite.txt", semConverter);
-		String sentence = "John faked the illness.";
+		String sentence = "The man in the purple hat isn't operating a camera that makes videos.";
 		String context = "John faked the illness.";
 		semConverter.processSentence(sentence, sentence+" "+context);	
 	}

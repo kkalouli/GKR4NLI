@@ -43,6 +43,7 @@ public class ContextMapper {
 	private HashMap<SemanticNode<?>,String> implCtxs;
 	private HashMap<String,String> mapOfImpl;
 	private ArrayList<String> verbalForms;
+	private ArrayList<SemanticNode<?>> traversedNeighbors;
 	
 	public ContextMapper(semantic.graph.SemanticGraph graph, ArrayList<String> verbalForms){
 		this.verbalForms = verbalForms;
@@ -54,6 +55,7 @@ public class ContextMapper {
 		this.verbCoord = false;
 		this.disjunction = false;
 		this.implCtxs = new HashMap<SemanticNode<?>,String>();
+		this.traversedNeighbors = new ArrayList<SemanticNode<?>>();
 		
 		// read the file with the implicative/factive signatures
 		BufferedReader br = null;
@@ -93,12 +95,7 @@ public class ContextMapper {
 	 * @throws IOException 
 	 */
 	public void integrateAllContexts(){
-		try {
-			integrateImplicativeContexts();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		integrateImplicativeContexts();
 		integrateCoordinatingContexts();
 		integrateNegativeContexts();
 		integrateModalContexts();
@@ -916,20 +913,26 @@ public class ContextMapper {
 	}
 
 	/**
-	 * Recursively sets the contexts of the children of the given parent node
+	 * Recursively sets the contexts of the children of the given parent node.
+	 * Keeps track of the neighbors that have been travsesed to avoid an infinite loop where there is a relative clause and thus
+	 * a cycle in the graph
 	 * @param firstParent: the same as the parent of the 1st iteration. Then, the firstParent remains the same so that the context is always the same. 
 	 * @param parent
 	 */
 	private void setContextsRecursively(SemanticNode<?> firstParent, SemanticNode<?> parent){
-		Set<SemanticNode<?>> outNeighbors = graph.getRoleGraph().getOutNeighbors(parent);
+		Set<SemanticNode<?>> outNeighbors = graph.getRoleGraph().getOutNeighbors(parent);		
 		if (!outNeighbors.isEmpty()){
 			for (SemanticNode<?> neighbor: outNeighbors){
+				if (traversedNeighbors.contains(neighbor))
+					continue;
 				if (neighbor instanceof SkolemNode){
 					if (!graph.getContextGraph().containsNode(neighbor) && verbalForms.contains(((SkolemNodeContent) neighbor.getContent()).getPosTag()) ) {
 						((SkolemNodeContent) neighbor.getContent()).setContext(graph.getContextGraph().getInNeighbors(firstParent).iterator().next().getLabel());
 					}
 				}
+				traversedNeighbors.add(neighbor);
 				setContextsRecursively(firstParent,neighbor);
+				
 			}
 		}
 	}
@@ -1099,7 +1102,7 @@ public class ContextMapper {
 	 * The signatures of the words are looked up from a text file. 
 	 * @throws IOException
 	 */
-	private void integrateImplicativeContexts() throws IOException{
+	private void integrateImplicativeContexts(){
 		//go through each node of the role graph and see if it is such a word
 		for (SemanticNode<?> node : graph.getRoleGraph().getNodes()){
 			if (!(node instanceof SkolemNode))

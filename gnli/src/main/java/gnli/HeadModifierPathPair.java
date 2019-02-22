@@ -1,5 +1,6 @@
 package gnli;
 
+import java.io.Serializable;
 import java.util.List;
 
 import semantic.graph.SemanticEdge;
@@ -12,7 +13,8 @@ import semantic.graph.SemanticEdge;
  * A path is an ordered sequence of {@link SemanticEdge}s.
  *
  */
-public class HeadModifierPathPair {
+public class HeadModifierPathPair implements Serializable {
+	private static final long serialVersionUID = 7683317319590861558L;
 	private SemanticEdge basePair;
 	private SemanticEdge modifiersPair;
 	private List<SemanticEdge> conclusionPath;

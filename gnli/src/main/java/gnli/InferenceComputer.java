@@ -2,24 +2,30 @@ package gnli;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import com.articulate.sigma.KB;
 import com.articulate.sigma.KBmanager;
 
 import gnli.GNLIGraph;
+import gnli.InferenceChecker.EntailmentRelation;
 import gnli.InitialTermMatcher;
-import gnli.InferenceChecker.InferenceDecision;
 import sem.mapper.DepGraphToSemanticGraph;
 import semantic.graph.SemanticGraph;
 import semantic.graph.SemanticNode;
@@ -35,14 +41,51 @@ public class InferenceComputer {
 	private static KB kb;
 	private static DepGraphToSemanticGraph semGraph;
 	private boolean learning;
-	
+	private Properties props;
+	private String sumoKB;
 
-	public InferenceComputer() throws FileNotFoundException, UnsupportedEncodingException {
+	public InferenceComputer(String configFile) throws FileNotFoundException, UnsupportedEncodingException {
+		
 		KBmanager.getMgr().initializeOnce("/Users/kkalouli/Documents/.sigmakee/KBs");	
 		this.kb = KBmanager.getMgr().getKB("SUMO");
+		//serializeKb();
 		this.semGraph = new DepGraphToSemanticGraph();
 		this.learning = true;
+		this.props = new Properties();
+		try {
+			props.load(new FileReader(configFile));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		this.sumoKB = props.getProperty("sumo_kb");
 	}
+	
+	/*public class TransientClass implements Serializable {
+		private static final long serialVersionUID = 228313879760515790L;
+		private transient KB kb;
+	     
+	    public TransientClass(KB kb) {
+	        this.kb = kb;
+	    }
+	}
+	
+	public void serializeKb(){
+		TransientClass toSerialize = new TransientClass(kb);
+		FileOutputStream fileSer;
+		try {
+			fileSer = new FileOutputStream("serialized_KB.ser");
+			ObjectOutputStream writerSer = new ObjectOutputStream(fileSer); 
+			writerSer.writeObject(toSerialize); 
+			writerSer.close();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+	}*/
 	
 
 	public InferenceDecision computeInference(DepGraphToSemanticGraph semGraph, String sent1, String sent2, String correctLabel, KB kb) throws FileNotFoundException, UnsupportedEncodingException {	
@@ -61,7 +104,14 @@ public class InferenceComputer {
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli, kb);
 		initialTermMatcher.process();
 		//gnli.display();
-		//gnli.matchGraph.display();
+		gnli.matchGraph.display();
+		/*gnli.getHypothesisGraph().displayContexts();
+		gnli.getHypothesisGraph().displayDependencies();
+		gnli.getHypothesisGraph().displayRoles();
+		gnli.getTextGraph().displayContexts();
+		gnli.getTextGraph().displayDependencies();
+		gnli.getTextGraph().displayRoles();*/
+		
 
 		
 
@@ -70,10 +120,12 @@ public class InferenceComputer {
 		String labelToLearn = "";
 		if (learning == true)
 			labelToLearn = correctLabel;
-		final SpecificityUpdater su = new SpecificityUpdater(gnli, new PathScorer(gnli,30f), labelToLearn);
-		su.updateSpecifity();
-		
-		
+		PathScorer scorer = new PathScorer(gnli,30f);
+		final SpecificityUpdater su = new SpecificityUpdater(gnli,scorer, labelToLearn);
+		//System.out.println(scorer.getAllowedRolePaths());
+		su.updateSpecifity();	
+		scorer.serialize(scorer.getEntailRolePaths(), "entail");
+		scorer.serialize(scorer.getNeutralRolePaths(), "neutral");
 		// Now look at the updated matches and context veridicalities to
 		// determine entailment relations
 		final InferenceChecker infCh = new InferenceChecker(gnli);
@@ -86,6 +138,9 @@ public class InferenceComputer {
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 		// true stands for append = true (dont overwrite)
 		BufferedWriter writer = new BufferedWriter( new FileWriter(file.substring(0,file.indexOf(".txt"))+"_with_inference_relation.csv", true));
+		FileOutputStream fileSer = new FileOutputStream(file.substring(0,file.indexOf(".txt"))+"_serialized_results.ser"); 
+        ObjectOutputStream writerSer = new ObjectOutputStream(fileSer); 
+        ArrayList<InferenceDecision> decisionGraphs = new ArrayList<InferenceDecision>();
 		String strLine;
 		while ((strLine = br.readLine()) != null) {
 			if (strLine.startsWith("####")){
@@ -98,17 +153,41 @@ public class InferenceComputer {
 			String premise = elements[1];
 			String hypothesis = elements[2];
 			String correctLabel = elements[3];
-			InferenceDecision decision = computeInference(semGraph, premise, hypothesis, correctLabel, kb);
-			Specificity spec = null;
-			if (decision.getJustification() != null)
-				spec = decision.getJustification().getSpecificity();	
-			writer.write(strLine+"\t"+decision.getEntailmentRelation()+"\t"+decision.getMatchStrength()+"\t"+decision.isLooseContr()+
-					"\t"+decision.isLooseEntail()+"\t"+spec+"\n");
-			writer.flush();
-			System.out.println("Processed pair "+ id);
+			try {
+				InferenceDecision decision = computeInference(semGraph, premise, hypothesis, correctLabel, kb);
+				if (decision != null){
+					decisionGraphs.add(decision);
+					Specificity spec = null;
+					if (decision.getJustification() != null)
+						spec = decision.getJustification().getSpecificity();	
+					writer.write(strLine+"\t"+decision.getEntailmentRelation()+"\t"+decision.getMatchStrength()+"\t"+decision.isLooseContr()+
+							"\t"+decision.isLooseEntail()+"\t"+spec+"\n");
+					writer.flush();
+					System.out.println("Processed pair "+ id);
+				}
+				else
+					decisionGraphs.add(new InferenceDecision(EntailmentRelation.UNKNOWN, 0.0, null, false, false, null));
+				
+			} catch (Exception e){
+				writer.write(strLine+"\t"+"Exception found:"+e.getMessage()+"\n");
+				writer.flush();
+			}
+			
 		}
+		try
+        {    // Method for serialization of object 
+			writerSer.writeObject(decisionGraphs);   
+        }        
+        catch(IOException ex) 
+        { 
+            System.out.println("IOException is caught"); 
+        } 
+		
 		writer.close();
 		br.close();
+		writerSer.close(); 
+        fileSer.close(); 
+           
 	}/*
 	
 	/***
@@ -126,15 +205,14 @@ public class InferenceComputer {
 	}
 	
 	public static void main(String args[]) throws IOException {
-		//KBmanager.getMgr().initializeOnce("/Users/kkalouli/Documents/.sigmakee/KBs");	
-		//KB kb = KBmanager.getMgr().getKB("SUMO");
-		InferenceComputer comp = new InferenceComputer();
+		String configFile = "gnli.properties";
+		InferenceComputer comp = new InferenceComputer(configFile);
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "A brown dog is attacking another animal in front of the tall man in pants.";
-		String hypothesis = "A brown dog is attacking another animal in front of the man in pants.";
-		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/test.txt"; //AeBBnA_and_PWN_annotated_checked_only_correcetd_labels_split_pairs.txt";
-		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, kb);
+		String premise = "There is no man in a black jacket doing tricks on a motorbike.";
+		String hypothesis = "A person in a black jacket is doing tricks on a motorbike.";
+		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/test.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
+		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "C", kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);
 	}
 	

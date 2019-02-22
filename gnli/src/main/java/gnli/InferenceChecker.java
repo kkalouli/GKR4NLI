@@ -1,5 +1,6 @@
 package gnli;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,7 +18,7 @@ import semantic.graph.vetypes.TermNode;
 
 public class InferenceChecker {
 
-	public enum EntailmentRelation {ENTAILMENT, CONTRADICTION, NEUTRAL, UNKNOWN}
+	public enum EntailmentRelation implements Serializable {ENTAILMENT, CONTRADICTION, NEUTRAL, UNKNOWN}
 	private GNLIGraph gnliGraph;
 	private EntailmentRelation entailmentRelation;
 	private HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>> hypothesisContexts;
@@ -48,13 +49,16 @@ public class InferenceChecker {
 		if (this.entailmentRelation == EntailmentRelation.UNKNOWN) {
 			computeInferenceRelation();
 		}
-		return new InferenceDecision(entailmentRelation,matchStrength, justification, looseContra, looseEntail);
+		return new InferenceDecision(entailmentRelation,matchStrength, justification, looseContra, looseEntail, gnliGraph);
 	}
 	
 	
 	private void computeInferenceRelation() {
+		SemanticNode<?> hypRootNode = gnliGraph.getHypothesisGraph().getRootNode();
 		MatchEdge rootNodeMatch = null;
-		SemanticNode<?> hypRootNode = null;
+		if (gnliGraph.getOutMatches(hypRootNode) != null && !gnliGraph.getOutMatches(hypRootNode).isEmpty())
+			rootNodeMatch = gnliGraph.getOutMatches(hypRootNode).iterator().next();	
+		//gnliGraph.getMatchGraph().display();
 		for (MatchEdge matchEdge : gnliGraph.getMatches()){
 			SemanticNode<?> hTerm = gnliGraph.getStartNode(matchEdge);
 			if (hTerm.equals(gnliGraph.getHypothesisGraph().getRootNode())){
@@ -64,18 +68,16 @@ public class InferenceChecker {
 			SemanticNode<?> tTerm = gnliGraph.getFinishNode(matchEdge);
 			HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(hTerm);
 			HashMap<SemanticNode<?>,Polarity> tTermCtxs = textContexts.get(tTerm);
-			if (hTermCtxs == null && tTermCtxs == null)
-				continue;
 			// in case one of the nodes is not in the context graph but we still need to find out its context
-			// for now everythign defaults to veridical to the top node; this can change by setting it to
-			// veridical to whatever node is in the node.getContent().getContext()
+			// we get the ctx of that node from its SkolemNodeContent, find this context within the hypothesisContexts
+			// (whatever ctx is in the SkolemContent will necessarily be one of the ctxs of the contetx graph), and put
+			// the ctx found as the key of the hash and the veridical as the value and the root node as another key and
+			// and veridicality of the mother ctx as the value
 			if (hTermCtxs == null){
-				hTermCtxs = new HashMap<SemanticNode<?>,Polarity>();
-				hTermCtxs.put(hypRootCtx, Polarity.VERIDICAL);		
+				hTermCtxs = fillEmptyContexts((SkolemNode) hTerm, "hyp");
 			}
 			if (tTermCtxs == null){
-				tTermCtxs = new HashMap<SemanticNode<?>,Polarity>();
-				hTermCtxs.put(textRootCtx, Polarity.VERIDICAL);
+				tTermCtxs = fillEmptyContexts((SkolemNode) tTerm, "txt");
 			}			
 			if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, true)) {
 				return;
@@ -85,7 +87,7 @@ public class InferenceChecker {
 			}*/
 			
 		}
-		if (entailment(rootNodeMatch, hypRootNode, true)) {
+		if (rootNodeMatch != null && entailment(rootNodeMatch, hypRootNode, true)) {
 			return;
 		}
 		/*if (entailment(rootNodeMatch, hypRootNode, false)) {
@@ -97,6 +99,33 @@ public class InferenceChecker {
 			justification = null;
 		}
 		
+	}
+	
+	
+	private HashMap<SemanticNode<?>,Polarity> fillEmptyContexts(SkolemNode term, String mode){
+		HashMap<SemanticNode<?>,Polarity> termCtxs = new HashMap<SemanticNode<?>,Polarity>();
+		 HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>> ctxs = null;
+		 SemanticNode<?> root = null;
+		 SemanticGraph graph = null;
+		 if (mode.equals("hyp")){
+			 ctxs = hypothesisContexts;
+			 root = hypRootCtx;
+			 graph = gnliGraph.getHypothesisGraph();
+		 }
+		 else {
+			 ctxs = textContexts;
+			 root = textRootCtx;
+			 graph = gnliGraph.getTextGraph();
+		 }
+		String ctx = ((SkolemNodeContent) term.getContent()).getContext();
+		for (SemanticNode<?> inReach : graph.getRoleGraph().getInReach(term)){
+			if (ctxs.keySet().contains(inReach)){
+				termCtxs.put(inReach, Polarity.VERIDICAL);
+				termCtxs.put(root, ctxs.get(inReach).get(root));
+				break;
+			}
+		}
+		return termCtxs;
 	}
 	
 	private boolean contradiction(SemanticNode<?> hTerm, SemanticNode<?> tTerm, MatchEdge matchEdge, HashMap<SemanticNode<?>,Polarity> hTermCtxs,
@@ -135,6 +164,17 @@ public class InferenceChecker {
 		SemanticNode<?> tTerm = gnliGraph.getFinishNode(matchEdge);
 		HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(hypRootNode);
 		HashMap<SemanticNode<?>,Polarity> tTermCtxs = textContexts.get(tTerm);
+		// in case one of the nodes is not in the context graph but we still need to find out its context
+		// we get the ctx of that node from its SkolemNodeContent, find this context within the hypothesisContexts
+		// (whatever ctx is in the SkolemContent will necessarily be one of the ctxs of the contetx graph), and put
+		// the ctx found as the key of the hash and the veridical as the value and the root node as another key and
+		// and veridicality of the mother ctx as the value
+		if (hTermCtxs == null){
+			hTermCtxs = fillEmptyContexts((SkolemNode) hypRootNode, "hyp");
+		}
+		if (tTermCtxs == null){
+			tTermCtxs = fillEmptyContexts((SkolemNode) tTerm, "txt");
+		}	
 		Polarity hPolarity = hTermCtxs.get(hypRootCtx);
 		Polarity tPolarity = tTermCtxs.get(textRootCtx);
 		if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.VERIDICAL) {
@@ -174,7 +214,6 @@ public class InferenceChecker {
 	
 	private HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>> getContextHeads(SemanticGraph semGraph){
 		HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>> ctxHeadsWithVerid = new HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>>();
-		SemanticNode<?> root = null;
 		for (SemanticNode<?> ctxNode : semGraph.getContextGraph().getNodes()){
 			if (!ctxNode.getLabel().startsWith("ctx") && !ctxNode.getLabel().startsWith("top") ){
 				HashMap<SemanticNode<?>, Polarity> hashOfCtxsAndVerid = new HashMap<SemanticNode<?>,Polarity>();
@@ -187,17 +226,17 @@ public class InferenceChecker {
 				if (inNeighbors == null || inNeighbors.isEmpty()){
 					if (semGraph.equals(gnliGraph.getHypothesisGraph())){
 						this.hypRootCtx = motherCtx;
-						root = hypRootCtx;
 					}
 					else if (semGraph.equals(gnliGraph.getTextGraph())){
 						this.textRootCtx = motherCtx;
-						root = textRootCtx;
 					}
 					hashOfCtxsAndVerid.put(motherCtx, Polarity.VERIDICAL);
 				} 
 				else {
 					Set<SemanticNode<?>> edgesCtxToInReachCtx = semGraph.getContextGraph().getInReach(motherCtx);
 					for (SemanticNode<?> reach : edgesCtxToInReachCtx){
+						if (reach.equals(motherCtx))
+							continue;
 						List<SemanticEdge> shortestPath = semGraph.getContextGraph().getShortestUndirectedPath(motherCtx, reach);
 						Polarity polar = computeEdgePolarity(shortestPath);
 						hashOfCtxsAndVerid.put(reach, polar);
@@ -227,51 +266,12 @@ public class InferenceChecker {
 			}
 			else if  (verEdge.getLabel().equals("averidical")){
 				polar = Polarity.AVERIDICAL;
-			}	
+			}
+			else {
+				polar = Polarity.VERIDICAL;
+			}
 		}
 		return polar;
 	}
-	
-	class InferenceDecision{
-		
-		EntailmentRelation relation;
-		double matchStrength;
-		MatchEdge justification;
-		boolean looseContra;
-		boolean looseEntail;
-			
-		InferenceDecision(EntailmentRelation relation, double matchStrength, MatchEdge justification, boolean looseContra, boolean looseEntail){
-			this.relation = relation;
-			this.matchStrength = matchStrength;
-			this.justification = justification;
-			this.looseContra = looseContra;
-			this.looseEntail = looseEntail;
-		}
-		
-		public EntailmentRelation getEntailmentRelation(){
-			return relation;
-		}
-		
-		public Double getMatchStrength(){
-			return matchStrength;
-		}
-		
-		public boolean isLooseContr(){
-			return looseContra;
-		}
-		
-		public boolean isLooseEntail(){
-			return looseEntail;
-		}
-		
-		public MatchEdge getJustification(){
-			return justification;
-		}
-			
-	}
-	
-
-
-	
 	
 }

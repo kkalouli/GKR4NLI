@@ -95,7 +95,7 @@ public class SenseMappingsRetriever {
         this.sumoInstall = props.getProperty("sumo_location");
         this.jigsawProps = props.getProperty("jigsaw_props");
 		this.jigsaw = new JIGSAW(new File(jigsawProps));
-		this.glove = WordVectorSerializer.readWord2VecModel(new File("/Users/kkalouli/Documents/project/gnli/glove.6B.300d.txt"));
+		this.glove = WordVectorSerializer.readWord2VecModel(new File(props.getProperty("glove")));
 	}
 	
 	
@@ -289,7 +289,7 @@ public class SenseMappingsRetriever {
 	 * @throws UnsupportedEncodingException
 	 * @throws FileNotFoundException
 	 */
-	public String extractSUMOMappingFromSUMO(String synset, String posInitial) throws UnsupportedEncodingException, FileNotFoundException{
+	public String extractSUMOMappingFromSUMO(String synset, String posInitial){
 		String senseToReturn = "";
 		String pos = "";
 		String sumo = "";
@@ -353,17 +353,23 @@ public class SenseMappingsRetriever {
 	}
 	
 	
-	private String getSumoFileMatchedSense(String synset,String sumo) throws FileNotFoundException{
+	private String getSumoFileMatchedSense(String synset,String sumo){
 		String senseMatched = "";
 		// read the file into a string
-		Scanner scanner = new Scanner(new File(sumo), "UTF-8");
-		String content = scanner.useDelimiter("\\A").next();
-		// match the given synset
-		Pattern sensePattern = Pattern.compile("\n"+synset+".*");
-		Matcher senseMatcher = sensePattern.matcher(content);
-		scanner.close();
-		if (senseMatcher.find())
-			senseMatched = senseMatcher.group();
+		Scanner scanner;
+		try {
+			scanner = new Scanner(new File(sumo), "UTF-8");
+			String content = scanner.useDelimiter("\\A").next();
+			// match the given synset
+			Pattern sensePattern = Pattern.compile("\n"+synset+".*");
+			Matcher senseMatcher = sensePattern.matcher(content);
+			scanner.close();
+			if (senseMatcher.find())
+				senseMatched = senseMatcher.group();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
 		return senseMatched;
 	}
 	
@@ -377,60 +383,69 @@ public class SenseMappingsRetriever {
 	 * @return
 	 * @throws Exception
 	 */
-	public HashMap <String, Map<String,Float>> disambiguateSensesWithJIGSAW(String wholeCtx) throws Exception{
+	public HashMap <String, Map<String,Float>> disambiguateSensesWithJIGSAW(String wholeCtx){
 		HashMap <String, String> listOfSenses = new HashMap<String,String>();
 		HashMap <String, Map<String,Float>> mapOfSensesSorted = new HashMap<String,Map<String,Float>>();
 		// create a file containing the sentence to be tokenized
 		String inString = "untokenized.tmp";
-		BufferedWriter writer = new BufferedWriter(new FileWriter(inString));
-		writer.write(wholeCtx);
-		writer.close();
-		// create a file where the tokenized sentence will be written
-		String tmpTokenized= "tokenized.tmp";
-		PrintWriter writerTokenizer = new PrintWriter(tmpTokenized, "UTF-8");
-		PTBTokenizer<CoreLabel> ptbt = new PTBTokenizer<>(new FileReader(new File(inString)), new CoreLabelTokenFactory(), "");
-	    // tokenize
-		while (ptbt.hasNext()) {
-	        CoreLabel label = ptbt.next();
-	        writerTokenizer.write(label.toString()+"\n");
-	      }
-		writerTokenizer.close();	
-		// run the disambiguation
-	   TokenGroup tg = null;
-       BufferedReader in = new BufferedReader(new FileReader(tmpTokenized));
-       List<String> list = new ArrayList<String>();
-       while (in.ready()) {
-    	   list.add(in.readLine());
-       }
-       in.close();
-       // write each disambiguated sense to the hashmap
-       tg = jigsaw.mapText(list.toArray(new String[list.size()]));
-       for (int i = 0; i < tg.size(); i++) {
-           listOfSenses.put(Integer.toString(i)+"_"+tg.get(i).getToken(),tg.get(i).getSyn());
-       }
-       //System.out.println(listOfSenses);
-       // go through the hashmap, split each sense to the sense and the probability and create an inner hashmap:
-       // the sense is the key and the probability is the value
-       for (String key: listOfSenses.keySet()){
-    	   String value = listOfSenses.get(key);
-    	   if (value.equals("U")) {
-    		   mapOfSensesSorted.put(key, new HashMap<String,Float>());
-    		   continue; 
-    	   }
-    	   String[] splitSenses = value.split(",");
-    	   HashMap<String,Float> mapSenseProp = new HashMap<String,Float>();
-    	   for (String senseProp : splitSenses){
-    		   String[] sensePropSplit = senseProp.split(":");
-    		   String sense = sensePropSplit[0].substring(1);
-    		   float prop = Float.parseFloat(sensePropSplit[1]);
-    		   mapSenseProp.put(sense, prop);
-    	   }
-    	   // sort this inner hashmap based on the values so that the sense with the highest probability is first
-    	   final Map<String, Float> mapSensePropSorted = mapSenseProp.entrySet().stream().sorted((Map.Entry.<String, Float>comparingByValue().reversed()))
-                   .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
-    	   // put this hashmap as value for the current key node
-    	   mapOfSensesSorted.put(key, mapSensePropSorted);
-       }
+		BufferedWriter writer;
+		try {
+			writer = new BufferedWriter(new FileWriter(inString));
+			writer.write(wholeCtx);
+			writer.close();
+			// create a file where the tokenized sentence will be written
+			String tmpTokenized= "tokenized.tmp";
+			PrintWriter writerTokenizer = new PrintWriter(tmpTokenized, "UTF-8");
+			PTBTokenizer<CoreLabel> ptbt = new PTBTokenizer<>(new FileReader(new File(inString)), new CoreLabelTokenFactory(), "");
+		    // tokenize
+			while (ptbt.hasNext()) {
+		        CoreLabel label = ptbt.next();
+		        writerTokenizer.write(label.toString()+"\n");
+		      }
+			writerTokenizer.close();	
+			// run the disambiguation
+		   TokenGroup tg = null;
+	       BufferedReader in = new BufferedReader(new FileReader(tmpTokenized));
+	       List<String> list = new ArrayList<String>();
+	       while (in.ready()) {
+	    	   list.add(in.readLine());
+	       }
+	       in.close();
+	       // write each disambiguated sense to the hashmap
+	       tg = jigsaw.mapText(list.toArray(new String[list.size()]));
+	       for (int i = 0; i < tg.size(); i++) {
+	           listOfSenses.put(Integer.toString(i)+"_"+tg.get(i).getToken(),tg.get(i).getSyn());
+	       }
+	     //System.out.println(listOfSenses);
+	       // go through the hashmap, split each sense to the sense and the probability and create an inner hashmap:
+	       // the sense is the key and the probability is the value
+	       for (String key: listOfSenses.keySet()){
+	    	   String value = listOfSenses.get(key);
+	    	   if (value.equals("U")) {
+	    		   mapOfSensesSorted.put(key, new HashMap<String,Float>());
+	    		   continue; 
+	    	   }
+	    	   String[] splitSenses = value.split(",");
+	    	   HashMap<String,Float> mapSenseProp = new HashMap<String,Float>();
+	    	   for (String senseProp : splitSenses){
+	    		   String[] sensePropSplit = senseProp.split(":");
+	    		   String sense = sensePropSplit[0].substring(1);
+	    		   float prop = Float.parseFloat(sensePropSplit[1]);
+	    		   mapSenseProp.put(sense, prop);
+	    	   }
+	    	   // sort this inner hashmap based on the values so that the sense with the highest probability is first
+	    	   final Map<String, Float> mapSensePropSorted = mapSenseProp.entrySet().stream().sorted((Map.Entry.<String, Float>comparingByValue().reversed()))
+	                   .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, LinkedHashMap::new));
+	    	   // put this hashmap as value for the current key node
+	    	   mapOfSensesSorted.put(key, mapSensePropSorted);
+	       }
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	    
        return mapOfSensesSorted;
 	}
 
@@ -454,15 +469,7 @@ public class SenseMappingsRetriever {
 			
 		if (senseProp != null && !senseProp.isEmpty()){
 			sense = (String) senseProp.keySet().toArray()[0];
-			try {
-				concept = extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());
-			} catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			concept = extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());
 		}				
 
 		lexSem.put(sense,concept);

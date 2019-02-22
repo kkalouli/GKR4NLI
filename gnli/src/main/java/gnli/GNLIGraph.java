@@ -2,6 +2,7 @@ package gnli;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,7 +21,8 @@ import semantic.graph.vetypes.RoleEdge;
 import semantic.graph.vetypes.SkolemNode;
 import semantic.graph.vetypes.TermNode;
 
-public class GNLIGraph {
+public class GNLIGraph implements Serializable {
+	private static final long serialVersionUID = 7867467000348756256L;
 	protected SemanticGraph gnliGraph;
 	protected SemanticGraph textGraph;
 	protected SemanticGraph hypothesisGraph;
@@ -135,6 +137,17 @@ public class GNLIGraph {
 	public void removeMatchEdge(SemanticEdge match) {
 		this.matchGraph.removeLinkEdge(match);
 		this.gnliGraph.removeLinkEdge(match);
+	}
+
+	
+	/**
+	 * Remove the specified match node from the graph
+	 * 
+	 * @param match
+	 */
+	public void removeMatchNode(SemanticNode<?> node) {
+		this.matchGraph.removeLinkNode(node);
+		this.gnliGraph.removeLinkNode(node);
 	}
 
 	/**
