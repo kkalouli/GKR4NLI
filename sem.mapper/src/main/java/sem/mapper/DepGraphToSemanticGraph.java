@@ -115,7 +115,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		this.retriever = new SenseMappingsRetriever(new File("/Users/caldadmin/Documents/diss/gkr.properties")); //"/Users/kkalouli/Documents/project/sem.mapper/gkr.properties"));
+		this.retriever = new SenseMappingsRetriever(new File("/Users/kkalouli/Documents/project/sem.mapper/gkr.properties"));
 		this.interrogative = false;
 
 	}
