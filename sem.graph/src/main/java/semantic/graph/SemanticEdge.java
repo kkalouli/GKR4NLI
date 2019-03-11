@@ -1,6 +1,6 @@
 package semantic.graph;
 
-
+import java.io.Serializable;
 
 /**
  * A general class for representing edges connecting {@link SemanticNode}s.
@@ -9,10 +9,8 @@ package semantic.graph;
  * {@link SemanticGraph#getFinishNode(SemanticEdge)}for retrieving the actual nodes
  *
  */
-public class SemanticEdge implements Comparable<SemanticEdge> {
-	/**
-	 * 
-	 */
+public class SemanticEdge implements Comparable<SemanticEdge>,Serializable {
+	private static final long serialVersionUID = -4736534192867326177L;
 	//protected int id;
 	protected String sourceVertexId;
 	protected String destVertexId;

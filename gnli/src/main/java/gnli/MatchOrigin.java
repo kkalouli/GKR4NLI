@@ -1,7 +1,10 @@
 package gnli;
 
-public class MatchOrigin { 
-	public enum MatchType {STEM, SURFACE, SENSE, EMBED, CONCEPT, DERIVED, NONE, SENSE_CMP}
+import java.io.Serializable;
+
+public class MatchOrigin implements Serializable { 
+	private static final long serialVersionUID = 5464834181048581205L;
+	public static enum MatchType {STEM, SURFACE, SENSE, EMBED, CONCEPT, DERIVED, NONE, SENSE_CMP}
 	private MatchType matchType;
 	private String hSense = null;
 	private String tSense = null;

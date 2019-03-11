@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
@@ -63,8 +64,12 @@ import jigsaw.data.Token;
 import jigsaw.data.TokenGroup;
 import edu.mit.jwi.item.ISynset;
 
-public class StanfordParser {
+public class StanfordParser implements Serializable{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 6643629409654290839L;
 	private StanfordCoreNLP pipeline;
 	public SemanticGraph synGraph;
 

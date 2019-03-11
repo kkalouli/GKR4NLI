@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -46,8 +47,12 @@ import semantic.graph.SemanticGraph;
 import semantic.graph.vetypes.SkolemNode;
 
 
-public class SenseMappingsRetriever {
+public class SenseMappingsRetriever implements Serializable {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5353876989060718577L;
 	HashMap<String,String> hashOfPOS = new HashMap<String,String>();
 	public Map<String, Integer> subConcepts = new HashMap<String,Integer>();
 	public Map<String, Integer> superConcepts =new HashMap<String,Integer>();

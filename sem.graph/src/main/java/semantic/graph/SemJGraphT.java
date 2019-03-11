@@ -36,7 +36,9 @@ import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
  * Implementation of SemGraph via JGraphT
  *
  */
-public class SemJGraphT implements SemGraph {
+public class SemJGraphT implements SemGraph, Serializable{
+
+	private static final long serialVersionUID = 4437969385952923418L;
 	private DirectedGraph<SemanticNode<?>, SemanticEdge> graph;
 
 	public SemJGraphT() {

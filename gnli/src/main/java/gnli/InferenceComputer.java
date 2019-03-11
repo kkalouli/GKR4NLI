@@ -10,6 +10,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.io.FileNotFoundException;
@@ -17,6 +18,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
@@ -104,7 +106,7 @@ public class InferenceComputer {
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli, kb);
 		initialTermMatcher.process();
 		//gnli.display();
-		gnli.matchGraph.display();
+		//gnli.matchGraph.display();
 		/*gnli.getHypothesisGraph().displayContexts();
 		gnli.getHypothesisGraph().displayDependencies();
 		gnli.getHypothesisGraph().displayRoles();
@@ -157,9 +159,9 @@ public class InferenceComputer {
 				InferenceDecision decision = computeInference(semGraph, premise, hypothesis, correctLabel, kb);
 				if (decision != null){
 					decisionGraphs.add(decision);
-					Specificity spec = null;
-					if (decision.getJustification() != null)
-						spec = decision.getJustification().getSpecificity();	
+					String spec = "";
+					if (decision.getJustifications() != null && !decision.getJustifications().isEmpty())
+						spec = decision.getJustifications().toString();	
 					writer.write(strLine+"\t"+decision.getEntailmentRelation()+"\t"+decision.getMatchStrength()+"\t"+decision.isLooseContr()+
 							"\t"+decision.isLooseEntail()+"\t"+spec+"\n");
 					writer.flush();
@@ -174,14 +176,8 @@ public class InferenceComputer {
 			}
 			
 		}
-		try
-        {    // Method for serialization of object 
-			writerSer.writeObject(decisionGraphs);   
-        }        
-        catch(IOException ex) 
-        { 
-            System.out.println("IOException is caught"); 
-        } 
+		// Method for serialization of object 
+		writerSer.writeObject(decisionGraphs);   
 		
 		writer.close();
 		br.close();
@@ -189,6 +185,7 @@ public class InferenceComputer {
         fileSer.close(); 
            
 	}/*
+	
 	
 	/***
 	 * Process a single pair to find the inference relation. 
@@ -200,21 +197,45 @@ public class InferenceComputer {
 		System.out.println("Strength of the Match: "+decision.getMatchStrength());
 		System.out.println("It was loose contradiction: "+decision.isLooseContr());
 		System.out.println("It was loose entailment: "+decision.isLooseEntail());
-		System.out.println("Specificity that led to the decision:"+decision.getJustification().getSpecificity());
+		System.out.println("Specificity that led to the decision:"+decision.getJustifications().toString());
 		
 	}
 	
+	
+	@SuppressWarnings("unchecked")
+	public ArrayList<InferenceDecision> deserializeFileWithComputedPairs(String file){
+		ArrayList<InferenceDecision> pairsToReturn = null;
+			try {
+				FileInputStream fileIn = new FileInputStream(file.substring(0,file.indexOf(".txt"))+"_serialized_results.ser");
+				ObjectInputStream in = new ObjectInputStream(fileIn);
+				pairsToReturn = (ArrayList<InferenceDecision>) in.readObject();
+				in.close();
+			} catch (FileNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return pairsToReturn;
+	}
+	
 	public static void main(String args[]) throws IOException {
-		String configFile = "gnli.properties";
+		String configFile = "/Users/kkalouli/Documents/project/gnli/gnli.properties";
 		InferenceComputer comp = new InferenceComputer(configFile);
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
 		String premise = "There is no man in a black jacket doing tricks on a motorbike.";
 		String hypothesis = "A person in a black jacket is doing tricks on a motorbike.";
-		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/test.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
+		String file = "/Users/caladmin/Documents/diss/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "C", kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);
+		//comp.deserializeFileWithComputedPairs(file);
 	}
+	
 	
 
 }

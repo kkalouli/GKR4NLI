@@ -1,5 +1,6 @@
 package gnli;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +14,8 @@ import semantic.graph.EdgeContent;
  * information between two nodes.
  *
  */
-public class MatchContent implements EdgeContent {
+public class MatchContent implements EdgeContent, Serializable {
+	private static final long serialVersionUID = -3687998411657779763L;
 	private Specificity specificity;
 	private Specificity originalSpecificity;
 	private Map<String, Float> scores;

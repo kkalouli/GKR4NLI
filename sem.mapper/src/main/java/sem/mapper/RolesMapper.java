@@ -1,6 +1,7 @@
 package sem.mapper;
 
 import java.awt.List;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,7 +33,11 @@ import semantic.graph.vetypes.TermNodeContent;
  * @author kkalouli
  *
  */
-public class RolesMapper {
+public class RolesMapper implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 8952920085814733709L;
 	private semantic.graph.SemanticGraph graph;
 	private SemGraph depGraph;
 	// will need passive for the passive graphs

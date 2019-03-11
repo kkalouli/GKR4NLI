@@ -237,7 +237,12 @@ public class PathScorer implements Serializable {
 	 */
 	public float pathPenalty(HeadModifierPathPair hMPath, List<SemanticEdge> tPath, List<SemanticEdge> hPath) {
 		float cost = 0;
-		if (tPath.size() == hPath.size()){
+		String key = hPath.toString()+"/"+tPath.toString();
+		if (neutralRolePaths.containsKey(key))
+			cost += maxCost;
+		else if (entailRolePaths.containsKey(key))
+			cost -= 10;
+		if (tPath.size() == hPath.size() && hPath.size() == 0){
 			// if the match is based on opposing roles, it should be neglected
 			if ( (tPath.get(0).getLabel().equals("sem_subj") && hPath.get(0).getLabel().equals("sem_obj")) ||
 				 (tPath.get(0).getLabel().equals("sem_obj") && hPath.get(0).getLabel().equals("sem_subj")) )
@@ -249,6 +254,9 @@ public class PathScorer implements Serializable {
 				cost -= 2; 
 		} else if (tPath.size() == 2){				
 			if (hPath.get(0).getLabel().equals("amod") && tPath.get(0).getLabel().equals("nmod") && tPath.get(1).getLabel().equals("amod"))
+				cost -= 2;
+		} else if (hPath.size() == 2 && tPath.size() == 1){	
+			if (tPath.get(0).getLabel().equals("amod") && hPath.get(0).getLabel().equals("nmod") && hPath.get(1).getLabel().equals("amod"))
 				cost -= 2;
 		}
 		cost += ((MatchContent) hMPath.getModifiersPair().getContent()).getScore();

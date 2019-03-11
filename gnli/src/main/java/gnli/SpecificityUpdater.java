@@ -34,6 +34,7 @@ public class SpecificityUpdater {
 		private int initialAgendaSize;
 		private static int MAX_AGENDA_SIZE = 1000;
 		private String correctLabel;
+		private ArrayList<String> specifiers;
 		
 		public SpecificityUpdater(GNLIGraph gnliGraph, PathScorer pathScorer, String correctLabel) {
 			this.gnliGraph = gnliGraph;
@@ -42,14 +43,29 @@ public class SpecificityUpdater {
 			this.matchAgenda = new ArrayList<MatchAgendaItem>();
 			// Set up match agenda and filter:
 			for (MatchEdge match: gnliGraph.getMatches()) {
-					MatchAgendaItem item = new MatchAgendaItem();
-					item.match = match;
-					item.noOfMods = getNoOfHypAndTextMods(match);
-					this.matchAgenda.add(item);	
+				if (gnliGraph.getHypothesisGraph().isRstr((TermNode) gnliGraph.getMatchGraph().getStartNode(match)))
+					continue;
+				if (gnliGraph.getTextGraph().isRstr((TermNode) gnliGraph.getMatchGraph().getFinishNode(match)))
+					continue;
+				MatchAgendaItem item = new MatchAgendaItem();
+				item.match = match;
+				item.noOfMods = getNoOfHypAndTextMods(match);
+				this.matchAgenda.add(item);	
 			}
 			Collections.sort(this.matchAgenda);
 			initialAgendaSize = matchAgenda.size();
 			this.correctLabel = correctLabel;
+			this.specifiers = new ArrayList<String>();
+			specifiers.add("a");
+			specifiers.add("an");
+			specifiers.add("the");
+			specifiers.add("many");
+			specifiers.add("few");
+			specifiers.add("much");
+			specifiers.add("little");
+			specifiers.add("most");
+			specifiers.add("some");
+			specifiers.add("several");
 		}
 
 		
@@ -80,7 +96,7 @@ public class SpecificityUpdater {
 			for (MatchAgendaItem item : this.matchAgenda) {
 				boolean updateComplete = updateMatch(item.match);
 				gnliGraph.getMatchGraph().display();
-				gnliGraph.getTextGraph().display();
+				//gnliGraph.getTextGraph().display();
 				if (!updateComplete) {
 					newAgenda.add(item);
 				}
@@ -124,47 +140,60 @@ public class SpecificityUpdater {
 		private boolean hypOrTextHasMods(HypoTextMatch hypoTextMatch){
 			MatchEdge m = hypoTextMatch.match;
 			if (hypoTextMatch.textModifiers.isEmpty()){
-				// H more specific
-				/*m.setSpecificity(switchSpecificity(m.getSpecificity(),Specificity.SUPERCLASS));
-				m.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, hypoTextMatch.hypothesisModifiers.get(0)));*/
+				/* check if the hypothesisModifiers have other matches in the graph, even if they
+				 * aren't direct modifiers. If such matches found, do not make the hypoTextMatch more specific.
+				 * if not found, make it more specific.  
+				*/
 				for (SemanticNode<?> mod: hypoTextMatch.hypothesisModifiers){
-					checkForUndirectedMatch(hypoTextMatch, "hyp",  mod);
+					if (gnliGraph.getOutMatches(mod) != null && gnliGraph.getOutMatches(mod).isEmpty()){
+						// H more specific
+						m.setSpecificity(switchSpecificity(m.getSpecificity(),Specificity.SUPERCLASS));
+						m.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, mod));
+						return true;
+					}
 				}
-				return true;
+				
 			} else if (hypoTextMatch.hypothesisModifiers.isEmpty()){
-				for (SemanticNode<?> mod: hypoTextMatch.textModifiers){
-					checkForUndirectedMatch(hypoTextMatch, "text",  mod);
+				/* check if the textModifiers have other matches in the graph, even if they
+				 * aren't direct modifiers. If such matches found, do not make the hypoTextMatch more specific.
+				 * if not found, make it more specific.  
+				*/
+				for (SemanticNode<?> mod: hypoTextMatch.textModifiers){			
+					if (gnliGraph.getInMatches(mod) != null && gnliGraph.getInMatches(mod).isEmpty()){
+						// T more specific
+						m.setSpecificity(switchSpecificity(m.getSpecificity(),Specificity.SUBCLASS));
+						m.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, mod));
+						return true;
+
+					}
 				}
-				// T more specific
-				/*m.setSpecificity(switchSpecificity(m.getSpecificity(),Specificity.SUBCLASS));
-				m.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, hypoTextMatch.textModifiers.get(0)));*/
-				return true;
-			} else 
-				return false;
+			}
+			return false;
 		}
 		
-		private void checkForUndirectedMatch(HypoTextMatch hypoTextMatch, String mode, SemanticNode<?> modifier){
+		private boolean existsUndirectedMatch(HypoTextMatch hypoTextMatch, String mode, SemanticNode<?> modifier){
 			if (mode.equals("hyp")){
 				// get only direct and indirect modifiers
 				//if (!gnliGraph.getTextGraph().getDependencyGraph().getOutReach(hypoTextMatch.textTerm).contains(finishRestr)){
 				// get also any undirected path connecting the term to the modifier
-				if (gnliGraph.getTextGraph().getDependencyGraph().getShortestUndirectedPath(hypoTextMatch.textTerm,modifier).isEmpty()){
+				if (gnliGraph.getTextGraph().getDependencyGraph().getShortestUndirectedPath(hypoTextMatch.textTerm,modifier).isEmpty() && !modifier.equals(hypoTextMatch.textTerm)){
 					// H more specific
 					hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUPERCLASS));
 					hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, modifier));
-					return;
+					return false;
 				}
 			} else{
 				// get only direct and indirect modifiers
 				//if (!gnliGraph.getHypothesisGraph().getDependencyGraph().getOutReach(hypoTextMatch.hypothesisTerm).contains(startRestr)){
 				// get also any undirected path connecting the term to the modifier
-				if (gnliGraph.getHypothesisGraph().getDependencyGraph().getShortestUndirectedPath(hypoTextMatch.hypothesisTerm,modifier).isEmpty()){
+				if (gnliGraph.getHypothesisGraph().getDependencyGraph().getShortestUndirectedPath(hypoTextMatch.hypothesisTerm,modifier).isEmpty() && !modifier.equals(hypoTextMatch.hypothesisTerm)){
 					// T more specific
 					hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUBCLASS));
 					hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, modifier));
-					return;
+					return false;
 				}		
 			}
+			return true;
 		}
 		
 		private boolean hypAndTextHaveMods(HypoTextMatch hypoTextMatch, String mode){			
@@ -226,11 +255,14 @@ public class SpecificityUpdater {
 		private void updateWithOneMatchedModifier(HypoTextMatch hypoTextMatch, MatchEdge outEdge, String mode){
 			SkolemNode finishRestr = (SkolemNode) gnliGraph.getFinishNode(outEdge);
 			SemanticNode<?> startRestr = gnliGraph.getStartNode(outEdge);
+			boolean undirMatch;
 			if (mode.equals("hyp")){
-				checkForUndirectedMatch(hypoTextMatch, mode, finishRestr);
+				undirMatch = existsUndirectedMatch(hypoTextMatch, mode, finishRestr);
 			} else{
-				checkForUndirectedMatch(hypoTextMatch, mode, startRestr);	
+				undirMatch = existsUndirectedMatch(hypoTextMatch, mode, startRestr);	
 			}
+			if (undirMatch == false)
+				return;
 			Specificity spec = outEdge.getSpecificity();
 			HeadModifierPathPair justification = justificationOfSpecificityUpdate(hypoTextMatch.hypothesisTerm, startRestr,
 					hypoTextMatch.textTerm, finishRestr, hypoTextMatch.match, outEdge);
@@ -340,7 +372,8 @@ public class SpecificityUpdater {
 					match.addJustification(justificationOfSpecificityUpdateNoText(hypTerm,hRstr));
 				}
 			}
-			
+			//gnliGraph.getHypothesisGraph().displayDependencies();
+			//gnliGraph.getHypothesisGraph().displayRoles();
 			// check for any left text restr and do the same as above
 			for (TermNode tRstr : unmatchedTextRestrs){
 				boolean matchFound = false;
@@ -369,10 +402,6 @@ public class SpecificityUpdater {
 			if (hSpecifier == null) {
 				return;
 			}
-			if (!hSpecifier.equals("a") && !hSpecifier.equals("an") && !hSpecifier.equals("the")  && !hSpecifier.equals("many")  && !hSpecifier.equals("few")
-					 && !hSpecifier.equals("much")  && !hSpecifier.equals("little") && !hSpecifier.equals("most") && !hSpecifier.equals("some") && !hSpecifier.equals("") ){
-				hSpecifier = "N";
-			}
 			String hCardinality = cardSpecHypTerm.get(0);
 			
 			
@@ -380,18 +409,23 @@ public class SpecificityUpdater {
 			if (tSpecifier == null) {
 				return;
 			}
-			if (!tSpecifier.equals("a") && !tSpecifier.equals("an") && !tSpecifier.equals("the") && !tSpecifier.equals("many") && !tSpecifier.equals("few")
-					&& !tSpecifier.equals("much") && !tSpecifier.equals("little") && !tSpecifier.equals("most") && !tSpecifier.equals("some") && !tSpecifier.equals("")){
-				tSpecifier = "N";
-			}
 			String tCardinality = cardSpecTextTerm.get(0);
 			
-			
 			Specificity newSpecificity = null;
-			if (hSpecifier.equals("N") && tSpecifier.equals("N"))
+			if (!hSpecifier.equals("") && !tSpecifier.equals("") && !specifiers.contains(hSpecifier) && !specifiers.contains(tSpecifier) && tSpecifier.equals(hSpecifier) ){
+				tSpecifier = "N";
+				hSpecifier = "N";
+			} else if (!hSpecifier.equals("") && !tSpecifier.equals("") && !specifiers.contains(hSpecifier) && specifiers.contains(tSpecifier)){
+				hSpecifier = "N";
+			} else if (!hSpecifier.equals("") && !tSpecifier.equals("") && specifiers.contains(hSpecifier) && !specifiers.contains(tSpecifier)){
+				tSpecifier = "N";
+			}
+			
+			if (!hSpecifier.equals("") && !tSpecifier.equals("") && !specifiers.contains(hSpecifier) && !specifiers.contains(tSpecifier) && !tSpecifier.equals(hSpecifier) ){
 				newSpecificity = Specificity.DISJOINT;
-			else
+			} else { 
 				newSpecificity = DeterminerEntailments.newDeterminerSpecificity(hSpecifier, hCardinality, tSpecifier, tCardinality, match.getSpecificity());
+			}
 			
 			match.setSpecificity(newSpecificity);
 		}

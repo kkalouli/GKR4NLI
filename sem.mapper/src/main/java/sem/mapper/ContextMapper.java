@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +32,11 @@ import semantic.graph.vetypes.RoleEdgeContent;
 import semantic.graph.vetypes.SkolemNode;
 import semantic.graph.vetypes.SkolemNodeContent;
 
-public class ContextMapper {
+public class ContextMapper implements Serializable {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -6755671877667960628L;
 	private semantic.graph.SemanticGraph graph;
 	private SemGraph depGraph;
 	private HashMap<SemanticNode<?>,SemanticNode<?>> negCtxs;

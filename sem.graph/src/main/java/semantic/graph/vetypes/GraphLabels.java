@@ -1,10 +1,16 @@
 package semantic.graph.vetypes;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class GraphLabels {
+public class GraphLabels implements Serializable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -1328451004558048056L;
+
 	/**
 	 * Marks the head word/concept of a context
 	 */

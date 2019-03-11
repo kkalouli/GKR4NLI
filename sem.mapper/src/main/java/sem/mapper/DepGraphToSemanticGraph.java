@@ -10,6 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,8 +58,12 @@ import semantic.graph.vetypes.TermNodeContent;
 import semantic.graph.vetypes.ValueNode;
 import semantic.graph.vetypes.ValueNodeContent;
 
-public class DepGraphToSemanticGraph {
+public class DepGraphToSemanticGraph implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 7281901236266524522L;
 	private semantic.graph.SemanticGraph graph;
 	private SemanticGraph stanGraph;
 	public ArrayList<String> verbalForms = new ArrayList<String>();
@@ -110,7 +115,7 @@ public class DepGraphToSemanticGraph {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		this.retriever = new SenseMappingsRetriever(new File("/Users/kkalouli/Documents/project/sem.mapper/gkr.properties"));
+		this.retriever = new SenseMappingsRetriever(new File("/Users/caldadmin/Documents/diss/gkr.properties")); //"/Users/kkalouli/Documents/project/sem.mapper/gkr.properties"));
 		this.interrogative = false;
 
 	}

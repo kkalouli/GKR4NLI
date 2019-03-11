@@ -13,7 +13,7 @@ import java.awt.Color;
  * Interface for basic graph structure for both JGraphT and Grph implementations
  *
  */
-public interface SemGraph {
+public interface SemGraph  {
 	
 	public void addNode(SemanticNode<?> node);
 	

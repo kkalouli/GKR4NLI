@@ -100,11 +100,11 @@ public class InitialTermMatcher {
 	public InitialTermMatcher(GNLIGraph gnliGraph, KB kb) {
 		this.gnliGraph = gnliGraph;
 		for (TermNode hTerm : gnliGraph.getHypothesisGraph().getSkolems()) {
-			if (gnliGraph.getHypothesisGraph().isLexCoRef(hTerm) == false && gnliGraph.getHypothesisGraph().isRstr(hTerm) == false)
+			if (gnliGraph.getHypothesisGraph().isLexCoRef(hTerm) == false) // && gnliGraph.getHypothesisGraph().isRstr(hTerm) == false)
 				this.hypothesisTerms.add(new CheckedTermNode(hTerm));
 		}
 		for (TermNode tTerm : gnliGraph.getTextGraph().getSkolems()) {
-			if (gnliGraph.getTextGraph().isLexCoRef(tTerm) == false && gnliGraph.getTextGraph().isRstr(tTerm) == false)
+			if (gnliGraph.getTextGraph().isLexCoRef(tTerm) == false) // && gnliGraph.getTextGraph().isRstr(tTerm) == false)
 				this.textTerms.add(tTerm);
 		}	
 		this.kb = kb;
@@ -404,9 +404,12 @@ public class InitialTermMatcher {
 			double[] tEmbed =  ((SenseNodeContent) tSenseNode.getContent()).getEmbed();
 			for (final SenseNode hSenseNode : gnliGraph.getHypothesisGraph().getSenses(hTerm)) {
 				double[] hEmbed = ((SenseNodeContent) hSenseNode.getContent()).getEmbed();
+				// exclude high frequency, functional elements from being matched
 				if (tEmbed != null && hEmbed != null && !((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech().equals("IN")
 						&& !((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech().equals("IN") && !((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech().contains("PRP")
-						&& !((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech().contains("PRP")){
+						&& !((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech().contains("PRP") && !((SkolemNodeContent) tTerm.getContent()).getStem().equals("be")
+						&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be") && !((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech().contains("DT")
+						&& !((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech().contains("DT")){
 					double cosSimil = computeCosineSimilarity(hEmbed, tEmbed);
 					if (cosSimil > highestCosSimil){
 						highestCosSimil = cosSimil;
@@ -423,7 +426,8 @@ public class InitialTermMatcher {
 	
 	protected  List<MatchEdge> checkEmbedMatch(CheckedTermNode cHTerm, TermNode similHTerm,TermNode similTTerm ) {
 		List<MatchEdge> retval = new ArrayList<MatchEdge>();
-		if (similHTerm != null && similTTerm != null ){ //&& highestCosSimil > 0.5
+		// avoid matching if the tTerm is already matched to another hTerm, to avoid overmatching
+		if (similHTerm != null && similTTerm != null && gnliGraph.getInMatches(similTTerm).isEmpty()){ //&& highestCosSimil > 0.5
 			final MatchContent linkContent = new MatchContent(MatchOrigin.MatchType.EMBED, Specificity.EQUALS, 20f);
 			final MatchEdge conceptMatch = new MatchEdge("embed",linkContent);
 			gnliGraph.addMatchEdge(conceptMatch, similHTerm, similTTerm);

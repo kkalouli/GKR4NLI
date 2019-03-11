@@ -18,7 +18,7 @@ import semantic.graph.vetypes.TermNode;
 
 public class InferenceChecker {
 
-	public enum EntailmentRelation implements Serializable {ENTAILMENT, CONTRADICTION, NEUTRAL, UNKNOWN}
+	public enum EntailmentRelation {ENTAILMENT, CONTRADICTION, NEUTRAL, UNKNOWN}
 	private GNLIGraph gnliGraph;
 	private EntailmentRelation entailmentRelation;
 	private HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>> hypothesisContexts;
@@ -26,7 +26,7 @@ public class InferenceChecker {
 	private SemanticNode<?> hypRootCtx;
 	private SemanticNode<?> textRootCtx;
 	private double matchStrength;
-	private MatchEdge justification;
+	private ArrayList<MatchEdge> justifications;
 	private boolean looseContra;
 	private boolean looseEntail;
 	
@@ -49,21 +49,30 @@ public class InferenceChecker {
 		if (this.entailmentRelation == EntailmentRelation.UNKNOWN) {
 			computeInferenceRelation();
 		}
-		return new InferenceDecision(entailmentRelation,matchStrength, justification, looseContra, looseEntail, gnliGraph);
+		return new InferenceDecision(entailmentRelation,matchStrength, justifications, looseContra, looseEntail, gnliGraph);
 	}
 	
 	
 	private void computeInferenceRelation() {
-		SemanticNode<?> hypRootNode = gnliGraph.getHypothesisGraph().getRootNode();
-		MatchEdge rootNodeMatch = null;
-		if (gnliGraph.getOutMatches(hypRootNode) != null && !gnliGraph.getOutMatches(hypRootNode).isEmpty())
-			rootNodeMatch = gnliGraph.getOutMatches(hypRootNode).iterator().next();	
+		HashMap<SemanticNode<?>,MatchEdge> rootNodeMatches = new HashMap<SemanticNode<?>,MatchEdge>();
 		//gnliGraph.getMatchGraph().display();
+		// find the root node of the role graph; there might be more than one root nodes or a double root node
 		for (MatchEdge matchEdge : gnliGraph.getMatches()){
 			SemanticNode<?> hTerm = gnliGraph.getStartNode(matchEdge);
-			if (hTerm.equals(gnliGraph.getHypothesisGraph().getRootNode())){
-				hypRootNode = hTerm;
-				rootNodeMatch = matchEdge;
+			// get all separate root nodes
+			if (gnliGraph.getHypothesisGraph().getContextGraph().getInEdges(hTerm).isEmpty()){
+				rootNodeMatches.put(hTerm,matchEdge);
+			} else {
+				// get all double root nodes
+				for (SemanticNode<?> node : gnliGraph.getHypothesisGraph().getContextGraph().getNodes()){
+					if (gnliGraph.getHypothesisGraph().getContextGraph().getInEdges(node).isEmpty()){
+						if (gnliGraph.getHypothesisGraph().getContextGraph().getEdges(node, hTerm).iterator().next().getLabel().equals("is_element")){
+							rootNodeMatches.put(node,matchEdge);
+						}
+					}
+				}
+
+				
 			}
 			SemanticNode<?> tTerm = gnliGraph.getFinishNode(matchEdge);
 			HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(hTerm);
@@ -87,7 +96,7 @@ public class InferenceChecker {
 			}*/
 			
 		}
-		if (rootNodeMatch != null && entailment(rootNodeMatch, hypRootNode, true)) {
+		if (!rootNodeMatches.isEmpty() && entailment(rootNodeMatches, true)) {
 			return;
 		}
 		/*if (entailment(rootNodeMatch, hypRootNode, false)) {
@@ -96,7 +105,7 @@ public class InferenceChecker {
 		
 		if (looseContra == false && looseEntail == false){
 			this.entailmentRelation = EntailmentRelation.NEUTRAL;
-			justification = null;
+			justifications = new ArrayList<MatchEdge>();
 		}
 		
 	}
@@ -155,43 +164,51 @@ public class InferenceChecker {
 		return false;
 	}
 	
-	private boolean entailment(MatchEdge matchEdge, SemanticNode<?> hypRootNode, boolean strict){
-		Specificity matchSpecificity = null;
-		if (strict == true)
-			matchSpecificity = matchEdge.getSpecificity();
-		else 
-			matchSpecificity = matchEdge.getOriginalSpecificity();
-		SemanticNode<?> tTerm = gnliGraph.getFinishNode(matchEdge);
-		HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(hypRootNode);
-		HashMap<SemanticNode<?>,Polarity> tTermCtxs = textContexts.get(tTerm);
-		// in case one of the nodes is not in the context graph but we still need to find out its context
-		// we get the ctx of that node from its SkolemNodeContent, find this context within the hypothesisContexts
-		// (whatever ctx is in the SkolemContent will necessarily be one of the ctxs of the contetx graph), and put
-		// the ctx found as the key of the hash and the veridical as the value and the root node as another key and
-		// and veridicality of the mother ctx as the value
-		if (hTermCtxs == null){
-			hTermCtxs = fillEmptyContexts((SkolemNode) hypRootNode, "hyp");
+	private boolean entailment(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches , boolean strict){
+		boolean entail = true;
+		for (SemanticNode<?> key : rootNodeMatches.keySet()){
+			Specificity matchSpecificity = null;
+			if (strict == true)
+				matchSpecificity = rootNodeMatches.get(key).getSpecificity();
+			else 
+				matchSpecificity = rootNodeMatches.get(key).getOriginalSpecificity();
+			SemanticNode<?> tTerm = gnliGraph.getFinishNode(rootNodeMatches.get(key));
+			HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(rootNodeMatches.get(key));
+			HashMap<SemanticNode<?>,Polarity> tTermCtxs = textContexts.get(tTerm);
+			// in case one of the nodes is not in the context graph but we still need to find out its context
+			// we get the ctx of that node from its SkolemNodeContent, find this context within the hypothesisContexts
+			// (whatever ctx is in the SkolemContent will necessarily be one of the ctxs of the contetx graph), and put
+			// the ctx found as the key of the hash and the veridical as the value and the root node as another key and
+			// and veridicality of the mother ctx as the value
+			if (hTermCtxs == null){
+				hTermCtxs = fillEmptyContexts((SkolemNode) key, "hyp");
+			}
+			if (tTermCtxs == null){
+				tTermCtxs = fillEmptyContexts((SkolemNode) tTerm, "txt");
+			}	
+			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
+			Polarity tPolarity = tTermCtxs.get(textRootCtx);
+			if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.VERIDICAL) {
+				if (matchSpecificity != Specificity.EQUALS || matchSpecificity != Specificity.SUBCLASS) {
+					entail = false;
+				}
+			}
+			else if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
+				if (matchSpecificity != Specificity.EQUALS || matchSpecificity != Specificity.SUPERCLASS) {
+					entail = false;
+					
+				}
+			} else{
+				entail = false;
+			}
 		}
-		if (tTermCtxs == null){
-			tTermCtxs = fillEmptyContexts((SkolemNode) tTerm, "txt");
+		if (entail == true){
+			this.entailmentRelation = EntailmentRelation.ENTAILMENT;
+			for (MatchEdge edge : rootNodeMatches.values()){
+				penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, edge);
+			}
 		}	
-		Polarity hPolarity = hTermCtxs.get(hypRootCtx);
-		Polarity tPolarity = tTermCtxs.get(textRootCtx);
-		if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.VERIDICAL) {
-			if (matchSpecificity == Specificity.EQUALS || matchSpecificity == Specificity.SUBCLASS) {
-				this.entailmentRelation = EntailmentRelation.ENTAILMENT;
-				penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
-				return true;
-			}
-		}
-		else if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
-			if (matchSpecificity == Specificity.EQUALS || matchSpecificity == Specificity.SUPERCLASS) {
-				this.entailmentRelation = EntailmentRelation.ENTAILMENT;
-				penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
-				return true;
-			}
-		}
-		return false;
+		return entail;
 	}
 	
 	
@@ -201,7 +218,7 @@ public class InferenceChecker {
 			if (strict == false)
 				matchStrength = 1;
 			matchStrength -= matchEdge.getScore();
-			justification = matchEdge;
+			justifications.add(matchEdge);
 		}
 	}
 	

@@ -10,7 +10,7 @@ import semantic.graph.SemanticEdge;
  * A {@link SemanticEdge} for the link graph
  *
  */
-public class LinkEdge extends SemanticEdge   implements Serializable {
+public class LinkEdge extends SemanticEdge implements Serializable {
 
 	/**
 	 * 

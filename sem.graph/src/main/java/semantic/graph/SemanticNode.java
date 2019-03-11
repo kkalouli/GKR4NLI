@@ -10,11 +10,10 @@ import java.io.Serializable;
  *
  * @param <T>
  */
-public class SemanticNode<T extends NodeContent> implements Comparable<SemanticNode<?>> {
+public class SemanticNode<T extends NodeContent> implements Comparable<SemanticNode<?>>, Serializable {
 
-	/**
-	 * 
-	 */
+
+	private static final long serialVersionUID = 9164392891306898759L;
 	protected String label;
 	protected T content;
 	
