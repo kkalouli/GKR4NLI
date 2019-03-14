@@ -1220,7 +1220,7 @@ public class SemanticGraph implements Serializable {
 	public boolean isRstr(TermNode node) {
 		if (this.roleGraph.containsNode(node)) {
 			for (SemanticEdge edge : getInEdges(node)) {
-				if (edge.getLabel().equals("rstr")) {
+				if (edge.getLabel().equals("rstr") || edge.getLabel().equals("ref")) {
 					return true;
 				}
 			}

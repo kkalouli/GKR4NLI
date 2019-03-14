@@ -14,11 +14,11 @@ import semantic.graph.EdgeContent;
  * information between two nodes.
  *
  */
-public class MatchContent implements EdgeContent, Serializable {
+public class MatchContent implements EdgeContent, Serializable, Comparable {
 	private static final long serialVersionUID = -3687998411657779763L;
 	private Specificity specificity;
 	private Specificity originalSpecificity;
-	private Map<String, Float> scores;
+	private Map<String, Double> scores;
 	private boolean finalized = false;
 	private List<MatchOrigin> matchOrigin;
 	private List<HeadModifierPathPair> justification;
@@ -27,8 +27,8 @@ public class MatchContent implements EdgeContent, Serializable {
 	public MatchContent() {
 		this.specificity = Specificity.NONE;
 		this.originalSpecificity = Specificity.NONE;
-		this.scores = new HashMap<String, Float>();
-		this.scores.put("distance", 0f);
+		this.scores = new HashMap<String, Double>();
+		this.scores.put("distance", 0.0);
 		this.finalized = false;
 		this.matchOrigin = new ArrayList<MatchOrigin>();
 		this.justification = new ArrayList<HeadModifierPathPair>();
@@ -65,17 +65,18 @@ public class MatchContent implements EdgeContent, Serializable {
 	 * @param tSense
 	 * 	    Sense id on text/premise term
 	 * @param concept
-	 * 	    The concept or racId for which there is a match
+	 * 	    The concept for which there is a match
 	 * @param specificity
 	 * 		The specificity of the match (sub, super, equal)
 	 * @param score
 	 * 		The penalty on the match
 	 */
-	public MatchContent(MatchOrigin.MatchType matchType, String hSense, String tSense, String concept, Specificity specificity, float score) {
+	public MatchContent(MatchOrigin.MatchType matchType, String hSense, String tSense, String concept, Specificity specificity, double positionScore, double depth) {
 		this(matchType);
 		this.specificity = specificity;
 		this.originalSpecificity = specificity;
-		this.scores.put("distance", score);
+		this.scores.put("distance", positionScore);
+		this.scores.put("depth", depth);
 		MatchOrigin mo = this.matchOrigin.get(0);
 		mo.setHSense(hSense); 
 		mo.setTSense(tSense);
@@ -88,18 +89,20 @@ public class MatchContent implements EdgeContent, Serializable {
 		}		
 	}
 	
-	public MatchContent(MatchOrigin.MatchType matchType, Specificity specificity, float score) {
+	public MatchContent(MatchOrigin.MatchType matchType, Specificity specificity,  double positionScore, double depth) {
 		this(matchType);
 		this.specificity = specificity;
 		this.originalSpecificity = specificity;
-		this.scores.put("distance", score);
+		this.scores.put("distance", positionScore);
+		this.scores.put("depth", depth);
+
 	}
 	
 	public MatchContent(MatchContent other) {
 		this();
 		this.specificity = other.specificity;
 		this.originalSpecificity = other.originalSpecificity;
-		this.scores = new HashMap<String, Float>(other.scores);
+		this.scores = new HashMap<String, Double>(other.scores);
 		this.finalized = other.finalized;
 		this.matchOrigin = other.matchOrigin;
 		this.justification = new ArrayList<HeadModifierPathPair>(other.justification);
@@ -141,27 +144,27 @@ public class MatchContent implements EdgeContent, Serializable {
 	 * The penalty/score on the match
 	 * @return
 	 */
-	public float getScore() {
-		float retval = 0f;
-		for (Float score : this.scores.values()) {
+	public double getScore() {
+		double retval = 0.0;
+		for (Double score : this.scores.values()) {
 			retval =+ score;
 		}
 		return retval;
 	}
 	
-	public float getFeatureScore(String feature) {
-		Float retval = this.scores.get(feature);
-		return retval == null ? 0f : retval;
+	public double getFeatureScore(String feature) {
+		Double retval = this.scores.get(feature);
+		return retval == null ? 0.0 : retval;
 	}
 	
-	public Map<String, Float> getScoreComponents() {
+	public Map<String, Double> getScoreComponents() {
 		return this.scores;
 	}
 	
-	public void addScore(String feature, float score) {
-		Float currentScore = this.scores.get(feature);
+	public void addScore(String feature, double score) {
+		Double currentScore = this.scores.get(feature);
 		if (currentScore == null) {
-			currentScore = (Float) 0f;
+			currentScore = 0.0;
 			this.scores.put(feature, currentScore);
 		}
 		currentScore =+ score;
@@ -200,6 +203,12 @@ public class MatchContent implements EdgeContent, Serializable {
 	public void setJustification(List<HeadModifierPathPair> justification) {
 		this.justification = justification;
 	}
+	
+	@Override
+    public int compareTo(Object o) {
+        MatchContent other = (MatchContent) o;
+        return (int) (this.getScore() - other.getScore());
+    }
 	
 
 }

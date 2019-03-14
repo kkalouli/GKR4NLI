@@ -30,14 +30,16 @@ public class PathScorer implements Serializable {
 	private float maxCost;
 	private HashMap<String, ArrayList<HeadModifierPathPair>> entailRolePaths;
 	private HashMap<String, ArrayList<HeadModifierPathPair>> neutralRolePaths;
+	private boolean learning;
 	
 	
-	public PathScorer(GNLIGraph gnliGraph, float maxCost) {
+	public PathScorer(GNLIGraph gnliGraph, float maxCost, boolean learning) {
 		super();
 		this.gnliGraph = gnliGraph;
 		this.maxCost = maxCost;
 		entailRolePaths = deserialize("entail");
 		neutralRolePaths = deserialize("neutral");
+		this.learning = learning;
 	}
 	
 	
@@ -146,14 +148,16 @@ public class PathScorer implements Serializable {
 	public void addEntailRolePath(HeadModifierPathPair pathToAdd){
 		if (pathsAreIdentical(pathToAdd) == true)
 			return;
-		String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();		
-		if (!entailRolePaths.containsKey(key)){
-			this.entailRolePaths.put(key, new ArrayList<HeadModifierPathPair>());
+		if (pathToAdd.getConclusionPath() != null && pathToAdd.getPremisePath() != null){
+			String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();		
+			if (!entailRolePaths.containsKey(key)){
+				this.entailRolePaths.put(key, new ArrayList<HeadModifierPathPair>());
+			}
+			this.entailRolePaths.get(key).add(pathToAdd);
+			// if a path is added to the entailPaths, it should be removed from the neutralPaths in case it is there. 
+			if (neutralRolePaths.keySet().contains(key))
+				removeNeutralRolePath(key); 
 		}
-		this.entailRolePaths.get(key).add(pathToAdd);
-		// if a path is added to the entailPaths, it should be removed from the neutralPaths in case it is there. 
-		if (neutralRolePaths.keySet().contains(key))
-			removeNeutralRolePath(key);  
 	}
 	
 	
@@ -164,12 +168,14 @@ public class PathScorer implements Serializable {
 	}
 	
 	private boolean pathsAreIdentical(HeadModifierPathPair path){
-		String hypPath = path.getConclusionPath().toString();
-		String txtPath = path.getPremisePath().toString();
-		if (hypPath.equals(txtPath))
-			return true;
-		else
-			return false;
+		if (path.getConclusionPath() != null && path.getPremisePath() != null){
+			String hypPath = path.getConclusionPath().toString();
+			String txtPath = path.getPremisePath().toString();
+			if (hypPath.equals(txtPath))
+				return true;
+			
+		}
+		return false;
 	}
 	
 	public void setNeutralRolePaths(HashMap<String,ArrayList<HeadModifierPathPair>> neutralRolePaths){
@@ -183,14 +189,16 @@ public class PathScorer implements Serializable {
 	public void addNeutralRolePath(HeadModifierPathPair pathToAdd){
 		if (pathsAreIdentical(pathToAdd) == true)
 			return;
-		String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();
-		// only add it to the neutral paths if it is not already contained in the entailPaths (entailPaths are more dominant) 
-		if (entailRolePaths.containsKey(key))
-			return;
-		if (!neutralRolePaths.containsKey(key)){
-			this.neutralRolePaths.put(key, new ArrayList<HeadModifierPathPair>());
+		if (pathToAdd.getConclusionPath() != null && pathToAdd.getPremisePath() != null){
+			String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();
+			// only add it to the neutral paths if it is not already contained in the entailPaths (entailPaths are more dominant) 
+			if (entailRolePaths.containsKey(key))
+				return;
+			if (!neutralRolePaths.containsKey(key)){
+				this.neutralRolePaths.put(key, new ArrayList<HeadModifierPathPair>());
+			}
+			this.neutralRolePaths.get(key).add(pathToAdd);
 		}
-		this.neutralRolePaths.get(key).add(pathToAdd);
 	}
 	
 	public void removeNeutralRolePath(String key){
@@ -236,13 +244,15 @@ public class PathScorer implements Serializable {
 	* not the same sense across matches
 	 */
 	public float pathPenalty(HeadModifierPathPair hMPath, List<SemanticEdge> tPath, List<SemanticEdge> hPath) {
-		float cost = 0;
-		String key = hPath.toString()+"/"+tPath.toString();
-		if (neutralRolePaths.containsKey(key))
-			cost += maxCost;
-		else if (entailRolePaths.containsKey(key))
-			cost -= 10;
-		if (tPath.size() == hPath.size() && hPath.size() == 0){
+		float cost = 0;	
+		if (pathsAreIdentical(hMPath) == false && learning == false){
+			String key = hPath.toString()+"/"+tPath.toString();
+			if (neutralRolePaths.containsKey(key))
+				cost += maxCost;
+			else if (entailRolePaths.containsKey(key))
+				cost -= 10;
+		}
+		if (tPath.size() == hPath.size() && hPath.size() == 1){
 			// if the match is based on opposing roles, it should be neglected
 			if ( (tPath.get(0).getLabel().equals("sem_subj") && hPath.get(0).getLabel().equals("sem_obj")) ||
 				 (tPath.get(0).getLabel().equals("sem_obj") && hPath.get(0).getLabel().equals("sem_subj")) )
@@ -252,7 +262,7 @@ public class PathScorer implements Serializable {
 				cost -= 2;
 			else if (tPath.equals(hPath))
 				cost -= 2; 
-		} else if (tPath.size() == 2){				
+		} else if (tPath.size() == 2 && hPath.size() == 1){				
 			if (hPath.get(0).getLabel().equals("amod") && tPath.get(0).getLabel().equals("nmod") && tPath.get(1).getLabel().equals("amod"))
 				cost -= 2;
 		} else if (hPath.size() == 2 && tPath.size() == 1){	
@@ -276,7 +286,7 @@ public class PathScorer implements Serializable {
 					}
 				}
 			}
-			if (same == false){
+			if (same == false && !startSenses.isEmpty() && !finishSenses.isEmpty()){
 				cost += maxCost;
 			}
 			

@@ -42,6 +42,7 @@ public class RolesMapper implements Serializable {
 	private SemGraph depGraph;
 	// will need passive for the passive graphs
 	private boolean passive;
+	private boolean passivePerm;
 	// need it for verb coordination
 	private boolean verbCoord;
 	// need it for clausal coordination
@@ -74,6 +75,7 @@ public class RolesMapper implements Serializable {
 		this.graph = graph;
 		this.depGraph = graph.getDependencyGraph();
 		passive = false;
+		passivePerm = false;
 		verbCoord = false;
 		clausalCoord = false;
 		coord = false;
@@ -125,8 +127,10 @@ public class RolesMapper implements Serializable {
 				integrateCoordinatingRoles(start, finish, edge, edgeLabel);
 				verbCoord = false;
 				coord = false;
-				if (edge.getLabel().contains("pass"))
+				if (edge.getLabel().contains("pass")){
 					passive = true;
+					passivePerm = true;
+				}
 			}
 			
 			// after dealing with coordination, add all the roles of the plain edges to the role graph		
@@ -151,7 +155,7 @@ public class RolesMapper implements Serializable {
 		// make sure that the role graph has a subject in the case of an imperative verb .
 		// first case: role graph is completely empty (intransitive imperative)
 		// second case: only asubject is missing (transitive imperative)
-		if (graph.getRoleGraph().getNodes().isEmpty() || foundSubj == false){
+		if ((graph.getRoleGraph().getNodes().isEmpty() || foundSubj == false) && passivePerm == true){
 			RoleEdge roleEdge = new RoleEdge(GraphLabels.SUBJ, new RoleEdgeContent());
 			SkolemNodeContent subjNodeContent = new SkolemNodeContent();
 			subjNodeContent.setSurface("you");
@@ -564,30 +568,33 @@ public class RolesMapper implements Serializable {
 		break;
 		case "auxpass" : passive = true;
 		break;
-		// only add it when the verb coord is false; when true, it will be added later
 		case "nsubjpass" : role = GraphLabels.OBJ;
 		passive = true;
+		foundSubj = true;
 		break;
 		case "nsubjpass:xsubj" : role = GraphLabels.OBJ;
 		passive = true;
+		foundSubj = true;
 		break;
-		// only add it when the verb coord is false; when true, it will be added later
 		case "csubj" : role = GraphLabels.SUBJ;
+		foundSubj = true;
 		break;
-		// only add it when the verb coord is false; when true, it will be added later
 		case "csubjpass" : role = GraphLabels.OBJ;	
 		passive = true;
+		foundSubj = true;
 		break;
 		case "nmod:agent" : if (passive == true){ 
 			role = GraphLabels.SUBJ;
+			foundSubj = true;
 		}	
 		break;
 		case "nmod:by" : if (passive == true){ 
 			role = GraphLabels.SUBJ;
+			foundSubj = true;
 		}	
 		break;
-		// only add it when the verb coord is false; when true, it will be added later
 		case "nsubj:xsubj": role = GraphLabels.SUBJ;
+		foundSubj = true;
 		break;
 		case "amod": boolean found = false;
 		// if the word is already included in the property graph as a specifier (e.g. many, few, etc) dont add it here again
@@ -604,6 +611,8 @@ public class RolesMapper implements Serializable {
 		case "acl:relcl": role = GraphLabels.RESTRICTION;
 		break;
 		case "compound":role = GraphLabels.COMPOUND;
+		break;
+		case "dep": role = GraphLabels.MOD;
 		break;
 		// dont know yet if they should be in there, appos is treated in the DepGraphToSemGraph as part of the LinkGraph
 		/*case "appos":role = GraphLabels.RESTRICTION;

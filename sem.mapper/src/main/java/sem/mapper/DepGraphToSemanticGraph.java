@@ -89,9 +89,13 @@ public class DepGraphToSemanticGraph implements Serializable {
 		nounForms.add("NNS");
 		nounForms.add("NNPS");
 		quantifiers.add("many");
-		quantifiers.add("few");
+		quantifiers.add("much");
 		quantifiers.add("plenty");
 		quantifiers.add("several");
+		quantifiers.add("some");
+		quantifiers.add("most");
+		quantifiers.add("all");
+		quantifiers.add("every");
 		whinterrogatives.add("who");
 		whinterrogatives.add("when");
 		whinterrogatives.add("where");
@@ -233,12 +237,16 @@ public class DepGraphToSemanticGraph implements Serializable {
 		
 		/*
 		 * Go through the finished dep graph and fix any cases that are dealt differently by CoreNLP than by us.
-		 * For now, only change the deps of the modals ought and need so they can be treated the same as the rest of the modals.
+		 * For now, 2 things:
+		 * 1)  only change the deps of the modals ought and need so they can be treated the same as the rest of the modals.
 		 * When the modals have a complement with "to", they are (correctly) considered the roots of the sentences and the main verb
 		 * gets to be the xcomp, e.g. Abrams need to hire Browne (as opposed to when they are found without "to", where they are
 		 * considered plain aux of the main verb, e.g. Need Abrams hire Browne?)  However, we want to treat the former cases as aux as well
 		 * so that the implementation of the role graph remains the same. Therefore, in the following we remove the x/ccomp edge
 		 * and add the aux edge instead.  
+		 * 2) if there are any quantifiers (e.g., few, little) involved with negative monotonicity in restriction position, then add a negated node in order to
+		 * capture accordingly the contexts: few people = not many people
+		 * For the moment, it doesnt work with "little". The quantifier "no" (not some) is separately treated in the context mapping. 
 		 */
 		for (SemanticNode<?> node : graph.getDependencyGraph().getNodes()){
 			if ( (((SkolemNodeContent) node.getContent()).getStem().equals("ought")
@@ -254,7 +262,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 					// remove all out edges of the modal
 					graph.removeDependencyEdge(out);
 				}		
-			} else if ( (((SkolemNodeContent) node.getContent()).getStem().equals("few"))){
+			} else if ( (((SkolemNodeContent) node.getContent()).getStem().equals("few"))) { 
 				RoleEdge depEdge = new RoleEdge("neg", new RoleEdgeContent());
 				SemanticNode<?> head = graph.getOutNeighbors(node).iterator().next();
 				SkolemNodeContent notContent = new SkolemNodeContent();
@@ -374,12 +382,11 @@ public class DepGraphToSemanticGraph implements Serializable {
 							}
 					} else if (depOfDependent.equals("amod") && (quantifiers.contains(determiner.toLowerCase()) )  ){
 						specifier = determiner;
+					// do the following adjustments for quantifiers with negative monotonicity in restriction type
 					} else if (determiner.equals("no")){
 						specifier = "some";
 					} else if (determiner.equals("few")){
 						specifier = "many";
-					} else if (determiner.equals("little")){
-						specifier = "much";
 					}
 				}
 				// check if there is a "none" involved: "none" is not recognized as a det:qmod so we have to look for it separately
@@ -643,7 +650,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 	public static void main(String args[]) throws IOException {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/mixed_testsuite.txt", semConverter);
-		String sentence = "The man in the purple hat isn't operating a camera that makes videos.";
+		String sentence = "The man drank a little water.";//"A family is watching a little boy who is hitting a baseball.";
 		String context = "John faked the illness.";
 		semConverter.processSentence(sentence, sentence+" "+context);	
 	}

@@ -2,6 +2,7 @@ package gnli;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -13,6 +14,7 @@ import java.util.Set;
 import static java.util.stream.Collectors.*;
 
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 import static java.util.Map.Entry.*;
 import semantic.graph.SemanticEdge;
@@ -43,9 +45,8 @@ public class SpecificityUpdater {
 			this.matchAgenda = new ArrayList<MatchAgendaItem>();
 			// Set up match agenda and filter:
 			for (MatchEdge match: gnliGraph.getMatches()) {
-				if (gnliGraph.getHypothesisGraph().isRstr((TermNode) gnliGraph.getMatchGraph().getStartNode(match)))
-					continue;
-				if (gnliGraph.getTextGraph().isRstr((TermNode) gnliGraph.getMatchGraph().getFinishNode(match)))
+				if (gnliGraph.getHypothesisGraph().isRstr((TermNode) gnliGraph.getMatchGraph().getStartNode(match)) &&
+						gnliGraph.getTextGraph().isRstr((TermNode) gnliGraph.getMatchGraph().getFinishNode(match)))
 					continue;
 				MatchAgendaItem item = new MatchAgendaItem();
 				item.match = match;
@@ -96,6 +97,7 @@ public class SpecificityUpdater {
 			for (MatchAgendaItem item : this.matchAgenda) {
 				boolean updateComplete = updateMatch(item.match);
 				gnliGraph.getMatchGraph().display();
+				//gnliGraph.getHypothesisGraph().displayDependencies();
 				//gnliGraph.getTextGraph().display();
 				if (!updateComplete) {
 					newAgenda.add(item);
@@ -176,7 +178,8 @@ public class SpecificityUpdater {
 				// get only direct and indirect modifiers
 				//if (!gnliGraph.getTextGraph().getDependencyGraph().getOutReach(hypoTextMatch.textTerm).contains(finishRestr)){
 				// get also any undirected path connecting the term to the modifier
-				if (gnliGraph.getTextGraph().getDependencyGraph().getShortestUndirectedPath(hypoTextMatch.textTerm,modifier).isEmpty() && !modifier.equals(hypoTextMatch.textTerm)){
+				if ((gnliGraph.getTextGraph().getDependencyGraph().getShortestUndirectedPath(hypoTextMatch.textTerm,modifier) == null ||
+						gnliGraph.getTextGraph().getDependencyGraph().getShortestUndirectedPath(hypoTextMatch.textTerm,modifier).isEmpty()) && !modifier.equals(hypoTextMatch.textTerm)){
 					// H more specific
 					hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUPERCLASS));
 					hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, modifier));
@@ -186,7 +189,8 @@ public class SpecificityUpdater {
 				// get only direct and indirect modifiers
 				//if (!gnliGraph.getHypothesisGraph().getDependencyGraph().getOutReach(hypoTextMatch.hypothesisTerm).contains(startRestr)){
 				// get also any undirected path connecting the term to the modifier
-				if (gnliGraph.getHypothesisGraph().getDependencyGraph().getShortestUndirectedPath(hypoTextMatch.hypothesisTerm,modifier).isEmpty() && !modifier.equals(hypoTextMatch.hypothesisTerm)){
+				if ((gnliGraph.getHypothesisGraph().getDependencyGraph().getShortestUndirectedPath(hypoTextMatch.hypothesisTerm,modifier) == null ||
+						gnliGraph.getHypothesisGraph().getDependencyGraph().getShortestUndirectedPath(hypoTextMatch.hypothesisTerm,modifier).isEmpty()) && !modifier.equals(hypoTextMatch.hypothesisTerm)){
 					// T more specific
 					hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUBCLASS));
 					hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, modifier));
@@ -288,6 +292,7 @@ public class SpecificityUpdater {
 				newMatches.add(newMatch);
 			}
 			
+			//Collections.sort(newMatches);
 			keepBestMatch(match, newMatches);
 			return complete;
 		}
@@ -295,11 +300,11 @@ public class SpecificityUpdater {
 		// set the content of the main match to the content of the best match (the one with the lowest cost)
 		// newMatches are the corresponding matches with modifier terms of the main match
 		private void keepBestMatch(MatchEdge match, List<HypoTextMatch> newMatches) {
-			float maxCost = 20;
+			double maxCost = 100;
 			HypoTextMatch bestMatch = null;
 			for (HypoTextMatch newMatch : newMatches){
 				if (newMatch.match.getJustification() != null){
-					float cost =  newMatch.match.getScore();
+					double cost =  newMatch.match.getScore();
 					if (cost <= maxCost){
 						maxCost = cost;
 						bestMatch = newMatch;
@@ -307,6 +312,14 @@ public class SpecificityUpdater {
 				}
 			}
 			match.setContent(bestMatch.match.getContent());
+			
+			for (HypoTextMatch newMatch : newMatches){
+				if (!newMatch.equals(newMatches.get(0))){
+					gnliGraph.removeMatchEdge(newMatch.match);
+					matchAgenda.remove(newMatch);
+				}
+			}
+
 		}
 		
 		
@@ -360,7 +373,7 @@ public class SpecificityUpdater {
 				for (MatchEdge outM : gnliGraph.getOutMatches(hRstr)){
 					SemanticNode<?> tRstr = gnliGraph.getMatchGraph().getFinishNode(outM);
 					// if there is a matching restriction Tr, either as a regular concept restriction on T or as a relative clause restriction
-					if (textTermRestr.contains(tRstr) || gnliGraph.getTextGraph().getDependencyGraph().getOutReach(textTerm).contains(tRstr)){
+					if (textTermRestr.contains(tRstr) || !gnliGraph.getHypothesisGraph().getDependencyGraph().getShortestUndirectedPath(textTerm,tRstr).isEmpty()){
 						match.setSpecificity(switchSpecificity(match.getSpecificity(), outM.getSpecificity()));
 						match.addJustification(justificationOfSpecificityUpdate(hypTerm,hRstr,textTerm,tRstr,match,outM));
 						unmatchedTextRestrs.remove(tRstr);
@@ -379,7 +392,7 @@ public class SpecificityUpdater {
 				boolean matchFound = false;
 				for (MatchEdge inM : gnliGraph.getInMatches(tRstr)){
 					SemanticNode<?> hRstr = gnliGraph.getMatchGraph().getStartNode(inM);
-					if (gnliGraph.getHypothesisGraph().getRoleGraph().getOutReach(hypTerm).contains(hRstr)){
+					if (!gnliGraph.getHypothesisGraph().getDependencyGraph().getShortestUndirectedPath(hypTerm,hRstr).isEmpty()){
 						match.setSpecificity(switchSpecificity(match.getSpecificity(), inM.getSpecificity()));
 						match.addJustification(justificationOfSpecificityUpdate(hypTerm,hRstr,textTerm,tRstr,match,inM));
 						matchFound = true;
@@ -625,7 +638,11 @@ public class SpecificityUpdater {
 			return hMods + tMods;
 		}
 		
-		class HypoTextMatch {
+		class HypoTextMatch implements Serializable, Comparable {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1282367049260447154L;
 			MatchEdge match;
 			SkolemNode textTerm;
 			SkolemNode hypothesisTerm;
@@ -691,6 +708,12 @@ public class SpecificityUpdater {
 					texMods.add((SkolemNode) key);
 				}			
 			}
+			
+			@Override
+		    public int compareTo(Object o) {
+		        MatchContent other = (MatchContent) o;
+		        return (int) (this.match.getScore() - other.getScore());
+		    }
 		}		
 		
 }

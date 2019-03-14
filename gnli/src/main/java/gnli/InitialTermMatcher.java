@@ -50,6 +50,7 @@ public class InitialTermMatcher {
 	private final List<TermNode> textTerms = Collections.synchronizedList(new ArrayList<TermNode>());
 	private KB kb;
 	private double highestCosSimil;
+	private ArrayList<String> POSToExclude;
 
 	
 
@@ -109,6 +110,11 @@ public class InitialTermMatcher {
 		}	
 		this.kb = kb;
 		this.highestCosSimil = 0.0;
+		this.POSToExclude = new ArrayList<String>();
+		this.POSToExclude.add("PRP");
+		this.POSToExclude.add("IN");
+		this.POSToExclude.add("DT");
+		this.POSToExclude.add("WDT");
 	}
 	
 	
@@ -256,12 +262,16 @@ public class InitialTermMatcher {
 	 * @return
 	 * 		A list of {@link MatchEdge}s (typically one or none)
 	 */
+	@SuppressWarnings("unchecked")
 	protected List<MatchEdge> checkSenseMatch(CheckedTermNode cHTerm,TermNode tTerm) {
-		// TODO: check how to deal with compounds that are given as a second sense of a word: for now they are treated in the specificityupdater as restrictions
 		List<MatchEdge> retval = new ArrayList<MatchEdge>();
+		ArrayList<MatchContent> contents = new ArrayList<MatchContent>();
 		if (cHTerm.isMatched()) {
 			return retval;
 		}
+		int indexTSense = 0;
+		int indexHSense = 0;
+		MatchContent linkContent = null;
 		TermNode hTerm = cHTerm.node;
 		for (final SenseNode tSenseNode : gnliGraph.getTextGraph().getSenses(tTerm)) {
 			String tSenseId = ((SenseNodeContent) tSenseNode.getContent()).getSenseId();
@@ -275,7 +285,6 @@ public class InitialTermMatcher {
 				List<String> hAntonyms = ((SenseNodeContent) hSenseNode.getContent()).getAntonyms();
 				Map<String, Integer> hSuperConcepts = ((SenseNodeContent) hSenseNode.getContent()).getSuperConcepts();
 				Map<String, Integer> hSubConcepts = ((SenseNodeContent) hSenseNode.getContent()).getSubConcepts();
-				MatchContent linkContent = null;
 				MatchOrigin.MatchType matchType  = MatchOrigin.MatchType.SENSE;
 				if (hSenseId.startsWith("cmp_")){
 					hSenseId = hSenseId.substring(4);
@@ -286,30 +295,38 @@ public class InitialTermMatcher {
 					matchType = MatchOrigin.MatchType.SENSE_CMP;
 				}
 				if (tSenseId != null && hSenseId != null && !tSenseId.equals("U") && !hSenseId.equals("U") && !((SkolemNodeContent) tTerm.getContent()).getStem().equals("be")
-						&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be")){
+						&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be") && !POSToExclude.contains(((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech()) 
+						&& !POSToExclude.contains(((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech())){
+					int penalty = indexTSense + indexHSense; 
 					if (tSenseId.equals(hSenseId)) {
-						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.EQUALS, 0f);
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.EQUALS, penalty, 0);
 					} else if (tSynonyms.contains(hTerm.getLabel().substring(0,hTerm.getLabel().indexOf("_"))) || hSynonyms.contains(tTerm.getLabel().substring(0,tTerm.getLabel().indexOf("_")))){
-						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.EQUALS, 1f);
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.EQUALS, penalty, 0);
 					} else if (tSuperConcepts.keySet().contains(hSenseId)){
-						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.SUPERCLASS, tSuperConcepts.get(hSenseId));
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.SUBCLASS, penalty, tSuperConcepts.get(hSenseId));
 					} else if (hSuperConcepts.keySet().contains(tSenseId)){
-						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.SUBCLASS, hSuperConcepts.get(tSenseId));
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.SUPERCLASS, penalty, hSuperConcepts.get(tSenseId));
 					} else if (hSubConcepts.keySet().contains(tSenseId)){
-						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.SUPERCLASS, hSubConcepts.get(tSenseId));
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.SUBCLASS, penalty, hSubConcepts.get(tSenseId));
 					} else if (tSubConcepts.keySet().contains(hSenseId)){
-						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.SUBCLASS, tSubConcepts.get(hSenseId));
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.SUPERCLASS, penalty, tSubConcepts.get(hSenseId));
 					} else if (hAntonyms.contains(tTerm.getLabel().substring(0,tTerm.getLabel().indexOf("_"))) || tAntonyms.contains(hTerm.getLabel().substring(0,hTerm.getLabel().indexOf("_"))) ){
-						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.DISJOINT, 0f);
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.DISJOINT, penalty, 0);
 					}
-					if (linkContent != null){
-						final MatchEdge senseMatch = new MatchEdge("sense",linkContent);
-						gnliGraph.addMatchEdge(senseMatch, hTerm, tTerm);
-						retval.add(senseMatch);
-						cHTerm.pendMatch();
-					}
+					
+					if (linkContent != null)
+						contents.add(linkContent);
 				}
+				indexHSense++;
 			}
+			indexTSense++;
+		}
+		Collections.sort(contents);
+		if (!contents.isEmpty()){
+			final MatchEdge senseMatch = new MatchEdge("sense",contents.get(0));
+			gnliGraph.addMatchEdge(senseMatch, hTerm, tTerm);
+			retval.add(senseMatch);
+			cHTerm.pendMatch();
 		}
 		return retval;
 	}
@@ -327,24 +344,27 @@ public class InitialTermMatcher {
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
 	protected List<MatchEdge> checkConceptMatch(CheckedTermNode cHTerm,TermNode tTerm) {
 		List<MatchEdge> retval = new ArrayList<MatchEdge>();
+		ArrayList<MatchContent> contents = new ArrayList<MatchContent>();
 		if (cHTerm.isMatched()) {
 			return retval;
 		}
 		TermNode hTerm = cHTerm.node;
+		int indexTSense = 0;
+		int indexHSense = 0;
+		MatchContent linkContent = null;
 		for (final SenseNode tSenseNode : gnliGraph.getTextGraph().getSenses(tTerm)) {
 			String tConcept = ((SenseNodeContent) tSenseNode.getContent()).getConcepts().get(0);
 			for (final SenseNode hSenseNode : gnliGraph.getHypothesisGraph().getSenses(hTerm)) {
 				String hConcept = ((SenseNodeContent) hSenseNode.getContent()).getConcepts().get(0);
 				if (tConcept != null && hConcept != null && tConcept != "" && hConcept != "" && !((SkolemNodeContent) tTerm.getContent()).getStem().equals("be")
-						&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be")){
+						&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be") && !POSToExclude.contains(((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech()) 
+						&& !POSToExclude.contains(((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech())){
+					int penalty = indexHSense + indexTSense;
 					if (tConcept.equals(hConcept)) {
-						final MatchContent linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, Specificity.EQUALS, 0f);
-						final MatchEdge conceptMatch = new MatchEdge("concept",linkContent);
-						gnliGraph.addMatchEdge(conceptMatch, hTerm, tTerm);
-						retval.add(conceptMatch);
-						cHTerm.pendMatch();
+						linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, Specificity.EQUALS, penalty, 0);
 					} else {
 						ArrayList<Formula> listOfRelations = kb.askWithRestriction(2, tConcept.substring(0,tConcept.length()-1), 1, hConcept.substring(0,hConcept.length()-1));
 						listOfRelations.addAll(kb.askWithRestriction(2, hConcept.substring(0,hConcept.length()-1), 1, tConcept.substring(0,tConcept.length()-1)));
@@ -380,15 +400,22 @@ public class InitialTermMatcher {
 								spec = Specificity.SUPERCLASS;
 						}
 						if (spec != null){
-							final MatchContent linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, spec, 0f);
-							final MatchEdge conceptMatch = new MatchEdge("concept",linkContent);
-							gnliGraph.addMatchEdge(conceptMatch, hTerm, tTerm);
-							retval.add(conceptMatch);
-							cHTerm.pendMatch();
+							linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, spec, penalty, 0);
 						}
 					}
+					if (linkContent != null)
+						contents.add(linkContent);
 				}
+				indexHSense++;
 			}
+			indexTSense++;
+		}	
+		Collections.sort(contents);
+		if (!contents.isEmpty()){
+			final MatchEdge conceptMatch = new MatchEdge("concept",contents.get(0));
+			gnliGraph.addMatchEdge(conceptMatch, hTerm, tTerm);
+			retval.add(conceptMatch);
+			cHTerm.pendMatch();
 		}
 		return retval;
 	}
@@ -405,11 +432,9 @@ public class InitialTermMatcher {
 			for (final SenseNode hSenseNode : gnliGraph.getHypothesisGraph().getSenses(hTerm)) {
 				double[] hEmbed = ((SenseNodeContent) hSenseNode.getContent()).getEmbed();
 				// exclude high frequency, functional elements from being matched
-				if (tEmbed != null && hEmbed != null && !((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech().equals("IN")
-						&& !((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech().equals("IN") && !((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech().contains("PRP")
-						&& !((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech().contains("PRP") && !((SkolemNodeContent) tTerm.getContent()).getStem().equals("be")
-						&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be") && !((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech().contains("DT")
-						&& !((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech().contains("DT")){
+				if (tEmbed != null && hEmbed != null && !POSToExclude.contains(((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech()) &&
+					!POSToExclude.contains(((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech()) 
+					&& !((SkolemNodeContent) tTerm.getContent()).getStem().equals("be") && !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be")){
 					double cosSimil = computeCosineSimilarity(hEmbed, tEmbed);
 					if (cosSimil > highestCosSimil){
 						highestCosSimil = cosSimil;
@@ -428,7 +453,10 @@ public class InitialTermMatcher {
 		List<MatchEdge> retval = new ArrayList<MatchEdge>();
 		// avoid matching if the tTerm is already matched to another hTerm, to avoid overmatching
 		if (similHTerm != null && similTTerm != null && gnliGraph.getInMatches(similTTerm).isEmpty()){ //&& highestCosSimil > 0.5
-			final MatchContent linkContent = new MatchContent(MatchOrigin.MatchType.EMBED, Specificity.EQUALS, 20f);
+			// subtract the similarity from 0 in order to have the result as the penalty(depth). This means
+			// highest cosine similarity will give lower penalty than lower similarity.
+			double depth = 0 - highestCosSimil;
+			final MatchContent linkContent = new MatchContent(MatchOrigin.MatchType.EMBED, Specificity.EQUALS, 0, depth);
 			final MatchEdge conceptMatch = new MatchEdge("embed",linkContent);
 			gnliGraph.addMatchEdge(conceptMatch, similHTerm, similTTerm);
 			retval.add(conceptMatch);

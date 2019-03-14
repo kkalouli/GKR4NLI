@@ -80,15 +80,15 @@ public class MatchEdge extends LinkEdge implements Serializable {
 	 * The cost of the match
 	 * @return
 	 */
-	public float getScore() {
+	public double getScore() {
 		return ((MatchContent) this.content).getScore();
 	}
 	
-	public float getFeatureScore(String feature) {
+	public double getFeatureScore(String feature) {
 		return ((MatchContent) this.content).getFeatureScore(feature);
 	}
 	
-	public Map<String, Float> getScoreComponents() {
+	public Map<String, Double> getScoreComponents() {
 		return ((MatchContent) this.content).getScoreComponents();
 	}
 

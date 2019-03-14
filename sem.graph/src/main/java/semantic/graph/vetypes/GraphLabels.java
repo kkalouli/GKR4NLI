@@ -87,6 +87,7 @@ public class GraphLabels implements Serializable{
 	public static final String COMP = "sem_comp";
 	public static final String XCOMP = "sem_xcomp";
 	public static final String NMOD = "nmod";
+	public static final String MOD = "mod"; // general mod that we dont know what exactly it is: corresponds to the "dep" UD relation
 	public static final String COMPOUND = "cmp";
 	
 	public static final Set<String> roleEdgeLabels = new HashSet<String>(Arrays.asList(new String[] {

@@ -39,6 +39,7 @@ public class InferenceChecker {
 		looseContra = false;
 		looseEntail = false;
 		matchStrength = 2;
+		justifications = new ArrayList<MatchEdge>();
 	}
 	
 	
@@ -60,20 +61,27 @@ public class InferenceChecker {
 		for (MatchEdge matchEdge : gnliGraph.getMatches()){
 			SemanticNode<?> hTerm = gnliGraph.getStartNode(matchEdge);
 			// get all separate root nodes
-			if (gnliGraph.getHypothesisGraph().getContextGraph().getInEdges(hTerm).isEmpty()){
+			if (gnliGraph.getHypothesisGraph().getRoleGraph().getInEdges(hTerm).isEmpty()){
+				//gnliGraph.getHypothesisGraph().displayRoles();
+				//gnliGraph.getHypothesisGraph().displayContexts();
 				rootNodeMatches.put(hTerm,matchEdge);
 			} else {
 				// get all double root nodes
-				for (SemanticNode<?> node : gnliGraph.getHypothesisGraph().getContextGraph().getNodes()){
-					if (gnliGraph.getHypothesisGraph().getContextGraph().getInEdges(node).isEmpty()){
-						if (gnliGraph.getHypothesisGraph().getContextGraph().getEdges(node, hTerm).iterator().next().getLabel().equals("is_element")){
-							rootNodeMatches.put(node,matchEdge);
+				for (SemanticNode<?> node : gnliGraph.getHypothesisGraph().getRoleGraph().getNodes()){
+					if (gnliGraph.getHypothesisGraph().getRoleGraph().getInEdges(node).isEmpty()){
+						if (!gnliGraph.getHypothesisGraph().getRoleGraph().getEdges(node, hTerm).isEmpty()){
+							if (gnliGraph.getHypothesisGraph().getRoleGraph().getEdges(node, hTerm).iterator().next().getLabel().equals("is_element")){
+								//gnliGraph.getHypothesisGraph().displayRoles();
+								//gnliGraph.getHypothesisGraph().displayContexts();
+								rootNodeMatches.put(hTerm,matchEdge);
+							}
 						}
 					}
 				}
 
 				
 			}
+			//gnliGraph.getHypothesisGraph().displayDependencies();
 			SemanticNode<?> tTerm = gnliGraph.getFinishNode(matchEdge);
 			HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(hTerm);
 			HashMap<SemanticNode<?>,Polarity> tTermCtxs = textContexts.get(tTerm);
@@ -96,7 +104,7 @@ public class InferenceChecker {
 			}*/
 			
 		}
-		if (!rootNodeMatches.isEmpty() && entailment(rootNodeMatches, true)) {
+		if (!rootNodeMatches.isEmpty() && entailmentOrDisjoint(rootNodeMatches, true)) {
 			return;
 		}
 		/*if (entailment(rootNodeMatch, hypRootNode, false)) {
@@ -105,7 +113,6 @@ public class InferenceChecker {
 		
 		if (looseContra == false && looseEntail == false){
 			this.entailmentRelation = EntailmentRelation.NEUTRAL;
-			justifications = new ArrayList<MatchEdge>();
 		}
 		
 	}
@@ -144,9 +151,9 @@ public class InferenceChecker {
 			matchSpecificity = matchEdge.getSpecificity();
 		else 
 			matchSpecificity = matchEdge.getOriginalSpecificity();
+		Polarity hPolarity = hTermCtxs.get(hypRootCtx);
+		Polarity tPolarity = tTermCtxs.get(textRootCtx);
 		if (matchSpecificity!= Specificity.NONE && matchSpecificity != Specificity.DISJOINT) {
-			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
-			Polarity tPolarity = tTermCtxs.get(textRootCtx);
 			if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.VERIDICAL) {
 				if (matchSpecificity == Specificity.EQUALS || matchSpecificity == Specificity.SUBCLASS) {
 					this.entailmentRelation = EntailmentRelation.CONTRADICTION;
@@ -160,12 +167,13 @@ public class InferenceChecker {
 					return true;
 				}
 			}
-		}
+		} 
 		return false;
 	}
 	
-	private boolean entailment(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches , boolean strict){
+	private boolean entailmentOrDisjoint(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches , boolean strict){
 		boolean entail = true;
+		boolean disjoint = true;
 		for (SemanticNode<?> key : rootNodeMatches.keySet()){
 			Specificity matchSpecificity = null;
 			if (strict == true)
@@ -173,7 +181,7 @@ public class InferenceChecker {
 			else 
 				matchSpecificity = rootNodeMatches.get(key).getOriginalSpecificity();
 			SemanticNode<?> tTerm = gnliGraph.getFinishNode(rootNodeMatches.get(key));
-			HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(rootNodeMatches.get(key));
+			HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(key);
 			HashMap<SemanticNode<?>,Polarity> tTermCtxs = textContexts.get(tTerm);
 			// in case one of the nodes is not in the context graph but we still need to find out its context
 			// we get the ctx of that node from its SkolemNodeContent, find this context within the hypothesisContexts
@@ -189,17 +197,22 @@ public class InferenceChecker {
 			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
 			Polarity tPolarity = tTermCtxs.get(textRootCtx);
 			if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.VERIDICAL) {
-				if (matchSpecificity != Specificity.EQUALS || matchSpecificity != Specificity.SUBCLASS) {
-					entail = false;
-				}
+				if (matchSpecificity != Specificity.DISJOINT && matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUBCLASS){
+					disjoint = false;
+				} else 	if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUBCLASS) {
+					entail = false;		
+				} 
+				
 			}
 			else if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
-				if (matchSpecificity != Specificity.EQUALS || matchSpecificity != Specificity.SUPERCLASS) {
-					entail = false;
-					
+				if (matchSpecificity != Specificity.DISJOINT && matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUBCLASS){
+					disjoint = false;
+				}else if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUPERCLASS) {
+					entail = false;		
 				}
 			} else{
 				entail = false;
+				disjoint = false;
 			}
 		}
 		if (entail == true){
@@ -207,8 +220,15 @@ public class InferenceChecker {
 			for (MatchEdge edge : rootNodeMatches.values()){
 				penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, edge);
 			}
-		}	
-		return entail;
+			return entail;
+		} else if (disjoint == true){
+			this.entailmentRelation = EntailmentRelation.CONTRADICTION;
+			for (MatchEdge edge : rootNodeMatches.values()){
+				penalizeLooseMatching(EntailmentRelation.CONTRADICTION, strict, edge);
+			}
+			return disjoint;
+		}
+		return false;
 	}
 	
 	

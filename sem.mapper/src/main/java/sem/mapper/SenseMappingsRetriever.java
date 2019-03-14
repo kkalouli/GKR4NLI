@@ -469,15 +469,23 @@ public class SenseMappingsRetriever implements Serializable {
 		int positionOfNode = node.getPosition();
 		String keyToGet = Integer.toString(positionOfNode-1) + "_" + node.getSurface();
 		Map<String,Float> senseProp = senses.get(keyToGet);
-		String sense = "";
+		//String sense = "";
 		String concept = "";
 			
 		if (senseProp != null && !senseProp.isEmpty()){
-			sense = (String) senseProp.keySet().toArray()[0];
-			concept = extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());
+			int length = senseProp.keySet().toArray().length;
+			if (senseProp.keySet().toArray().length >5)
+				length = 5;
+			for (int i= 0; i< length; i++){
+				String sense = (String) senseProp.keySet().toArray()[i];
+				concept = extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());
+				lexSem.put(sense,concept);
+			}
+			//sense = (String) senseProp.keySet().toArray()[0];
+			
 		}				
 
-		lexSem.put(sense,concept);
+		
 		// check if there is a compound involved and find the sense/concept of the compound as well. Find the sense/concepts
 		// of the separate words anyway in case the compound is not found or does not help for the further processing
 		Set<SemanticEdge> edges = graph.getDependencyGraph().getOutEdges(node);
@@ -488,7 +496,7 @@ public class SenseMappingsRetriever implements Serializable {
 				try {
 					ArrayList<String> compSenses = accessPWNDBAndExtractSenses(compound,pos);
 					if (compSenses != null && !compSenses.isEmpty()){
-						sense = compSenses.get(0).substring(4, compSenses.get(0).lastIndexOf("-"));		
+						String sense = compSenses.get(0).substring(4, compSenses.get(0).lastIndexOf("-"));		
 						concept = extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());				
 						lexSem.put("cmp_"+sense,concept);
 					}

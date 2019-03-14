@@ -122,7 +122,7 @@ public class InferenceComputer {
 		String labelToLearn = "";
 		if (learning == true)
 			labelToLearn = correctLabel;
-		PathScorer scorer = new PathScorer(gnli,30f);
+		PathScorer scorer = new PathScorer(gnli,50f, learning);
 		final SpecificityUpdater su = new SpecificityUpdater(gnli,scorer, labelToLearn);
 		//System.out.println(scorer.getAllowedRolePaths());
 		su.updateSpecifity();	
@@ -230,7 +230,7 @@ public class InferenceComputer {
 		// TODO: change label for embed match
 		String premise = "There is no man in a black jacket doing tricks on a motorbike.";
 		String hypothesis = "A person in a black jacket is doing tricks on a motorbike.";
-		String file = "//Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
+		String file = "//Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/1st2000_corrected_labeled_wrong_ones_2nd_pass.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "C", kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//comp.deserializeFileWithComputedPairs(file);
