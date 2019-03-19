@@ -22,8 +22,8 @@ import com.articulate.sigma.KBmanager;
 import gnli.GNLIGraph;
 import gnli.InferenceChecker.EntailmentRelation;
 import gnli.InitialTermMatcher;
+import sem.graph.SemanticGraph;
 import sem.mapper.DepGraphToSemanticGraph;
-import semantic.graph.SemanticGraph;
 
 
 

@@ -11,15 +11,15 @@ import java.util.Map;
 import java.util.Set;
 
 import gnli.MatchEdge;
+import sem.graph.SemGraph;
+import sem.graph.SemanticEdge;
+import sem.graph.SemanticGraph;
+import sem.graph.SemanticNode;
+import sem.graph.vetypes.GraphLabels;
+import sem.graph.vetypes.RoleEdge;
+import sem.graph.vetypes.SkolemNode;
+import sem.graph.vetypes.TermNode;
 import sem.mapper.DepGraphToSemanticGraph;
-import semantic.graph.SemGraph;
-import semantic.graph.SemanticEdge;
-import semantic.graph.SemanticGraph;
-import semantic.graph.SemanticNode;
-import semantic.graph.vetypes.GraphLabels;
-import semantic.graph.vetypes.RoleEdge;
-import semantic.graph.vetypes.SkolemNode;
-import semantic.graph.vetypes.TermNode;
 
 public class GNLIGraph implements Serializable {
 	private static final long serialVersionUID = 7867467000348756256L;

@@ -28,14 +28,13 @@ import gnli.MatchContent;
 import gnli.MatchEdge;
 import gnli.MatchOrigin;
 import gnli.Specificity;
-import semantic.graph.SemanticEdge;
-import semantic.graph.SemanticGraph;
-import semantic.graph.SemanticNode;
-
-import semantic.graph.vetypes.SenseNode;
-import semantic.graph.vetypes.SenseNodeContent;
-import semantic.graph.vetypes.SkolemNodeContent;
-import semantic.graph.vetypes.TermNode;
+import sem.graph.SemanticEdge;
+import sem.graph.SemanticGraph;
+import sem.graph.SemanticNode;
+import sem.graph.vetypes.SenseNode;
+import sem.graph.vetypes.SenseNodeContent;
+import sem.graph.vetypes.SkolemNodeContent;
+import sem.graph.vetypes.TermNode;
 
 
 

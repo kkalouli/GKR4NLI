@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import semantic.graph.vetypes.LinkEdge;
+import sem.graph.vetypes.LinkEdge;
 
 
 /**

@@ -42,9 +42,9 @@ import edu.stanford.nlp.process.CoreLabelTokenFactory;
 import edu.stanford.nlp.process.PTBTokenizer;
 import jigsaw.JIGSAW;
 import jigsaw.data.TokenGroup;
-import semantic.graph.SemanticEdge;
-import semantic.graph.SemanticGraph;
-import semantic.graph.vetypes.SkolemNode;
+import sem.graph.SemanticEdge;
+import sem.graph.SemanticGraph;
+import sem.graph.vetypes.SkolemNode;
 
 
 public class SenseMappingsRetriever implements Serializable {

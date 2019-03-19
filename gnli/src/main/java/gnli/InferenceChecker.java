@@ -6,13 +6,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import semantic.graph.SemanticEdge;
-import semantic.graph.SemanticGraph;
-import semantic.graph.SemanticNode;
-import semantic.graph.vetypes.ContextNode;
-import semantic.graph.vetypes.SkolemNode;
-import semantic.graph.vetypes.SkolemNodeContent;
-import semantic.graph.vetypes.TermNode;
+import sem.graph.SemanticEdge;
+import sem.graph.SemanticGraph;
+import sem.graph.SemanticNode;
+import sem.graph.vetypes.ContextNode;
+import sem.graph.vetypes.SkolemNode;
+import sem.graph.vetypes.SkolemNodeContent;
+import sem.graph.vetypes.TermNode;
 
 
 

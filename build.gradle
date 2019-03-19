@@ -1,4 +1,4 @@
-subprojects {
+allprojects {
     apply plugin: 'java'
     apply plugin: 'eclipse'
  
@@ -9,6 +9,14 @@ subprojects {
         url "https://mvnrepository.com/artifact/"
     }
     }
-
+  
+  task fatJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': 'gnli.InferenceComputer'
+    }
+    baseName = project.name + '-all'
+    from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
 
 }

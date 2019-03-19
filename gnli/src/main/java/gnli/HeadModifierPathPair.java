@@ -3,7 +3,7 @@ package gnli;
 import java.io.Serializable;
 import java.util.List;
 
-import semantic.graph.SemanticEdge;
+import sem.graph.SemanticEdge;
 
 
 /**

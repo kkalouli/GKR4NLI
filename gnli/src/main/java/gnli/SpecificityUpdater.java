@@ -10,6 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import sem.graph.SemanticEdge;
+import sem.graph.SemanticGraph;
+import sem.graph.SemanticNode;
+import sem.graph.vetypes.GraphLabels;
+import sem.graph.vetypes.SkolemNode;
+import sem.graph.vetypes.TermNode;
 
 import static java.util.stream.Collectors.*;
 
@@ -17,12 +23,6 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
 import static java.util.Map.Entry.*;
-import semantic.graph.SemanticEdge;
-import semantic.graph.SemanticNode;
-import semantic.graph.SemanticGraph;
-import semantic.graph.vetypes.GraphLabels;
-import semantic.graph.vetypes.SkolemNode;
-import semantic.graph.vetypes.TermNode;
 
 
 

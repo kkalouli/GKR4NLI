@@ -12,20 +12,20 @@ import java.util.Set;
 import org.jgrapht.graph.DirectedSubgraph;
 import org.jgrapht.graph.Subgraph;
 
-import semantic.graph.SemGraph;
-import semantic.graph.SemJGraphT;
-import semantic.graph.SemanticEdge;
-import semantic.graph.SemanticGraph;
-import semantic.graph.SemanticNode;
-import semantic.graph.vetypes.ContextNode;
-import semantic.graph.vetypes.ContextNodeContent;
-import semantic.graph.vetypes.GraphLabels;
-import semantic.graph.vetypes.RoleEdge;
-import semantic.graph.vetypes.RoleEdgeContent;
-import semantic.graph.vetypes.SkolemNode;
-import semantic.graph.vetypes.SkolemNodeContent;
-import semantic.graph.vetypes.TermNode;
-import semantic.graph.vetypes.TermNodeContent;
+import sem.graph.SemGraph;
+import sem.graph.SemJGraphT;
+import sem.graph.SemanticEdge;
+import sem.graph.SemanticGraph;
+import sem.graph.SemanticNode;
+import sem.graph.vetypes.ContextNode;
+import sem.graph.vetypes.ContextNodeContent;
+import sem.graph.vetypes.GraphLabels;
+import sem.graph.vetypes.RoleEdge;
+import sem.graph.vetypes.RoleEdgeContent;
+import sem.graph.vetypes.SkolemNode;
+import sem.graph.vetypes.SkolemNodeContent;
+import sem.graph.vetypes.TermNode;
+import sem.graph.vetypes.TermNodeContent;
 
 
 /**
@@ -38,7 +38,7 @@ public class RolesMapper implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 8952920085814733709L;
-	private semantic.graph.SemanticGraph graph;
+	private sem.graph.SemanticGraph graph;
 	private SemGraph depGraph;
 	// will need passive for the passive graphs
 	private boolean passive;
@@ -71,7 +71,7 @@ public class RolesMapper implements Serializable {
 	
 
 
-	public RolesMapper(semantic.graph.SemanticGraph graph,ArrayList<String> verbalForms,  ArrayList<String> nounForms ){
+	public RolesMapper(sem.graph.SemanticGraph graph,ArrayList<String> verbalForms,  ArrayList<String> nounForms ){
 		this.graph = graph;
 		this.depGraph = graph.getDependencyGraph();
 		passive = false;

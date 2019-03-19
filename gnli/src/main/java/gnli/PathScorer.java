@@ -11,10 +11,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import semantic.graph.SemanticEdge;
-import semantic.graph.vetypes.SenseNode;
-import semantic.graph.vetypes.SkolemNode;
-import semantic.graph.vetypes.TermNode;
+import sem.graph.SemanticEdge;
+import sem.graph.vetypes.SenseNode;
+import sem.graph.vetypes.SkolemNode;
+import sem.graph.vetypes.TermNode;
 
 
 

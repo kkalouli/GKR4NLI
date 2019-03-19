@@ -31,32 +31,32 @@ import edu.stanford.nlp.semgraph.SemanticGraphEdge;
 import edu.stanford.nlp.trees.GrammaticalRelation;
 import edu.stanford.nlp.util.IntPair;
 import edu.stanford.nlp.util.Pair;
-import semantic.graph.EdgeContent;
-import semantic.graph.NodeContent;
-import semantic.graph.SemGraph;
-import semantic.graph.SemJGraphT;
-import semantic.graph.SemanticEdge;
-import semantic.graph.SemanticNode;
-import semantic.graph.vetypes.ContextHeadEdge;
-import semantic.graph.vetypes.ContextNode;
-import semantic.graph.vetypes.ContextNodeContent;
-import semantic.graph.vetypes.DefaultEdgeContent;
-import semantic.graph.vetypes.GraphLabels;
-import semantic.graph.vetypes.LexEdge;
-import semantic.graph.vetypes.LexEdgeContent;
-import semantic.graph.vetypes.LinkEdge;
-import semantic.graph.vetypes.PropertyEdge;
-import semantic.graph.vetypes.PropertyEdgeContent;
-import semantic.graph.vetypes.RoleEdge;
-import semantic.graph.vetypes.RoleEdgeContent;
-import semantic.graph.vetypes.SenseNode;
-import semantic.graph.vetypes.SenseNodeContent;
-import semantic.graph.vetypes.SkolemNode;
-import semantic.graph.vetypes.SkolemNodeContent;
-import semantic.graph.vetypes.TermNode;
-import semantic.graph.vetypes.TermNodeContent;
-import semantic.graph.vetypes.ValueNode;
-import semantic.graph.vetypes.ValueNodeContent;
+import sem.graph.EdgeContent;
+import sem.graph.NodeContent;
+import sem.graph.SemGraph;
+import sem.graph.SemJGraphT;
+import sem.graph.SemanticEdge;
+import sem.graph.SemanticNode;
+import sem.graph.vetypes.ContextHeadEdge;
+import sem.graph.vetypes.ContextNode;
+import sem.graph.vetypes.ContextNodeContent;
+import sem.graph.vetypes.DefaultEdgeContent;
+import sem.graph.vetypes.GraphLabels;
+import sem.graph.vetypes.LexEdge;
+import sem.graph.vetypes.LexEdgeContent;
+import sem.graph.vetypes.LinkEdge;
+import sem.graph.vetypes.PropertyEdge;
+import sem.graph.vetypes.PropertyEdgeContent;
+import sem.graph.vetypes.RoleEdge;
+import sem.graph.vetypes.RoleEdgeContent;
+import sem.graph.vetypes.SenseNode;
+import sem.graph.vetypes.SenseNodeContent;
+import sem.graph.vetypes.SkolemNode;
+import sem.graph.vetypes.SkolemNodeContent;
+import sem.graph.vetypes.TermNode;
+import sem.graph.vetypes.TermNodeContent;
+import sem.graph.vetypes.ValueNode;
+import sem.graph.vetypes.ValueNodeContent;
 
 public class DepGraphToSemanticGraph implements Serializable {
 
@@ -64,7 +64,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 7281901236266524522L;
-	private semantic.graph.SemanticGraph graph;
+	private sem.graph.SemanticGraph graph;
 	private SemanticGraph stanGraph;
 	public ArrayList<String> verbalForms = new ArrayList<String>();
 	public ArrayList<String> nounForms = new ArrayList<String>();
@@ -130,9 +130,9 @@ public class DepGraphToSemanticGraph implements Serializable {
 	 * @param stanGraph
 	 * @return
 	 */
-	public semantic.graph.SemanticGraph getGraph(SemanticGraph stanGraph, String sentence, String wholeCtx) {
+	public sem.graph.SemanticGraph getGraph(SemanticGraph stanGraph, String sentence, String wholeCtx) {
 		this.stanGraph = stanGraph;
-		this.graph = new semantic.graph.SemanticGraph();
+		this.graph = new sem.graph.SemanticGraph();
 		this.graph.setName(stanGraph.toRecoveredSentenceString());
 		traversed.clear();
 		integrateDependencies();
@@ -145,7 +145,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		return this.graph;
 	}
 
-	public semantic.graph.SemanticGraph getGraph() {
+	public sem.graph.SemanticGraph getGraph() {
 		return this.graph;
 	}
 
@@ -569,11 +569,11 @@ public class DepGraphToSemanticGraph implements Serializable {
 	 * @throws FileNotFoundException
 	 * @throws UnsupportedEncodingException
 	 */
-	public semantic.graph.SemanticGraph sentenceToGraph(String sentence, String wholeCtx){	
+	public sem.graph.SemanticGraph sentenceToGraph(String sentence, String wholeCtx){	
 		if (sentence.contains("?"))
 			this.interrogative = true;
 		SemanticGraph stanGraph = parser.parseOnly(sentence);
-		semantic.graph.SemanticGraph graph = this.getGraph(stanGraph, sentence, wholeCtx);
+		sem.graph.SemanticGraph graph = this.getGraph(stanGraph, sentence, wholeCtx);
 		return graph;
 	}
 
@@ -601,7 +601,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 			}
 			String text = strLine.split("\t")[1];
 			SemanticGraph stanGraph = parser.parseOnly(text);
-			semantic.graph.SemanticGraph graph = this.getGraph(stanGraph, text, text);
+			sem.graph.SemanticGraph graph = this.getGraph(stanGraph, text, text);
 			//System.out.println(graph.displayAsString());
 			writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
 			writer.flush();
@@ -631,7 +631,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 	 * You can comment in or out the subgraphs that you want to have displayed.
 	 */
 	public void processSentence(String sentence, String wholeCtx) throws FileNotFoundException, UnsupportedEncodingException{
-		semantic.graph.SemanticGraph graph = this.sentenceToGraph(sentence, wholeCtx);
+		sem.graph.SemanticGraph graph = this.sentenceToGraph(sentence, wholeCtx);
 		graph.displayDependencies();
 		graph.displayProperties();
 		graph.displayLex();

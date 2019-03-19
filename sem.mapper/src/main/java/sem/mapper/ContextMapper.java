@@ -16,28 +16,29 @@ import java.util.Scanner;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Set;
 
-import semantic.graph.EdgeContent;
-import semantic.graph.SemGraph;
-import semantic.graph.SemanticEdge;
-import semantic.graph.SemanticGraph;
-import semantic.graph.SemanticNode;
-import semantic.graph.vetypes.ContextHeadEdge;
-import semantic.graph.vetypes.ContextNode;
-import semantic.graph.vetypes.ContextNodeContent;
-import semantic.graph.vetypes.GraphLabels;
-import semantic.graph.vetypes.RoleEdge;
-import semantic.graph.vetypes.RoleEdgeContent;
-import semantic.graph.vetypes.SkolemNode;
-import semantic.graph.vetypes.SkolemNodeContent;
+import sem.graph.EdgeContent;
+import sem.graph.SemGraph;
+import sem.graph.SemanticEdge;
+import sem.graph.SemanticGraph;
+import sem.graph.SemanticNode;
+import sem.graph.vetypes.ContextHeadEdge;
+import sem.graph.vetypes.ContextNode;
+import sem.graph.vetypes.ContextNodeContent;
+import sem.graph.vetypes.GraphLabels;
+import sem.graph.vetypes.RoleEdge;
+import sem.graph.vetypes.RoleEdgeContent;
+import sem.graph.vetypes.SkolemNode;
+import sem.graph.vetypes.SkolemNodeContent;
+
+import java.util.Set;
 
 public class ContextMapper implements Serializable {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -6755671877667960628L;
-	private semantic.graph.SemanticGraph graph;
+	private sem.graph.SemanticGraph graph;
 	private SemGraph depGraph;
 	private HashMap<SemanticNode<?>,SemanticNode<?>> negCtxs;
 	private HashMap<SemanticNode<?>,String> coordCtxs;
@@ -50,7 +51,7 @@ public class ContextMapper implements Serializable {
 	private ArrayList<String> verbalForms;
 	private ArrayList<SemanticNode<?>> traversedNeighbors;
 	
-	public ContextMapper(semantic.graph.SemanticGraph graph, ArrayList<String> verbalForms){
+	public ContextMapper(sem.graph.SemanticGraph graph, ArrayList<String> verbalForms){
 		this.verbalForms = verbalForms;
 		this.graph = graph;
 		this.depGraph = this.graph.getDependencyGraph();
