@@ -96,7 +96,7 @@ public class SpecificityUpdater {
 			// minimizes the number of full rounds taken
 			for (MatchAgendaItem item : this.matchAgenda) {
 				boolean updateComplete = updateMatch(item.match);
-				gnliGraph.getMatchGraph().display();
+				//gnliGraph.getMatchGraph().display();
 				//gnliGraph.getHypothesisGraph().displayDependencies();
 				//gnliGraph.getTextGraph().display();
 				if (!updateComplete) {
@@ -150,7 +150,7 @@ public class SpecificityUpdater {
 					if (gnliGraph.getOutMatches(mod) != null && gnliGraph.getOutMatches(mod).isEmpty()){
 						// H more specific
 						m.setSpecificity(switchSpecificity(m.getSpecificity(),Specificity.SUPERCLASS));
-						m.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, mod));
+						m.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, mod, hypoTextMatch.match));
 						return true;
 					}
 				}
@@ -164,7 +164,7 @@ public class SpecificityUpdater {
 					if (gnliGraph.getInMatches(mod) != null && gnliGraph.getInMatches(mod).isEmpty()){
 						// T more specific
 						m.setSpecificity(switchSpecificity(m.getSpecificity(),Specificity.SUBCLASS));
-						m.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, mod));
+						m.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, mod, hypoTextMatch.match));
 						return true;
 
 					}
@@ -182,7 +182,7 @@ public class SpecificityUpdater {
 						gnliGraph.getTextGraph().getDependencyGraph().getShortestUndirectedPath(hypoTextMatch.textTerm,modifier).isEmpty()) && !modifier.equals(hypoTextMatch.textTerm)){
 					// H more specific
 					hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUPERCLASS));
-					hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, modifier));
+					hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, modifier, hypoTextMatch.match));
 					return false;
 				}
 			} else{
@@ -193,7 +193,7 @@ public class SpecificityUpdater {
 						gnliGraph.getHypothesisGraph().getDependencyGraph().getShortestUndirectedPath(hypoTextMatch.hypothesisTerm,modifier).isEmpty()) && !modifier.equals(hypoTextMatch.hypothesisTerm)){
 					// T more specific
 					hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUBCLASS));
-					hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, modifier));
+					hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, modifier, hypoTextMatch.match));
 					return false;
 				}		
 			}
@@ -244,11 +244,11 @@ public class SpecificityUpdater {
 		private void updateWithUnmatchedModifier(HypoTextMatch hypoTextMatch, String mode, SkolemNode restr){
 			if (mode.equals("hyp")){
 				// H more specific
-				hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, restr));
+				hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, restr, hypoTextMatch.match));
 				hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUPERCLASS));
 			} else{
 				// T more specific
-				hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, restr));
+				hypoTextMatch.match.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, restr, hypoTextMatch.match));
 				hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),Specificity.SUBCLASS));
 			}
 		}
@@ -273,6 +273,9 @@ public class SpecificityUpdater {
 			if (justification != null){
 				hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),spec));
 				hypoTextMatch.match.addJustification(justification);
+				HashMap<String, Double> scoreComponents = ((MatchEdge) justification.getModifiersPair()).getScoreComponents();
+				hypoTextMatch.match.incrementScore(scoreComponents);
+				String test = "";
 			} else{
 				gnliGraph.removeMatchEdge(hypoTextMatch.match);
 				matchAgenda.remove(hypoTextMatch);
@@ -285,7 +288,7 @@ public class SpecificityUpdater {
 			boolean complete = true;
 			MatchEdge match = hypoTextMatch.match;
 			List<HypoTextMatch> newMatches = new ArrayList<HypoTextMatch>();
-			for (MatchEdge edg : tOutMatches){
+			/*for (MatchEdge edg : tOutMatches){
 				// make a new copy of the match and update it
 				HypoTextMatch newMatch = new HypoTextMatch(match);
 				updateWithOneMatchedModifier(newMatch, edg, mode);
@@ -294,13 +297,32 @@ public class SpecificityUpdater {
 			
 			//Collections.sort(newMatches);
 			keepBestMatch(match, newMatches);
+			*/
+
+			double minCost = findMinCost(tOutMatches);
+			for (MatchEdge edg : tOutMatches){
+				double cost = edg.getScore();
+				if (cost == minCost){
+					updateWithOneMatchedModifier(hypoTextMatch, edg, mode);
+				}
+			}
 			return complete;
 		}
 		
 		// set the content of the main match to the content of the best match (the one with the lowest cost)
 		// newMatches are the corresponding matches with modifier terms of the main match
-		private void keepBestMatch(MatchEdge match, List<HypoTextMatch> newMatches) {
-			double maxCost = 100;
+		private double findMinCost(List<MatchEdge> tOutMatches){ //MatchEdge match, List<HypoTextMatch> newMatches) {
+			double minCost = 1000;
+			for (MatchEdge edge : tOutMatches){
+				double cost = edge.getScore();
+				if (cost <= minCost){
+					minCost = cost;
+					}
+				}
+			return minCost;
+		}
+			
+			/*double maxCost = 1000;
 			HypoTextMatch bestMatch = null;
 			for (HypoTextMatch newMatch : newMatches){
 				if (newMatch.match.getJustification() != null){
@@ -313,14 +335,12 @@ public class SpecificityUpdater {
 			}
 			match.setContent(bestMatch.match.getContent());
 			
-			for (HypoTextMatch newMatch : newMatches){
+			/*for (HypoTextMatch newMatch : newMatches){
 				if (!newMatch.equals(newMatches.get(0))){
 					gnliGraph.removeMatchEdge(newMatch.match);
 					matchAgenda.remove(newMatch);
 				}
-			}
-
-		}
+			}*/
 		
 		
 		/**
@@ -382,7 +402,7 @@ public class SpecificityUpdater {
 				}
 				if (matchFound == false){
 					match.setSpecificity(switchSpecificity(match.getSpecificity(), Specificity.SUPERCLASS));
-					match.addJustification(justificationOfSpecificityUpdateNoText(hypTerm,hRstr));
+					match.addJustification(justificationOfSpecificityUpdateNoText(hypTerm,hRstr, null));
 				}
 			}
 			//gnliGraph.getHypothesisGraph().displayDependencies();
@@ -400,7 +420,7 @@ public class SpecificityUpdater {
 				}
 				if (matchFound == false){
 					match.setSpecificity(switchSpecificity(match.getSpecificity(), Specificity.SUBCLASS));
-					match.addJustification(justificationOfSpecificityUpdateNoHypothesis(textTerm,tRstr));
+					match.addJustification(justificationOfSpecificityUpdateNoHypothesis(textTerm,tRstr, null));
 				}
 			}
 		}
@@ -506,9 +526,9 @@ public class SpecificityUpdater {
 		}
 		
 		
-		private HeadModifierPathPair justificationOfSpecificityUpdateNoHypothesis(SemanticNode<?> textTerm, SemanticNode<?> textMod) {
+		private HeadModifierPathPair justificationOfSpecificityUpdateNoHypothesis(SemanticNode<?> textTerm, SemanticNode<?> textMod, MatchEdge hTTermsMatch) {
 			HeadModifierPathPair mcp = new HeadModifierPathPair();
-			mcp.setBasePair(null);
+			mcp.setBasePair(hTTermsMatch);
 			mcp.setModifiersPair(null);
 			mcp.setConclusionPath(null);
 			mcp.setPremisePath(findModPath(textTerm, textMod, gnliGraph.getTextGraph()));
@@ -517,9 +537,9 @@ public class SpecificityUpdater {
 		}
 
 		
-		private HeadModifierPathPair justificationOfSpecificityUpdateNoText(SemanticNode<?> hypothesisTerm, SemanticNode<?> hypothesisMod) {
+		private HeadModifierPathPair justificationOfSpecificityUpdateNoText(SemanticNode<?> hypothesisTerm, SemanticNode<?> hypothesisMod, MatchEdge hTTermsMatch) {
 			HeadModifierPathPair mcp = new HeadModifierPathPair();
-			mcp.setBasePair(null);
+			mcp.setBasePair(hTTermsMatch);
 			mcp.setModifiersPair(null);
 			mcp.setConclusionPath(findModPath(hypothesisTerm, hypothesisMod, gnliGraph.getHypothesisGraph()));
 			mcp.setPremisePath(null);

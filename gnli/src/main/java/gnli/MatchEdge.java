@@ -1,6 +1,7 @@
 package gnli;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -88,7 +89,7 @@ public class MatchEdge extends LinkEdge implements Serializable {
 		return ((MatchContent) this.content).getFeatureScore(feature);
 	}
 	
-	public Map<String, Double> getScoreComponents() {
+	public HashMap<String, Double> getScoreComponents() {
 		return ((MatchContent) this.content).getScoreComponents();
 	}
 
@@ -98,11 +99,17 @@ public class MatchEdge extends LinkEdge implements Serializable {
 		
 	}
 	
+	public void incrementScore(HashMap<String, Double> map) {
+		for (String key :map.keySet()){
+			((MatchContent) this.content).addScore(key, map.get(key));
+		}		
+	}
+	
 	@Override
 	public String toString() {
 		return ((MatchContent) this.content).getSpecificity() + "(" + label +")";
 	}
-
+	
 
 
 }

@@ -197,17 +197,19 @@ public class InferenceChecker {
 			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
 			Polarity tPolarity = tTermCtxs.get(textRootCtx);
 			if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.VERIDICAL) {
-				if (matchSpecificity != Specificity.DISJOINT && matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUBCLASS){
+				if (matchSpecificity != Specificity.DISJOINT){
 					disjoint = false;
-				} else 	if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUBCLASS) {
+				} 
+				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUBCLASS) {
 					entail = false;		
 				} 
 				
 			}
 			else if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
-				if (matchSpecificity != Specificity.DISJOINT && matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUBCLASS){
+				if (matchSpecificity != Specificity.DISJOINT ){
 					disjoint = false;
-				}else if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUPERCLASS) {
+				}
+				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUPERCLASS) {
 					entail = false;		
 				}
 			} else{

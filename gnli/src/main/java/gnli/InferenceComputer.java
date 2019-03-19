@@ -2,7 +2,6 @@ package gnli;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -12,13 +11,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
@@ -30,12 +24,7 @@ import gnli.InferenceChecker.EntailmentRelation;
 import gnli.InitialTermMatcher;
 import sem.mapper.DepGraphToSemanticGraph;
 import semantic.graph.SemanticGraph;
-import semantic.graph.SemanticNode;
-import semantic.graph.vetypes.SkolemNodeContent;
-import gnli.GNLIGraph;
-import gnli.InitialTermMatcher;
-import sem.mapper.DepGraphToSemanticGraph;
-import semantic.graph.SemanticGraph;
+
 
 
 public class InferenceComputer {
@@ -48,7 +37,8 @@ public class InferenceComputer {
 
 	public InferenceComputer(String configFile) throws FileNotFoundException, UnsupportedEncodingException {
 		
-		KBmanager.getMgr().initializeOnce("/Users/kkalouli/Documents/.sigmakee/KBs");	
+		//KBmanager.getMgr().initializeOnce("/Users/kkalouli/Documents/.sigmakee/KBs");
+		KBmanager.getMgr().initializeOnce("/Users/caldadmin/Documents/.sigmakee/KBs");
 		this.kb = KBmanager.getMgr().getKB("SUMO");
 		//serializeKb();
 		this.semGraph = new DepGraphToSemanticGraph();
@@ -62,6 +52,7 @@ public class InferenceComputer {
 		}
 		this.sumoKB = props.getProperty("sumo_kb");
 	}
+
 	
 	/*public class TransientClass implements Serializable {
 		private static final long serialVersionUID = 228313879760515790L;
@@ -224,13 +215,15 @@ public class InferenceComputer {
 	}
 	
 	public static void main(String args[]) throws IOException {
-		String configFile = "/Users/kkalouli/Documents/project/gnli/gnli.properties";
+		//String configFile = "/Users/kkalouli/Documents/project/gnli/gnli.properties";
+		String configFile = "/Users/caldadmin/Documents/diss/gnli.properties";
 		InferenceComputer comp = new InferenceComputer(configFile);
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
 		String premise = "There is no man in a black jacket doing tricks on a motorbike.";
 		String hypothesis = "A person in a black jacket is doing tricks on a motorbike.";
-		String file = "//Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/1st2000_corrected_labeled_wrong_ones_2nd_pass.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
+		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
+		String file = "/Users/caldadmin/Documents/diss/to_check.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "C", kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//comp.deserializeFileWithComputedPairs(file);

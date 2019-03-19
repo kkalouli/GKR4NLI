@@ -148,16 +148,48 @@ public class InitialTermMatcher {
 		}
 		updatePendingMatches();
 		for (CheckedTermNode hTerm : hypothesisTerms) {
+			HashMap<MatchContent, TermNode> senseContents = new HashMap<MatchContent,TermNode>();
 			for (TermNode tTerm : textTerms) {
-				checkSenseMatch(hTerm, tTerm);
+				HashMap<MatchContent, TermNode>  contents = checkSenseMatch(hTerm, tTerm, senseContents);
+				senseContents.putAll(contents);
+			}
+
+			if (!senseContents.isEmpty()){
+				List<MatchContent> keys = new ArrayList(senseContents.keySet());
+				Collections.sort(keys);
+				double minCost = keys.get(0).getScore();
+				for (MatchContent key : keys){
+					if (key.getScore() == minCost){
+						final MatchEdge senseMatch = new MatchEdge("sense",keys.get(0));
+						gnliGraph.addMatchEdge(senseMatch, hTerm.node, senseContents.get(key));
+						hTerm.pendMatch();
+					}
+				}
 			}
 		}
+
 		updatePendingMatches();
 		for (CheckedTermNode hTerm : hypothesisTerms) {
+			HashMap<MatchContent, TermNode> conceptContents = new HashMap<MatchContent,TermNode>();
 			for (TermNode tTerm : textTerms) {
-				checkConceptMatch(hTerm, tTerm);
+				HashMap<MatchContent, TermNode>  contents = checkConceptMatch(hTerm, tTerm, conceptContents);
+				conceptContents.putAll(contents);
+			}
+
+			if (!conceptContents.isEmpty()){
+				List<MatchContent> keys = new ArrayList(conceptContents.keySet());
+				Collections.sort(keys);
+				double minCost = keys.get(0).getScore();
+				for (MatchContent key : keys){
+					if (key.getScore() == minCost){
+						final MatchEdge senseMatch = new MatchEdge("concept",keys.get(0));
+						gnliGraph.addMatchEdge(senseMatch, hTerm.node, conceptContents.get(key));
+						hTerm.pendMatch();
+					}
+				}
 			}
 		}
+		
 		updatePendingMatches();
 		for (CheckedTermNode hTerm : hypothesisTerms) {
 			TermNode similHTerm = null;
@@ -263,11 +295,9 @@ public class InitialTermMatcher {
 	 * 		A list of {@link MatchEdge}s (typically one or none)
 	 */
 	@SuppressWarnings("unchecked")
-	protected List<MatchEdge> checkSenseMatch(CheckedTermNode cHTerm,TermNode tTerm) {
-		List<MatchEdge> retval = new ArrayList<MatchEdge>();
-		ArrayList<MatchContent> contents = new ArrayList<MatchContent>();
+	protected HashMap<MatchContent,TermNode> checkSenseMatch(CheckedTermNode cHTerm,TermNode tTerm, HashMap<MatchContent, TermNode> contents) {
 		if (cHTerm.isMatched()) {
-			return retval;
+			return new HashMap<MatchContent,TermNode>();
 		}
 		int indexTSense = 0;
 		int indexHSense = 0;
@@ -297,7 +327,7 @@ public class InitialTermMatcher {
 				if (tSenseId != null && hSenseId != null && !tSenseId.equals("U") && !hSenseId.equals("U") && !((SkolemNodeContent) tTerm.getContent()).getStem().equals("be")
 						&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be") && !POSToExclude.contains(((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech()) 
 						&& !POSToExclude.contains(((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech())){
-					int penalty = indexTSense + indexHSense; 
+					int penalty = 2*(indexTSense + indexHSense); 
 					if (tSenseId.equals(hSenseId)) {
 						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.EQUALS, penalty, 0);
 					} else if (tSynonyms.contains(hTerm.getLabel().substring(0,hTerm.getLabel().indexOf("_"))) || hSynonyms.contains(tTerm.getLabel().substring(0,tTerm.getLabel().indexOf("_")))){
@@ -315,20 +345,13 @@ public class InitialTermMatcher {
 					}
 					
 					if (linkContent != null)
-						contents.add(linkContent);
+						contents.put(linkContent,tTerm);
 				}
 				indexHSense++;
 			}
 			indexTSense++;
 		}
-		Collections.sort(contents);
-		if (!contents.isEmpty()){
-			final MatchEdge senseMatch = new MatchEdge("sense",contents.get(0));
-			gnliGraph.addMatchEdge(senseMatch, hTerm, tTerm);
-			retval.add(senseMatch);
-			cHTerm.pendMatch();
-		}
-		return retval;
+		return contents;
 	}
 	
 	
@@ -345,11 +368,9 @@ public class InitialTermMatcher {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected List<MatchEdge> checkConceptMatch(CheckedTermNode cHTerm,TermNode tTerm) {
-		List<MatchEdge> retval = new ArrayList<MatchEdge>();
-		ArrayList<MatchContent> contents = new ArrayList<MatchContent>();
+	protected HashMap<MatchContent, TermNode> checkConceptMatch(CheckedTermNode cHTerm,TermNode tTerm, HashMap<MatchContent, TermNode> contents) {
 		if (cHTerm.isMatched()) {
-			return retval;
+			return new HashMap<MatchContent,TermNode>();
 		}
 		TermNode hTerm = cHTerm.node;
 		int indexTSense = 0;
@@ -377,12 +398,17 @@ public class InitialTermMatcher {
 							String firstArg = f.getArgument(1);
 							String secondArg = f.getArgument(2);						
 							for (String rel : f.gatherRelationConstants()){
-								if (rel.equals("subclass") || rel.equals("instance")){
+								if (rel.equals("subclass")){
 									if (hConcept.contains(firstArg) && tConcept.contains(secondArg))
 										spec = Specificity.SUPERCLASS;
 									else if (tConcept.contains(firstArg) && hConcept.contains(secondArg))
 										spec = Specificity.SUBCLASS;
 								} else if (rel.equals("partition") && spec == null){
+									if (hConcept.contains(firstArg) && tConcept.contains(secondArg))
+										spec = Specificity.SUBCLASS;
+									else if (tConcept.contains(firstArg) && hConcept.contains(firstArg))
+										spec = Specificity.SUPERCLASS;
+								} else if (rel.equals("instance") && spec == null){
 									if (hConcept.contains(firstArg) && tConcept.contains(secondArg))
 										spec = Specificity.SUBCLASS;
 									else if (tConcept.contains(firstArg) && hConcept.contains(firstArg))
@@ -404,20 +430,13 @@ public class InitialTermMatcher {
 						}
 					}
 					if (linkContent != null)
-						contents.add(linkContent);
+						contents.put(linkContent,tTerm);
 				}
 				indexHSense++;
 			}
 			indexTSense++;
 		}	
-		Collections.sort(contents);
-		if (!contents.isEmpty()){
-			final MatchEdge conceptMatch = new MatchEdge("concept",contents.get(0));
-			gnliGraph.addMatchEdge(conceptMatch, hTerm, tTerm);
-			retval.add(conceptMatch);
-			cHTerm.pendMatch();
-		}
-		return retval;
+		return contents;
 	}
 	
 

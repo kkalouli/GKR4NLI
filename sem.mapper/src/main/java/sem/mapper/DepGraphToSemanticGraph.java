@@ -119,7 +119,8 @@ public class DepGraphToSemanticGraph implements Serializable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		this.retriever = new SenseMappingsRetriever(new File("/Users/kkalouli/Documents/project/sem.mapper/gkr.properties"));
+		//this.retriever = new SenseMappingsRetriever(new File("/Users/kkalouli/Documents/project/sem.mapper/gkr.properties"));
+		this.retriever = new SenseMappingsRetriever(new File("/Users/caldadmin/Documents/diss/gkr.properties"));
 		this.interrogative = false;
 
 	}
@@ -650,7 +651,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 	public static void main(String args[]) throws IOException {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/mixed_testsuite.txt", semConverter);
-		String sentence = "The man drank a little water.";//"A family is watching a little boy who is hitting a baseball.";
+		String sentence = "A boy is walking.";//"A family is watching a little boy who is hitting a baseball.";
 		String context = "John faked the illness.";
 		semConverter.processSentence(sentence, sentence+" "+context);	
 	}

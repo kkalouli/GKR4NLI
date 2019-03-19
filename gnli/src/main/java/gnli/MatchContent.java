@@ -18,7 +18,7 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 	private static final long serialVersionUID = -3687998411657779763L;
 	private Specificity specificity;
 	private Specificity originalSpecificity;
-	private Map<String, Double> scores;
+	private HashMap<String, Double> scores;
 	private boolean finalized = false;
 	private List<MatchOrigin> matchOrigin;
 	private List<HeadModifierPathPair> justification;
@@ -157,17 +157,17 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 		return retval == null ? 0.0 : retval;
 	}
 	
-	public Map<String, Double> getScoreComponents() {
+	public HashMap<String, Double> getScoreComponents() {
 		return this.scores;
 	}
 	
 	public void addScore(String feature, double score) {
 		Double currentScore = this.scores.get(feature);
 		if (currentScore == null) {
-			currentScore = 0.0;
-			this.scores.put(feature, currentScore);
+			this.scores.put(feature, score);
+		} else {
+			this.scores.put(feature, currentScore+ score);
 		}
-		currentScore =+ score;
 	}
 
 	
