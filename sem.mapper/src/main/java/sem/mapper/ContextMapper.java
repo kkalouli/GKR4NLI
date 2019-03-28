@@ -67,6 +67,8 @@ public class ContextMapper implements Serializable {
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/kkalouli/Documents/project/sem.mapper/implicatives3.txt"), "UTF-8"));
+			//br = new BufferedReader(new InputStreamReader(new FileInputStream("/home/kkalouli/Documents/diss/implicatives3.txt"), "UTF-8"));
+			//br = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/caldadmin/Documents/diss/implicatives3.txt"), "UTF-8"));
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -37,8 +37,9 @@ public class InferenceComputer {
 
 	public InferenceComputer(String configFile) throws FileNotFoundException, UnsupportedEncodingException {
 		
-		//KBmanager.getMgr().initializeOnce("/Users/kkalouli/Documents/.sigmakee/KBs");
-		KBmanager.getMgr().initializeOnce("/Users/caldadmin/Documents/.sigmakee/KBs");
+		KBmanager.getMgr().initializeOnce("/Users/kkalouli/Documents/.sigmakee/KBs");
+		//KBmanager.getMgr().initializeOnce("/Users/caldadmin/Documents/.sigmakee/KBs");
+		//KBmanager.getMgr().initializeOnce("/home/kkalouli/Documents/.sigmakee/KBs");
 		this.kb = KBmanager.getMgr().getKB("SUMO");
 		//serializeKb();
 		this.semGraph = new DepGraphToSemanticGraph();
@@ -215,15 +216,17 @@ public class InferenceComputer {
 	}
 	
 	public static void main(String args[]) throws IOException {
-		//String configFile = "/Users/kkalouli/Documents/project/gnli/gnli.properties";
-		String configFile = "/Users/caldadmin/Documents/diss/gnli.properties";
+		String configFile = "/Users/kkalouli/Documents/project/gnli/gnli.properties";
+		//String configFile = "/Users/caldadmin/Documents/diss/gnli.properties";
+		//String configFile = "/home/kkalouli/Documents/diss/gnli.properties";
 		InferenceComputer comp = new InferenceComputer(configFile);
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
 		String premise = "There is no man in a black jacket doing tricks on a motorbike.";
 		String hypothesis = "A person in a black jacket is doing tricks on a motorbike.";
-		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
-		String file = "/Users/caldadmin/Documents/diss/to_check.txt";
+		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
+		//String file = "/Users/caldadmin/Documents/diss/to_check.txt";
+		//String file = "/home/kkalouli/Documents/diss/to_check.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "C", kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//comp.deserializeFileWithComputedPairs(file);

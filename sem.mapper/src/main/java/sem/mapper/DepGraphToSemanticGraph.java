@@ -2,6 +2,7 @@ package sem.mapper;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -9,6 +10,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -119,8 +121,9 @@ public class DepGraphToSemanticGraph implements Serializable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		//this.retriever = new SenseMappingsRetriever(new File("/Users/kkalouli/Documents/project/sem.mapper/gkr.properties"));
-		this.retriever = new SenseMappingsRetriever(new File("/Users/caldadmin/Documents/diss/gkr.properties"));
+		this.retriever = new SenseMappingsRetriever(new File("/Users/kkalouli/Documents/project/sem.mapper/gkr.properties"));
+		//this.retriever = new SenseMappingsRetriever(new File("/Users/caldadmin/Documents/diss/gkr.properties"));
+		//this.retriever = new SenseMappingsRetriever(new File("/home/kkalouli/Documents/diss/gkr.properties"));
 		this.interrogative = false;
 
 	}
@@ -591,8 +594,10 @@ public class DepGraphToSemanticGraph implements Serializable {
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 		// true stands for append = true (dont overwrite)
 		BufferedWriter writer = new BufferedWriter( new FileWriter(file.substring(0,file.indexOf(".txt"))+"_processed.csv", true));
-		ObjectOutputStream writerSer = null;
+		FileOutputStream fileSer = null;
+        ObjectOutputStream writerSer = null;
 		String strLine;
+		ArrayList<sem.graph.SemanticGraph> semanticGraphs = new ArrayList<sem.graph.SemanticGraph>();
 		while ((strLine = br.readLine()) != null) {
 			if (strLine.startsWith("####")){
 				writer.write(strLine+"\n\n");
@@ -606,26 +611,26 @@ public class DepGraphToSemanticGraph implements Serializable {
 			writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
 			writer.flush();
 			System.out.println("Processed sentence "+ strLine.split("\t")[0]);
-			
-			// serialize and write to file
-			FileOutputStream fileSer;	
-			try {
-				fileSer = new FileOutputStream("serialized_SemanticGraphs.ser");
-				writerSer = new ObjectOutputStream(fileSer); 
-				writerSer.writeObject(graph); 				
-			} catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} 
+			if (graph != null)
+				semanticGraphs.add(graph);
 		}
+		// serialize and write to file
+		try {
+			fileSer = new FileOutputStream("serialized_SemanticGraphs.ser");
+			writerSer = new ObjectOutputStream(fileSer);
+			writerSer.writeObject(semanticGraphs); 				
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
 		writer.close();
 		br.close();
 		writerSer.close();
 	}
-	
+
 	/***
 	 * Process a single sentence with GKR. 
 	 * You can comment in or out the subgraphs that you want to have displayed.
@@ -646,13 +651,36 @@ public class DepGraphToSemanticGraph implements Serializable {
 				System.out.println(node.getLabel()+((SkolemNodeContent) node.getContent()).getContext());
 		}
 	}
+	
+	
+	@SuppressWarnings("unchecked")
+	public ArrayList<sem.graph.SemanticGraph> deserializeFileWithComputedPairs(String file){
+		ArrayList<sem.graph.SemanticGraph> semanticGraphs = null;
+			try {
+				FileInputStream fileIn = new FileInputStream("serialized_SemanticGraphs.ser");
+				ObjectInputStream in = new ObjectInputStream(fileIn);
+				semanticGraphs = (ArrayList<sem.graph.SemanticGraph>) in.readObject();
+				in.close();
+			} catch (FileNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} 
+			return semanticGraphs;
+	}
 
 
 	public static void main(String args[]) throws IOException {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
-		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/mixed_testsuite.txt", semConverter);
-		String sentence = "A boy is walking.";//"A family is watching a little boy who is hitting a baseball.";
-		String context = "John faked the illness.";
+		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
+		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
+		String sentence = "The woman is more helpful than the baby.";//"A family is watching a little boy who is hitting a baseball.";
+		String context = "A boy is walking.";
 		semConverter.processSentence(sentence, sentence+" "+context);	
 	}
 }
