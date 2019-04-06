@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -66,13 +67,11 @@ public class ContextMapper implements Serializable {
 		// read the file with the implicative/factive signatures
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/kkalouli/Documents/project/sem.mapper/implicatives3.txt"), "UTF-8"));
-			//br = new BufferedReader(new InputStreamReader(new FileInputStream("/home/kkalouli/Documents/diss/implicatives3.txt"), "UTF-8"));
-			//br = new BufferedReader(new InputStreamReader(new FileInputStream("/Users/caldadmin/Documents/diss/implicatives3.txt"), "UTF-8"));
+			ClassLoader classLoader = getClass().getClassLoader();
+			InputStream implFile = getClass().getClassLoader().getResourceAsStream("implicatives3.txt");
+			//File implFile = new File(classLoader.getResource("implicatives3.txt").getFile());
+			br = new BufferedReader(new InputStreamReader(implFile, "UTF-8"));
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

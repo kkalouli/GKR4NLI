@@ -2,12 +2,14 @@ package gnli;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -35,51 +37,26 @@ public class InferenceComputer {
 	private Properties props;
 	private String sumoKB;
 
-	public InferenceComputer(String configFile) throws FileNotFoundException, UnsupportedEncodingException {
-		
-		KBmanager.getMgr().initializeOnce("/Users/kkalouli/Documents/.sigmakee/KBs");
+	public InferenceComputer() throws FileNotFoundException, UnsupportedEncodingException {
+		// load the classloader to get the properties of the properties file
+		InputStream properties = getClass().getClassLoader().getResourceAsStream("gnli.properties");
+		this.props = new Properties();
+		try {
+			props.load(new InputStreamReader(properties));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		// initialize the SUMO reader
+        this.sumoKB = props.getProperty("sumo_kb");
+		KBmanager.getMgr().initializeOnce(sumoKB);
 		//KBmanager.getMgr().initializeOnce("/Users/caldadmin/Documents/.sigmakee/KBs");
 		//KBmanager.getMgr().initializeOnce("/home/kkalouli/Documents/.sigmakee/KBs");
 		this.kb = KBmanager.getMgr().getKB("SUMO");
 		//serializeKb();
 		this.semGraph = new DepGraphToSemanticGraph();
 		this.learning = true;
-		this.props = new Properties();
-		try {
-			props.load(new FileReader(configFile));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		this.sumoKB = props.getProperty("sumo_kb");
 	}
-
-	
-	/*public class TransientClass implements Serializable {
-		private static final long serialVersionUID = 228313879760515790L;
-		private transient KB kb;
-	     
-	    public TransientClass(KB kb) {
-	        this.kb = kb;
-	    }
-	}
-	
-	public void serializeKb(){
-		TransientClass toSerialize = new TransientClass(kb);
-		FileOutputStream fileSer;
-		try {
-			fileSer = new FileOutputStream("serialized_KB.ser");
-			ObjectOutputStream writerSer = new ObjectOutputStream(fileSer); 
-			writerSer.writeObject(toSerialize); 
-			writerSer.close();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
-	}*/
 	
 
 	public InferenceDecision computeInference(DepGraphToSemanticGraph semGraph, String sent1, String sent2, String correctLabel, KB kb) throws FileNotFoundException, UnsupportedEncodingException {	
@@ -216,10 +193,10 @@ public class InferenceComputer {
 	}
 	
 	public static void main(String args[]) throws IOException {
-		String configFile = "/Users/kkalouli/Documents/project/gnli/gnli.properties";
+		//String configFile = "/Users/kkalouli/Documents/project/gnli/gnli.properties";
 		//String configFile = "/Users/caldadmin/Documents/diss/gnli.properties";
 		//String configFile = "/home/kkalouli/Documents/diss/gnli.properties";
-		InferenceComputer comp = new InferenceComputer(configFile);
+		InferenceComputer comp = new InferenceComputer();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
 		String premise = "There is no man in a black jacket doing tricks on a motorbike.";

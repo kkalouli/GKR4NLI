@@ -4,9 +4,12 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
@@ -24,6 +27,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.IOUtils;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
@@ -69,7 +73,7 @@ public class SenseMappingsRetriever implements Serializable {
 	private WordVectors glove;
 	private Integer indexOfPunct;
 	
-	public SenseMappingsRetriever(File configFile){
+	public SenseMappingsRetriever(InputStream configFile){
 		/* fill hash with the POS tags of the Penn treebank. The POS
 		have to be matched to the generic POS used in SUMO and PWN.  */
 		hashOfPOS.put("JJ","ADJECTIVE");
@@ -91,7 +95,7 @@ public class SenseMappingsRetriever implements Serializable {
 		hashOfPOS.put("VBZ","VERB");
 		this.props = new Properties();
 		try {
-			props.load(new FileReader(configFile));
+			props.load(new InputStreamReader(configFile));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -100,8 +104,24 @@ public class SenseMappingsRetriever implements Serializable {
         this.sumoInstall = props.getProperty("sumo_location");
         this.jigsawProps = props.getProperty("jigsaw_props");
 		this.jigsaw = new JIGSAW(new File(jigsawProps));
-		this.glove = WordVectorSerializer.readWord2VecModel(new File(props.getProperty("glove")));
+		InputStream gloveFile = getClass().getClassLoader().getResourceAsStream("glove.6B.300d.txt");
+		try {
+			this.glove = WordVectorSerializer.readWord2VecModel(stream2file(gloveFile));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
+	
+	
+    public static File stream2file (InputStream in) throws IOException {
+        final File tempFile = File.createTempFile("stream2file.", ".txt");
+        tempFile.deleteOnExit();
+        try (FileOutputStream out = new FileOutputStream(tempFile)) {
+            IOUtils.copy(in, out);
+        }
+        return tempFile;
+    }
 	
 	
 	public double[] getEmbed() {

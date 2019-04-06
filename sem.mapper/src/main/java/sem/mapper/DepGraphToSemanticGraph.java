@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -121,9 +122,8 @@ public class DepGraphToSemanticGraph implements Serializable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		this.retriever = new SenseMappingsRetriever(new File("/Users/kkalouli/Documents/project/sem.mapper/gkr.properties"));
-		//this.retriever = new SenseMappingsRetriever(new File("/Users/caldadmin/Documents/diss/gkr.properties"));
-		//this.retriever = new SenseMappingsRetriever(new File("/home/kkalouli/Documents/diss/gkr.properties"));
+		InputStream configFile = getClass().getClassLoader().getResourceAsStream("gkr.properties");
+		this.retriever = new SenseMappingsRetriever(configFile);
 		this.interrogative = false;
 
 	}
@@ -644,8 +644,8 @@ public class DepGraphToSemanticGraph implements Serializable {
 		graph.displayRoles();
 		graph.displayLinks();
 		//graph.nonLexicalDisplay();
-		//graph.generalDisplay();
-		//graph.display();
+		graph.generalDisplay();
+		graph.display();
 		System.out.println(graph.displayAsString());
 		for (SemanticNode<?> node : graph.getDependencyGraph().getNodes()){
 				System.out.println(node.getLabel()+((SkolemNodeContent) node.getContent()).getContext());
@@ -679,7 +679,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
 		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
-		String sentence = "The woman is more helpful than the baby.";//"A family is watching a little boy who is hitting a baseball.";
+		String sentence = "the man with a beard does shout loudly, whereas the woman in the black shirt does not shout loudly.";//"A family is watching a little boy who is hitting a baseball.";
 		String context = "A boy is walking.";
 		semConverter.processSentence(sentence, sentence+" "+context);	
 	}

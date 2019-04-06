@@ -6,6 +6,7 @@ dependencies {
     // https://mvnrepository.com/artifact/edu.stanford.nlp/stanford-corenlp
 	//compile group: 'edu.stanford.nlp', name: 'stanford-corenlp', version: '3.8.0' 
 	//compile group: 'edu.stanford.nlp', name: 'stanford-corenlp', version: '3.8.0', classifier: 'models'
+	// we have to exclude lucene because it clashes with the snowball stemmer version needed by JIGSAW
 	compile ('edu.stanford.nlp:stanford-corenlp:3.8.0:models') {
     exclude group: 'org.apache.lucene'}
 	compile ('edu.stanford.nlp:stanford-corenlp:3.8.0') {

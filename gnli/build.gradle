@@ -2,6 +2,7 @@
    	
     // https://mvnrepository.com/artifact/com.github.ontologyportal/sigma-nlp
 	//compile group: 'com.github.ontologyportal', name: 'sigma-nlp', version: '1.1'
+	// we are only importing the sigma-component becase sigma-nlp contains lucene (through the stanford dep) which creates a problem with the snowball stemmer
 	// https://mvnrepository.com/artifact/com.github.ontologyportal/sigma-component
 	compile group: 'com.github.ontologyportal', name: 'sigma-component', version: '2.12'
 
