@@ -2,6 +2,11 @@ package sem.graph;
 
 
 import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,8 +16,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
+import javax.swing.JWindow;
 
 import org.jgraph.JGraph;
 import org.jgraph.graph.DefaultGraphCell;
@@ -22,15 +29,23 @@ import org.jgrapht.Graph;
 import org.jgrapht.UndirectedGraph;
 import org.jgrapht.alg.DijkstraShortestPath;
 import org.jgrapht.ext.JGraphModelAdapter;
+import org.jgrapht.ext.JGraphXAdapter;
 import org.jgrapht.graph.AsUndirectedGraph;
 import org.jgrapht.graph.DirectedMultigraph;
 import org.jgrapht.graph.DirectedSubgraph;
 import org.jgrapht.graph.EdgeReversedGraph;
+import org.jgrapht.graph.ListenableDirectedGraph;
 import org.jgrapht.traverse.BreadthFirstIterator;
 
 import com.jgraph.layout.JGraphFacade;
 import com.jgraph.layout.JGraphLayout;
 import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
+import com.mxgraph.layout.mxIGraphLayout;
+import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
+import com.mxgraph.model.mxGraphModel;
+import com.mxgraph.swing.mxGraphComponent;
+import com.mxgraph.util.mxCellRenderer;
+import com.mxgraph.view.mxGraph;
 
 /**
  * Implementation of SemGraph via JGraphT
@@ -286,6 +301,7 @@ public class SemJGraphT implements SemGraph, Serializable{
 			@SuppressWarnings("rawtypes")
 			Map nested = facade.createNestedMap(true, true);
 			jgraph.getGraphLayoutCache().edit(nested);
+			jgraph.setVisible(true);
 			// Show in Frame
 			JFrame frame = new JFrame();
 			frame.getContentPane().add(new JScrollPane(jgraph));
@@ -296,6 +312,103 @@ public class SemJGraphT implements SemGraph, Serializable{
 			e.printStackTrace();
 		}
 	}
+	
+	public BufferedImage saveGraphAsImage(){
+		BufferedImage image = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
+		Graphics2D g = image.createGraphics();
+		g.setColor(Color.WHITE);
+		g.fillRect(0, 0, image.getWidth(), image.getHeight());
+		g.setFont(new Font("Arial Black", Font.BOLD, 5));
+        g.drawString("graph not available", 0, 0);
+		g.dispose();
+		if (this.graph.vertexSet().isEmpty())
+			return image;
+		JGraph jgraph = new JGraph(new JGraphModelAdapter<SemanticNode<?>, SemanticEdge>(this.graph));
+		JGraphFacade facade = new JGraphFacade(jgraph);
+		JGraphLayout layout = new JGraphHierarchicalLayout();
+		layout.run(facade);
+		@SuppressWarnings("rawtypes")
+		Map nested = facade.createNestedMap(true, true);
+		jgraph.getGraphLayoutCache().edit(nested);
+		jgraph.setVisible(true);
+		// Show in Frame
+		JScrollPane component = new JScrollPane(jgraph);
+		JFrame frame = new JFrame();
+		frame.setBackground(Color.WHITE);
+		frame.setUndecorated(true);
+		frame.getContentPane().add(new JScrollPane(jgraph));
+		frame.pack();
+		frame.setLocation(-2000, -2000);
+		frame.setVisible(true);	
+		try
+		{
+			image = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_RGB);		
+			Graphics2D graphics2D = image.createGraphics();
+			frame.paint(graphics2D);	
+			component.print(graphics2D);
+			graphics2D.dispose();
+			frame.dispose();
+			//ImageIO.write(image,"png", new File(imagePath));
+		}
+		catch(Exception exception)
+		{
+			//code
+		}
+		return image;
+
+
+//Create image from graph
+/*JGraphModelAdapter<SemanticNode<?>, SemanticEdge> graphModel = new JGraphModelAdapter<SemanticNode<?>, SemanticEdge>(this.graph);
+JGraph jgraph = new JGraph (graphModel);
+BufferedImage image = jgraph.getImage(Color.WHITE, 5);
+try {
+	ImageIO.write(image, "PNG", new File("/Users/kkalouli/Desktop/img.png"));
+} catch (IOException e) {
+	// TODO Auto-generated catch block
+	e.printStackTrace();
+}
+
+mxGraph graphMx = new mxGraph();
+
+for (SemanticEdge edge : graph.getEdges()){
+	SemanticNode<?> start = graph.getStartNode(edge);
+	SemanticNode<?> finish = graph.getEndNode(edge);
+	graphMx.insertVertex(graphMx.getDefaultParent(), "Start", "Start", 0.0, 0.0, 50.0, 30.0, "rounded");
+	graphMx.insertVertex(graphMx.getDefaultParent(), "Ende", "Ende", 0.0, 0.0, 50.0, 30.0, "rounded");
+
+	graphMx.insertEdge(graphMx.getDefaultParent(), null, "", ((mxGraphModel)graphMx.getModel()).getCell("Start"), ((mxGraphModel)graphMx.getModel()).getCell("Ende"));
+	
+}
+
+graphMx.insertVertex(graphMx.getDefaultParent(), "Start", "Start", 0.0, 0.0, 50.0, 30.0, "rounded");
+graphMx.insertVertex(graphMx.getDefaultParent(), "Ende", "Ende", 0.0, 0.0, 50.0, 30.0, "rounded");
+
+graphMx.insertEdge(graphMx.getDefaultParent(), null, "", ((mxGraphModel)graphMx.getModel()).getCell("Start"), ((mxGraphModel)graphMx.getModel()).getCell("Ende"));
+
+mxIGraphLayout layout = new mxHierarchicalLayout(graphMx);
+layout.execute(graphMx.getDefaultParent());
+
+BufferedImage image1 = mxCellRenderer.createBufferedImage(graphMx, null, 1, Color.WHITE, true, null);
+try {
+	ImageIO.write(image1, "PNG", new File("/Users/kkalouli/Desktop/img1.png"));
+} catch (IOException e) {
+	// TODO Auto-generated catch block
+	e.printStackTrace();
+}
+
+/*JGraph jgraph = new JGraph(new JGraphModelAdapter<SemanticNode<?>, SemanticEdge>(this.graph));
+ListenableDirectedGraph<SemanticNode<?>, SemanticEdge> g = new ListenableDirectedGraph<SemanticNode<?>, SemanticEdge>(graph);	
+// create a visualization using JGraph, via an adapter
+jgxAdapter = new JGraphXAdapter<String, DefaultEdge>(g);
+
+    getContentPane().add(new mxGraphComponent(jgxAdapter));
+BufferedImage image = mxCellRenderer.createBufferedImage(g, null, 1, Color.WHITE, true, null);
+ImageIO.write(image, "PNG", new File("C:\\Temp\\graph.png"));*/
+}
+
+	
+
+
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
@@ -353,6 +466,7 @@ public class SemJGraphT implements SemGraph, Serializable{
 		DirectedSubgraph<SemanticNode<?>, SemanticEdge> subGraph = new DirectedSubgraph<SemanticNode<?>, SemanticEdge>(this.graph, nodes, edges);
 		return new SemJGraphT(subGraph);
 	}
+
 
 
 }

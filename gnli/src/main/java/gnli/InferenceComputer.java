@@ -192,6 +192,7 @@ public class InferenceComputer {
 			return pairsToReturn;
 	}
 	
+	
 	public static void main(String args[]) throws IOException {
 		//String configFile = "/Users/kkalouli/Documents/project/gnli/gnli.properties";
 		//String configFile = "/Users/caldadmin/Documents/diss/gnli.properties";
@@ -201,11 +202,11 @@ public class InferenceComputer {
 		// TODO: change label for embed match
 		String premise = "There is no man in a black jacket doing tricks on a motorbike.";
 		String hypothesis = "A person in a black jacket is doing tricks on a motorbike.";
-		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
-		//String file = "/Users/caldadmin/Documents/diss/to_check.txt";
+		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
+		String file = "/Users/caldadmin/Documents/dissertation/to_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/to_check.txt";
-		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "C", kb);
-		comp.computeInferenceOfTestsuite(file, semGraph, kb);
+		comp.computeInferenceOfPair(semGraph, premise, hypothesis, "C", kb);
+		//comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//comp.deserializeFileWithComputedPairs(file);
 	}
 	

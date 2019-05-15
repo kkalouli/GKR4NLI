@@ -11,10 +11,34 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.imageio.ImageIO;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+
 import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 
+import org.jgraph.JGraph;
+import org.jgrapht.ListenableGraph;
+import org.jgrapht.ext.JGraphModelAdapter;
+import org.jgrapht.ext.JGraphXAdapter;
+import org.jgrapht.graph.DirectedMultigraph;
 import org.springframework.util.SerializationUtils;
+
+import com.jgraph.layout.JGraphFacade;
+import com.jgraph.layout.JGraphLayout;
+import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
+import com.mxgraph.layout.mxCircleLayout;
+import com.mxgraph.layout.mxIGraphLayout;
+import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
+import com.mxgraph.model.mxGraphModel;
+import com.mxgraph.util.mxCellRenderer;
+import com.mxgraph.view.mxGraph;
 
 import sem.graph.vetypes.ContextNode;
 import sem.graph.vetypes.GraphLabels;
@@ -35,7 +59,7 @@ import sem.graph.vetypes.ValueNode;
  * The class can be extended to include further graph layers
  *
  */
-public class SemanticGraph implements Serializable {
+public class SemanticGraph implements Serializable  {
 	/**
 	 * 
 	 */
@@ -442,6 +466,43 @@ public class SemanticGraph implements Serializable {
 		
 		}
 	}
+	
+	public BufferedImage saveGraphAsImage(){
+		BufferedImage image = this.graph.saveGraphAsImage();
+		return image;
+	}
+	
+	public BufferedImage saveRolesAsImage(){
+		BufferedImage image = this.roleGraph.saveGraphAsImage();	
+		return image;
+	}
+	
+	public BufferedImage saveContextsAsImage(){
+		BufferedImage image = this.contextGraph.saveGraphAsImage();
+		return image;
+	}
+	
+	public BufferedImage savePropertiesAsImage(){
+		BufferedImage image = this.propertyGraph.saveGraphAsImage();	
+		return image;
+	}
+	
+	public BufferedImage saveLexAsImage(){
+		BufferedImage image = this.lexGraph.saveGraphAsImage();
+		return image;
+	}
+	
+	public BufferedImage saveDepsAsImage(){
+		BufferedImage image = this.dependencyGraph.saveGraphAsImage();	
+		return image;
+	}
+	
+	public BufferedImage saveCorefAsImage(){
+		BufferedImage image = this.linkGraph.saveGraphAsImage();	
+		return image;
+	}
+	
+	
 
 	/**
 	 * Open a window displaying the full graph
@@ -1291,9 +1352,6 @@ public class SemanticGraph implements Serializable {
 	public boolean isEmpty() {
 		return this.graph.getNodes().isEmpty();
 	}
-
-
-
 
 
 

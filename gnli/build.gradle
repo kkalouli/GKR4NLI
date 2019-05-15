@@ -1,3 +1,10 @@
+plugins {
+    id 'war'  
+    id 'org.gretty' version '2.2.0'
+}
+
+
+
 	dependencies {
    	
     // https://mvnrepository.com/artifact/com.github.ontologyportal/sigma-nlp
@@ -16,7 +23,14 @@
 	
 	compile project(':sem.graph')
 	compile project(':sem.mapper')
+	
+	
+	providedCompile 'javax.servlet:javax.servlet-api:3.1.0' 
+    testCompile 'junit:junit:4.12'
+	
+		
 	}
+	
 
 
 

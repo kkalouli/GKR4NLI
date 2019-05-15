@@ -8,6 +8,8 @@ import java.util.Set;
 import org.jgrapht.Graph;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.File;
 
 /**
  * Interface for basic graph structure for both JGraphT and Grph implementations
@@ -68,5 +70,8 @@ public interface SemGraph  {
 	public void display();
 	
 	public void display(Map<Color, List<SemanticNode<?>>> nodeProperties, Map<Color, List<SemanticEdge>> edgeProperties);
+
+	public BufferedImage saveGraphAsImage();
+	
 
 }
