@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+// uncomment to use through Gretty plugin
 //@WebServlet(name = "GKRServlet", urlPatterns = {"gkr"}, loadOnStartup = 1) 
 public class GKRServlet extends HttpServlet {
 	
@@ -44,7 +45,7 @@ public class GKRServlet extends HttpServlet {
 	
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
-        response.getWriter().print("Hello, World!");     
+        response.getWriter().print("");     
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -54,11 +55,23 @@ public class GKRServlet extends HttpServlet {
         	if (Integer.parseInt(id) < 0){
         		request.setAttribute("sent", examples.get(id));
         		request.setAttribute("counter", String.valueOf(id));
+        		request.setAttribute("image_folder", "images_default");
         		request.getRequestDispatcher("response.jsp").forward(request, response); 
         		return;
         	}
         }
+        if(!request.getParameter("sentence").matches("(\\w*(\\s|,|\\.|\\?|!|\")*)*")){
+			request.setAttribute("error", "Please enter only letters, numbers, and spaces.");
+			request.getRequestDispatcher("response.jsp").forward(request,response);
+			return;
+		}
         String sentence = request.getParameter("sentence");
+        if (sentence.equals("")) {
+        	 request.getRequestDispatcher("index.jsp").forward(request, response); 
+        	 return;
+        }
+        if (!sentence.endsWith("."))
+        	sentence = sentence.concat(".");
         counter++;
         this.graph = semConverter.sentenceToGraph(sentence, sentence);
         if (this.graph == null) this.graph = new sem.graph.SemanticGraph();
@@ -71,6 +84,8 @@ public class GKRServlet extends HttpServlet {
 		}
         request.setAttribute("sent", sentence);
         request.setAttribute("counter", counter);
+        request.setAttribute("image_folder", "images");
+        request.setAttribute("graph", graph.test());
         request.getRequestDispatcher("response.jsp").forward(request, response); 
     }
     
@@ -79,14 +94,16 @@ public class GKRServlet extends HttpServlet {
     	String fullPath = context.getRealPath("src/main/webapp/images/");
     	String typo = "/Library/Tomcat/webapps/sem.mapper/";
     	String kate_apache = "/Users/kkalouli/Documents/Programs/apache-tomcat-9.0.19/webapps/sem.mapper/";
-    	String kate_eclip = "src/main/webapp/";
-        try {
-			ImageIO.write(graph.saveRolesAsImage(),"png", new File(typo+"images/roles_"+counter+".png")); 
-			ImageIO.write(graph.saveDepsAsImage(),"png", new File(typo+"images/deps_"+counter+".png"));
-		    ImageIO.write(graph.saveContextsAsImage(),"png", new File(typo+"images/ctxs_"+counter+".png"));
-		    ImageIO.write(graph.savePropertiesAsImage(),"png", new File(typo+"images/props_"+counter+".png"));
-		    ImageIO.write(graph.saveLexAsImage(),"png", new File(typo+"images/lex_"+counter+".png"));
-		    ImageIO.write(graph.saveCorefAsImage(),"png", new File(typo+"images/coref_"+counter+".png"));
+    	String kate_appRun = "src/main/webapp/";
+    	String gpu_appRun = "/home/kkalouli/Documents/project/semantic_processing/sem.mapper/src/main/webapp/";
+    	String gpu_apache = "/home/kkalouli/Documents/Programs/apache-tomcat-9.0.20/webapps/sem.mapper/";
+    	try {
+			ImageIO.write(graph.saveRolesAsImage(),"png", new File(gpu_apache+"images/roles_"+counter+".png")); 
+			ImageIO.write(graph.saveDepsAsImage(),"png", new File(gpu_apache+"images/deps_"+counter+".png"));
+		    ImageIO.write(graph.saveContextsAsImage(),"png", new File(gpu_apache+"images/ctxs_"+counter+".png"));
+		    ImageIO.write(graph.savePropertiesAsImage(),"png", new File(gpu_apache+"images/props_"+counter+".png"));
+		    ImageIO.write(graph.saveLexAsImage(),"png", new File(gpu_apache+"images/lex_"+counter+".png"));
+		    ImageIO.write(graph.saveCorefAsImage(),"png", new File(gpu_apache+"images/coref_"+counter+".png"));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

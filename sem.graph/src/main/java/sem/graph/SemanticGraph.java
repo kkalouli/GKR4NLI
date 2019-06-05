@@ -467,41 +467,174 @@ public class SemanticGraph implements Serializable  {
 		}
 	}
 	
+	/**
+	 * Save whole graph as a static image
+	 * @return
+	 */
 	public BufferedImage saveGraphAsImage(){
 		BufferedImage image = this.graph.saveGraphAsImage();
 		return image;
 	}
 	
+	/**
+	 * Save roles graph as a static image with the blue color
+	 * @return
+	 */
 	public BufferedImage saveRolesAsImage(){
-		BufferedImage image = this.roleGraph.saveGraphAsImage();	
+		Set<SemanticNode<?>> nodes = new HashSet<SemanticNode<?>>();
+		Set<SemanticEdge> edges = new HashSet<SemanticEdge>();
+		Map<Color, List<SemanticNode<?>>> nodeProperties = new HashMap<Color, List<SemanticNode<?>>>();
+		Map<Color, List<SemanticEdge>> edgeProperties = new HashMap<Color,List<SemanticEdge>>();
+		List<SemanticNode<?>> roleNodes = new ArrayList<SemanticNode<?>>();
+		nodeProperties.put(Color.BLUE, roleNodes);
+		List<SemanticEdge> roleEdges = new ArrayList<SemanticEdge>();
+		edgeProperties.put(Color.BLACK, roleEdges);
+		
+		for (SemanticNode<?> rNode : this.roleGraph.getNodes()) {
+			roleNodes.add(rNode);
+		}
+		for (SemanticEdge rEdge : this.roleGraph.getEdges()) {
+			roleEdges.add(rEdge);
+		}
+
+		BufferedImage image = this.roleGraph.saveGraphAsImage(nodeProperties, edgeProperties);	
 		return image;
 	}
 	
+	/**
+	 * Save contexts graph as a static image with the grey color
+	 * @return
+	 */
 	public BufferedImage saveContextsAsImage(){
-		BufferedImage image = this.contextGraph.saveGraphAsImage();
+		Set<SemanticNode<?>> nodes = new HashSet<SemanticNode<?>>();
+		Set<SemanticEdge> edges = new HashSet<SemanticEdge>();
+		Map<Color, List<SemanticNode<?>>> nodeProperties = new HashMap<Color, List<SemanticNode<?>>>();
+		Map<Color, List<SemanticEdge>> edgeProperties = new HashMap<Color,List<SemanticEdge>>();
+		List<SemanticNode<?>> contextNodes = new ArrayList<SemanticNode<?>>();
+		nodeProperties.put(Color.LIGHT_GRAY, contextNodes);
+		List<SemanticEdge> contextEdges = new ArrayList<SemanticEdge>();
+		edgeProperties.put(Color.LIGHT_GRAY, contextEdges);
+		
+		for (SemanticNode<?> cNode : this.contextGraph.getNodes()) {
+			contextNodes.add(cNode);
+		}
+		for (SemanticEdge cEdge : this.contextGraph.getEdges()) {
+			contextEdges.add(cEdge);
+		}
+		
+		BufferedImage image = this.contextGraph.saveGraphAsImage(nodeProperties, edgeProperties);
 		return image;
 	}
 	
+	/**
+	 * Save properties graph as a static image with the magenta color
+	 * @return
+	 */
+
 	public BufferedImage savePropertiesAsImage(){
-		BufferedImage image = this.propertyGraph.saveGraphAsImage();	
+		//this.propertyGraph.display();
+		Set<SemanticNode<?>> nodes = new HashSet<SemanticNode<?>>();
+		Set<SemanticEdge> edges = new HashSet<SemanticEdge>();
+		Map<Color, List<SemanticNode<?>>> nodeProperties = new HashMap<Color, List<SemanticNode<?>>>();
+		Map<Color, List<SemanticEdge>> edgeProperties = new HashMap<Color,List<SemanticEdge>>();
+		List<SemanticNode<?>> propertyNodes = new ArrayList<SemanticNode<?>>();
+		nodeProperties.put(Color.MAGENTA, propertyNodes);
+		List<SemanticEdge> propertyEdges = new ArrayList<SemanticEdge>();
+		edgeProperties.put(Color.MAGENTA, propertyEdges);
+		List<SemanticNode<?>> roleNodes = new ArrayList<SemanticNode<?>>();
+		nodeProperties.put(Color.BLUE, roleNodes);
+		List<SemanticEdge> roleEdges = new ArrayList<SemanticEdge>();
+		edgeProperties.put(Color.BLUE, roleEdges);
+
+		for (SemanticNode<?> rNode : this.propertyGraph.getNodes()) {
+			if (rNode instanceof ValueNode)
+				propertyNodes.add(rNode);
+			else if (rNode instanceof SkolemNode)
+				roleNodes.add(rNode);
+		}
+		for (SemanticEdge rEdge : this.propertyGraph.getEdges()) {
+			if (rEdge instanceof PropertyEdge)
+				propertyEdges.add(rEdge);
+			else if (rEdge instanceof RoleEdge)
+				roleEdges.add(rEdge);
+		}
+
+		BufferedImage image = this.propertyGraph.saveGraphAsImage(nodeProperties, edgeProperties);
 		return image;
 	}
 	
+	/**
+	 * Save lexical graph as a static image with the cyan color
+	 * @return
+	 */
 	public BufferedImage saveLexAsImage(){
-		BufferedImage image = this.lexGraph.saveGraphAsImage();
+		Set<SemanticNode<?>> nodes = new HashSet<SemanticNode<?>>();
+		Set<SemanticEdge> edges = new HashSet<SemanticEdge>();
+		Map<Color, List<SemanticNode<?>>> nodeProperties = new HashMap<Color, List<SemanticNode<?>>>();
+		Map<Color, List<SemanticEdge>> edgeProperties = new HashMap<Color,List<SemanticEdge>>();
+		List<SemanticNode<?>> lexNodes = new ArrayList<SemanticNode<?>>();
+		nodeProperties.put(Color.CYAN, lexNodes);
+		List<SemanticEdge> lexEdges = new ArrayList<SemanticEdge>();
+		edgeProperties.put(Color.CYAN, lexEdges);
+		List<SemanticNode<?>> roleNodes = new ArrayList<SemanticNode<?>>();
+		nodeProperties.put(Color.BLUE, roleNodes);
+		List<SemanticEdge> roleEdges = new ArrayList<SemanticEdge>();
+		edgeProperties.put(Color.BLUE, roleEdges);
+		
+		for (SemanticNode<?> rNode : this.lexGraph.getNodes()) {
+			if (rNode instanceof SenseNode)
+				lexNodes.add(rNode);
+			else if (rNode instanceof SkolemNode)
+				roleNodes.add(rNode);
+		}
+		for (SemanticEdge rEdge : this.lexGraph.getEdges()) {
+			if (rEdge instanceof LexEdge)
+				lexEdges.add(rEdge);
+			else if (rEdge instanceof RoleEdge)
+				roleEdges.add(rEdge);
+		}
+		
+		BufferedImage image = this.lexGraph.saveGraphAsImage(nodeProperties, edgeProperties);
 		return image;
 	}
 	
+	/**
+	 * Save deps graph as a static image with default colors (orange)
+	 * @return
+	 */
 	public BufferedImage saveDepsAsImage(){
 		BufferedImage image = this.dependencyGraph.saveGraphAsImage();	
 		return image;
 	}
 	
+	/**
+	 * Save coref graph as a static image with the green color
+	 * @return
+	 */
 	public BufferedImage saveCorefAsImage(){
-		BufferedImage image = this.linkGraph.saveGraphAsImage();	
+		Set<SemanticNode<?>> nodes = new HashSet<SemanticNode<?>>();
+		Set<SemanticEdge> edges = new HashSet<SemanticEdge>();
+		Map<Color, List<SemanticNode<?>>> nodeProperties = new HashMap<Color, List<SemanticNode<?>>>();
+		Map<Color, List<SemanticEdge>> edgeProperties = new HashMap<Color,List<SemanticEdge>>();
+		List<SemanticNode<?>> corefNodes = new ArrayList<SemanticNode<?>>();
+		nodeProperties.put(Color.GREEN, corefNodes);
+		List<SemanticEdge> corefEdges = new ArrayList<SemanticEdge>();
+		edgeProperties.put(Color.GREEN, corefEdges);
+		
+		for (SemanticNode<?> rNode : this.linkGraph.getNodes()) {
+			corefNodes.add(rNode);
+		}
+		for (SemanticEdge rEdge : this.linkGraph.getEdges()) {
+			corefEdges.add(rEdge);
+		}
+		
+		BufferedImage image = this.linkGraph.saveGraphAsImage(nodeProperties, edgeProperties);	
 		return image;
 	}
 	
+	public JFrame test() {
+		return graph.saveGraphAsImageTest();	
+	}
 	
 
 	/**

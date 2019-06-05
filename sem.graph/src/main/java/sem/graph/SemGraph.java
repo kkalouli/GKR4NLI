@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.JFrame;
+
 import org.jgrapht.Graph;
 
 import java.awt.Color;
@@ -73,5 +75,8 @@ public interface SemGraph  {
 
 	public BufferedImage saveGraphAsImage();
 	
+	public BufferedImage saveGraphAsImage(Map<Color, List<SemanticNode<?>>> nodeProperties, Map<Color, List<SemanticEdge>> edgeProperties);
+	
+	public JFrame saveGraphAsImageTest();
 
 }

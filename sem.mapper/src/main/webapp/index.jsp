@@ -17,7 +17,7 @@
   right: 0;
   bottom: 0;
   width: 100%;
-  background: rgba(0,0,0,0.75) url(images/bunny_loop.gif) no-repeat center center;
+  background: rgba(0,0,0,0.75) url(images_default/bunny_loop.gif) no-repeat center center;
   z-index: 10000;
 }
 
@@ -39,20 +39,22 @@
 	<p class="tab">
 		This is the Graphical Knowledge Representation (GKR) parser. It
 		transforms a given sentence into a layered semantic graph. The
-		semantic graph consists of (currently) 6 subgraphs: dependency graph,
+		semantic graph consists of (currently) 6 subgraphs/layers: dependency graph,
 		concept graph, context graph, lexical graph, properties graph and
-		coreference graph. Each of those encodes different kinds of
-		information present in the sentence. This makes the GKR representation
-		flexible enough to be expanded with additional subgraphs as necessary,
-		and modular to be used in different NLP applications. The
+		coreference graph. This separation in layers is analogous to the separation in levels
+		in the LFG architecture (Kaplan, 1995): each layer encodes different kinds of
+		information present in the sentence and this allows the formulation of modular linguistic
+		generalizations which govern a given layer independently from the others.
+		This allows for the combination of multiple logics and styles of representations, i.e.
+		structural/linguistic and distributional representations, and contrasts with the latent representations used
+		in end-to-end deep learning approaches. The
 		representation is especially targeted towards Natural Language
-		Inference (NLI) but also simpler semantic similarity tasks. <br>
-		This demo seeks to give the chance to interested researchers to have a
-		go on our system. The system is still under implementation and we are
+		Inference (NLI) but is also suitable for other semantic processing tasks, e.g. semantic similarity tasks. <br>
+		This demo seeks to give interested researchers a taste of GKR. 
+		GKR is constantly being improved and we are
 		thankful for any comments or discussions. <br> We are currently
-		also implementing a hybrid rule-based and machine-learning NLI system
-		based on GKR, which you can also try at its initial experimental
-		version.
+		also implementing a hybrid, structural/linguistic and distributional, NLI system
+		based on GKR. Its preliminary version will be made available soon. 
 	</p>
 
 	</p>
@@ -68,7 +70,7 @@
 
 	<h2 class="tab" id="online"><font color="#349aff">Online Demo for GKR</font></h2>
 	<p class="tab">
-		Enter a sentence below to try our GKR parser online: (please use punctuation marks)<br>
+		Enter a sentence below to try our GKR parser online:<br>
 		<form class="tab" method="post" action="gkr">  
   <input type="text" id="sentence-input" name="sentence" />
    <!-- <input type="submit" id="process-button" value="Process" /> -->
@@ -84,28 +86,19 @@
   <input type="radio" name="id" value="-1" checked> The boy faked the illness. <br>
   <input type="radio" name="id" value="-2"> Negotiations prevented the strike.<br>
   <input type="radio" name="id" value="-3"> The dog is not eating the food. <br>
-  <input type="radio" name="id" value="-4"> The boy walked or drove to school..<br>
+  <input type="radio" name="id" value="-4"> The boy walked or drove to school.<br>
   <input type="radio" name="id" value="-5"> No woman is walking.<br>
   <input type="radio" name="id" value="-6"> Max forgot to close the door.<br>
   <button class="btn btn-primary" type="submit">Submit</button>
 	</form>
-	<!-- 
-	<ul>
-		<li id="-1"> The boy faked the illness. 
-		<li id="-2"> Negotiations prevented the strike.
-		<li id="-3"> The dog is not eating the food.
-		<li id="-4"> The boy walked or drove to school.
-		<li id="-5" > No woman is walking.
-		<li id="-6"> Max forgot to close the door.
-		
-	</ul>
-	-->
 	</p>
 	
 	<br>
 
 	<h2 class="tab" id="publications"><font color="#349aff">Publications</font></h2>
 	<ul>
+		<li> GKR: Bridging the gap between symbolic/structural and distributional meaning representations</a> Kalouli,
+			A.-L., Richard Crouch and Valeria de Paiva. 2019, to appear. 1st International Workshop on Designing Meaning Representations (DMR) @ACL 2019.
 		<li><a href="http://aclweb.org/anthology/W18-1304"> GKR: the
 				Graphical Knowledge Representation for semantic parsing</a> Kalouli,
 			A.-L. and Richard Crouch. 2018. SEMBEaR @NAACL 2018.

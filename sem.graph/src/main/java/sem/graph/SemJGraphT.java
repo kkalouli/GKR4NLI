@@ -2,15 +2,22 @@ package sem.graph;
 
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
+import java.awt.geom.Dimension2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -18,12 +25,17 @@ import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
+import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JWindow;
 
 import org.jgraph.JGraph;
+import org.jgraph.graph.AttributeMap;
+import org.jgraph.graph.CellView;
 import org.jgraph.graph.DefaultGraphCell;
 import org.jgraph.graph.GraphConstants;
+import org.jgraph.graph.GraphLayoutCache;
+import org.jgraph.graph.VertexView;
 import org.jgrapht.DirectedGraph;
 import org.jgrapht.Graph;
 import org.jgrapht.UndirectedGraph;
@@ -313,103 +325,6 @@ public class SemJGraphT implements SemGraph, Serializable{
 		}
 	}
 	
-	public BufferedImage saveGraphAsImage(){
-		BufferedImage image = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
-		Graphics2D g = image.createGraphics();
-		g.setColor(Color.WHITE);
-		g.fillRect(0, 0, image.getWidth(), image.getHeight());
-		g.setFont(new Font("Arial Black", Font.BOLD, 5));
-        g.drawString("graph not available", 0, 0);
-		g.dispose();
-		if (this.graph.vertexSet().isEmpty())
-			return image;
-		JGraph jgraph = new JGraph(new JGraphModelAdapter<SemanticNode<?>, SemanticEdge>(this.graph));
-		JGraphFacade facade = new JGraphFacade(jgraph);
-		JGraphLayout layout = new JGraphHierarchicalLayout();
-		layout.run(facade);
-		@SuppressWarnings("rawtypes")
-		Map nested = facade.createNestedMap(true, true);
-		jgraph.getGraphLayoutCache().edit(nested);
-		jgraph.setVisible(true);
-		// Show in Frame
-		JScrollPane component = new JScrollPane(jgraph);
-		JFrame frame = new JFrame();
-		frame.setBackground(Color.WHITE);
-		frame.setUndecorated(true);
-		frame.getContentPane().add(new JScrollPane(jgraph));
-		frame.pack();
-		frame.setLocation(-2000, -2000);
-		frame.setVisible(true);	
-		try
-		{
-			image = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_RGB);		
-			Graphics2D graphics2D = image.createGraphics();
-			frame.paint(graphics2D);	
-			component.print(graphics2D);
-			graphics2D.dispose();
-			frame.dispose();
-			//ImageIO.write(image,"png", new File(imagePath));
-		}
-		catch(Exception exception)
-		{
-			//code
-		}
-		return image;
-
-
-//Create image from graph
-/*JGraphModelAdapter<SemanticNode<?>, SemanticEdge> graphModel = new JGraphModelAdapter<SemanticNode<?>, SemanticEdge>(this.graph);
-JGraph jgraph = new JGraph (graphModel);
-BufferedImage image = jgraph.getImage(Color.WHITE, 5);
-try {
-	ImageIO.write(image, "PNG", new File("/Users/kkalouli/Desktop/img.png"));
-} catch (IOException e) {
-	// TODO Auto-generated catch block
-	e.printStackTrace();
-}
-
-mxGraph graphMx = new mxGraph();
-
-for (SemanticEdge edge : graph.getEdges()){
-	SemanticNode<?> start = graph.getStartNode(edge);
-	SemanticNode<?> finish = graph.getEndNode(edge);
-	graphMx.insertVertex(graphMx.getDefaultParent(), "Start", "Start", 0.0, 0.0, 50.0, 30.0, "rounded");
-	graphMx.insertVertex(graphMx.getDefaultParent(), "Ende", "Ende", 0.0, 0.0, 50.0, 30.0, "rounded");
-
-	graphMx.insertEdge(graphMx.getDefaultParent(), null, "", ((mxGraphModel)graphMx.getModel()).getCell("Start"), ((mxGraphModel)graphMx.getModel()).getCell("Ende"));
-	
-}
-
-graphMx.insertVertex(graphMx.getDefaultParent(), "Start", "Start", 0.0, 0.0, 50.0, 30.0, "rounded");
-graphMx.insertVertex(graphMx.getDefaultParent(), "Ende", "Ende", 0.0, 0.0, 50.0, 30.0, "rounded");
-
-graphMx.insertEdge(graphMx.getDefaultParent(), null, "", ((mxGraphModel)graphMx.getModel()).getCell("Start"), ((mxGraphModel)graphMx.getModel()).getCell("Ende"));
-
-mxIGraphLayout layout = new mxHierarchicalLayout(graphMx);
-layout.execute(graphMx.getDefaultParent());
-
-BufferedImage image1 = mxCellRenderer.createBufferedImage(graphMx, null, 1, Color.WHITE, true, null);
-try {
-	ImageIO.write(image1, "PNG", new File("/Users/kkalouli/Desktop/img1.png"));
-} catch (IOException e) {
-	// TODO Auto-generated catch block
-	e.printStackTrace();
-}
-
-/*JGraph jgraph = new JGraph(new JGraphModelAdapter<SemanticNode<?>, SemanticEdge>(this.graph));
-ListenableDirectedGraph<SemanticNode<?>, SemanticEdge> g = new ListenableDirectedGraph<SemanticNode<?>, SemanticEdge>(graph);	
-// create a visualization using JGraph, via an adapter
-jgxAdapter = new JGraphXAdapter<String, DefaultEdge>(g);
-
-    getContentPane().add(new mxGraphComponent(jgxAdapter));
-BufferedImage image = mxCellRenderer.createBufferedImage(g, null, 1, Color.WHITE, true, null);
-ImageIO.write(image, "PNG", new File("C:\\Temp\\graph.png"));*/
-}
-
-	
-
-
-
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public void display(Map<Color, List<SemanticNode<?>>> nodeProperties,
@@ -460,6 +375,184 @@ ImageIO.write(image, "PNG", new File("C:\\Temp\\graph.png"));*/
 		}
 	}
 
+	/**
+	 * Create a static image out of the graph.
+	 */
+	public BufferedImage saveGraphAsImage(){
+		// following code if the graph is empty: just show empty graph
+		BufferedImage image = new BufferedImage(200, 40, BufferedImage.TYPE_INT_RGB);
+		Graphics graphics = image.getGraphics();
+        graphics.setColor(Color.WHITE);
+        graphics.fillRect(0, 0, 200, 40);
+        graphics.setColor(Color.BLACK);
+        graphics.setFont(new Font("Arial Black", Font.PLAIN, 18));
+        graphics.drawString("graph not available", 10, 20);
+		if (this.graph.vertexSet().isEmpty())
+			return image;
+		// else if graph is full:
+		JGraph jgraph = new JGraph(new JGraphModelAdapter<SemanticNode<?>, SemanticEdge>(this.graph)); 
+		JGraphFacade facade = new JGraphFacade(jgraph);
+		JGraphLayout layout = new JGraphHierarchicalLayout();
+		layout.run(facade);	
+		// rescale whole facade so that the nodes are further apart and thus the edge labels dont overlap
+		//facade.scale(facade.getVertices(), 1.3, 1.0, 0, 0);
+		// rescale cells that are bigger than the default to fit their content size (get size of font)
+		for (Object vert : facade.getVertices()) {
+			int width = graphics.getFontMetrics().stringWidth(vert.toString());
+			//90 is the default size
+			if (width > 90) {
+				facade.setSize(vert, width, 30);
+				Rectangle2D rect = facade.getBounds(vert);
+				rect.setRect(rect.getX()+10, rect.getY(), rect.getWidth(), rect.getHeight());
+				facade.setBounds(vert, rect);
+			}
+		}
+		@SuppressWarnings("rawtypes")
+		Map nested = facade.createNestedMap(true, true);
+		jgraph.getGraphLayoutCache().edit(nested);	
+		// Show in Frame
+		JScrollPane component = new JScrollPane(jgraph);
+		JFrame frame = new JFrame();
+		frame.setBackground(Color.WHITE);
+		frame.setUndecorated(true);
+		frame.getContentPane().add(component);
+		frame.pack();
+		frame.setLocation(-2000, -2000);
+		frame.setVisible(true);	
+		try
+		{
+			image = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_RGB);		
+			Graphics2D graphics2D = image.createGraphics();
+			frame.paint(graphics2D);	
+			component.print(graphics2D);
+			graphics2D.dispose();
+			frame.dispose();
+			//ImageIO.write(image,"png", new File(imagePath));
+		}
+		catch(Exception exception)
+		{
+			//code
+		}
+		frame.setVisible(false);
+		jgraph.setVisible(false);
+		return image;
+	}
+	
+	
+	public JFrame saveGraphAsImageTest(){
+		JGraph jgraph = new JGraph(new JGraphModelAdapter<SemanticNode<?>, SemanticEdge>(this.graph)); 
+		JGraphFacade facade = new JGraphFacade(jgraph);
+		JGraphLayout layout = new JGraphHierarchicalLayout();
+		layout.run(facade);	
+		@SuppressWarnings("rawtypes")
+		Map nested = facade.createNestedMap(true, true);
+		jgraph.getGraphLayoutCache().edit(nested);	
+		// Show in Frame
+		JScrollPane component = new JScrollPane(jgraph);
+		JFrame frame = new JFrame();
+		frame.setBackground(Color.WHITE);
+		frame.setUndecorated(true);
+		frame.getContentPane().add(component);
+		frame.pack();
+		frame.setLocation(-2000, -2000);
+		frame.setVisible(true);	
+		//frame.setVisible(false);
+		//jgraph.setVisible(false);
+		return frame;
+	}
+	
+	/**
+	 * Create a static image out of the graph with the given colormap for the nodes and the edges.
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public BufferedImage saveGraphAsImage(Map<Color, List<SemanticNode<?>>> nodeProperties,
+			Map<Color, List<SemanticEdge>> edgeProperties){
+		// following code if the graph is empty: just show empty graph
+		BufferedImage image = new BufferedImage(200, 40, BufferedImage.TYPE_INT_RGB);
+		Graphics graphics = image.getGraphics();
+        graphics.setColor(Color.WHITE);
+        graphics.fillRect(0, 0, 200, 40);
+        graphics.setColor(Color.BLACK);
+        graphics.setFont(new Font("Arial Black", Font.PLAIN, 18));
+        graphics.drawString("graph not available", 10, 20);
+		if (this.graph.vertexSet().isEmpty())
+			return image;		
+		// else if graph is full:
+		JGraphModelAdapter jgAdapter = new JGraphModelAdapter<SemanticNode<?>, SemanticEdge>(this.graph);
+		JGraph jgraph = new JGraph(jgAdapter); 
+		JGraphFacade facade = new JGraphFacade(jgraph);
+		JGraphLayout layout = new JGraphHierarchicalLayout();
+		layout.run(facade);	
+		// rescale whole facade so that the nodes are further apart and thus the edge labels dont overlap
+		//facade.scale(facade.getVertices(), 1.2, 1.0, 0, 0);
+		// rescale cells that are bigger than the default to fit their content size (get size of font)
+		for (Object vert : facade.getVertices()) {
+			//Rectangle2D rect = facade.getBounds(vert);
+			//rect.setRect(rect.getX()-50, rect.getY(), rect.getWidth(), rect.getHeight());
+			//facade.setBounds(vert, rect);
+			int width = graphics.getFontMetrics().stringWidth(vert.toString());
+			//90 is the default size
+			if (width > 90) {
+				facade.setSize(vert, width, 30);
+			}
+		}
+		Map nested = facade.createNestedMap(true, true);
+		jgraph.getGraphLayoutCache().getModel().beginUpdate();
+		jgraph.getGraphLayoutCache().edit(nested);	
+		
+		// Add additional node and edge properties
+		// Currently, only colours
+		Map nested1 = new HashMap();
+		for (Entry<Color, List<SemanticNode<?>>> kv : nodeProperties.entrySet()) {
+			Map nodeColor = new HashMap();
+			GraphConstants.setBackground(nodeColor, kv.getKey());
+			for (SemanticNode<?> n : kv.getValue()) {
+				DefaultGraphCell cell = jgAdapter.getVertexCell(n);
+				nested1.put(cell, nodeColor);
+			}
+		}
+		for (Entry<Color, List<SemanticEdge>> kv : edgeProperties.entrySet()) {
+			Map edgeColor = new HashMap();
+			GraphConstants.setLineColor(edgeColor, kv.getKey());
+			for (SemanticEdge e : kv.getValue()) {
+				DefaultGraphCell cell = jgAdapter.getEdgeCell(e);
+				nested1.put(cell, edgeColor);
+			}
+		}
+		jgraph.getGraphLayoutCache().getModel().beginUpdate();
+		jgraph.getGraphLayoutCache().edit(nested1);
+		jgraph.getGraphLayoutCache().getModel().endUpdate();
+		jgraph.getGraphLayoutCache().getModel().endUpdate();
+
+		// Show in Frame
+		JScrollPane component = new JScrollPane(jgraph);
+		JFrame frame = new JFrame();
+		frame.setBackground(Color.WHITE);
+		frame.setUndecorated(true);
+		frame.getContentPane().add(component);
+		frame.pack();
+		frame.setLocation(-2000, -2000);
+		frame.setVisible(true);	
+		try
+		{
+			image = new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_RGB);		
+			Graphics2D graphics2D = image.createGraphics();
+			frame.paint(graphics2D);	
+			component.print(graphics2D);
+			graphics2D.dispose();
+			frame.dispose();
+			//ImageIO.write(image,"png", new File(imagePath));
+		}
+		catch(Exception exception)
+		{
+			//code
+		}
+		frame.setVisible(false);
+		jgraph.setVisible(false);
+		return image;
+}
+
+	
 	@Override
 	public SemGraph getSubGraph(Set<SemanticNode<?>> nodes,
 			Set<SemanticEdge> edges) {

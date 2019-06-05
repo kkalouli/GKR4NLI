@@ -104,10 +104,10 @@ public class ContextMapper implements Serializable {
 	public void integrateAllContexts(){
 		integrateImplicativeContexts();
 		integrateCoordinatingContexts();
-		graph.displayContexts();
+		//graph.displayContexts();
 		integrateNegativeContexts();
 		integrateModalContexts();
-		graph.displayContexts();
+		//graph.displayContexts();
 		if (coord == false)
 			checkForPostIntegrationMistakes();
 		SemGraph conGraph = graph.getContextGraph();	
@@ -175,7 +175,7 @@ public class ContextMapper implements Serializable {
 			graph.removeContextNode(top);
 		}
 		
-		graph.displayContexts();
+		//graph.displayContexts();
 			
 	}
 	

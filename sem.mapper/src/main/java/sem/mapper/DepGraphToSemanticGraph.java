@@ -560,7 +560,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 			if (depEdge.getLabel().equals("appos")){
 				startNode = graph.getStartNode(depEdge);
 				finishNode = graph.getFinishNode(depEdge);
-				LinkEdge linkEdge = new LinkEdge(GraphLabels.APPOSITIVE_IDENTICAL_TO, new DefaultEdgeContent());
+				LinkEdge linkEdge = new LinkEdge(GraphLabels.APPOS_IDENTICAL_TO, new DefaultEdgeContent());
 				graph.addLinkEdge(linkEdge, startNode, finishNode);
 			}
 		}
@@ -640,7 +640,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 	 */
 	public sem.graph.SemanticGraph processSentence(String sentence, String wholeCtx) throws IOException{
 		sem.graph.SemanticGraph graph = this.sentenceToGraph(sentence, wholeCtx);
-		graph.displayDependencies();
+		/*graph.displayDependencies();
 		graph.displayProperties();
 		graph.displayLex();
 		graph.displayContexts();
@@ -648,8 +648,14 @@ public class DepGraphToSemanticGraph implements Serializable {
 		graph.displayLinks();
 		//graph.nonLexicalDisplay();
 		graph.generalDisplay();
-		graph.display();
-		/*ImageIO.write(graph.saveRolesAsImage(),"png", new File("/Users/kkalouli/Desktop/roles.png"));*/
+		graph.display();*/
+		//ImageIO.write(graph.saveDepsAsImage(),"png", new File("/home/kkalouli/Desktop/deps.png"));
+		//ImageIO.write(graph.saveRolesAsImage(),"png", new File("/home/kkalouli/Desktop/roles.png"));
+		//ImageIO.write(graph.saveContextsAsImage(),"png", new File("/home/kkalouli/Desktop/ctx.png"));
+		ImageIO.write(graph.savePropertiesAsImage(),"png", new File("/home/kkalouli/Desktop/props.png"));
+		//ImageIO.write(graph.saveLexAsImage(),"png", new File("/home/kkalouli/Desktop/lex.png"));
+		//ImageIO.write(graph.saveCorefAsImage(),"png", new File("/home/kkalouli/Desktop/coref.png"));
+
 		System.out.println(graph.displayAsString());
 		for (SemanticNode<?> node : graph.getDependencyGraph().getNodes()){
 				System.out.println(node.getLabel()+((SkolemNodeContent) node.getContent()).getContext());
@@ -685,7 +691,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
 		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
-		String sentence = "Max does not believe John does not like Mary.";//"A family is watching a little boy who is hitting a baseball.";
+		String sentence = "The boy faked the illness and the headache.";//"A family is watching a little boy who is hitting a baseball.";
 		String context = "A boy is walking.";
 		semConverter.processSentence(sentence, sentence+" "+context);	
 	}
