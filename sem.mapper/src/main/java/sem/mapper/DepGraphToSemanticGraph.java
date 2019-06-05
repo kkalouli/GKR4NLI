@@ -639,6 +639,10 @@ public class DepGraphToSemanticGraph implements Serializable {
 	 * @throws IOException 
 	 */
 	public sem.graph.SemanticGraph processSentence(String sentence, String wholeCtx) throws IOException{
+		if (!sentence.endsWith("."))
+			sentence = sentence+".";
+		if (!wholeCtx.endsWith("."))
+			wholeCtx = wholeCtx+".";
 		sem.graph.SemanticGraph graph = this.sentenceToGraph(sentence, wholeCtx);
 		/*graph.displayDependencies();
 		graph.displayProperties();

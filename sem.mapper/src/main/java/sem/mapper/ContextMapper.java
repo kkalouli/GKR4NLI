@@ -51,6 +51,7 @@ public class ContextMapper implements Serializable {
 	private HashMap<String,String> mapOfImpl;
 	private ArrayList<String> verbalForms;
 	private ArrayList<SemanticNode<?>> traversedNeighbors;
+	private ArrayList<String> modals;
 	
 	public ContextMapper(sem.graph.SemanticGraph graph, ArrayList<String> verbalForms){
 		this.verbalForms = verbalForms;
@@ -63,6 +64,17 @@ public class ContextMapper implements Serializable {
 		this.disjunction = false;
 		this.implCtxs = new HashMap<SemanticNode<?>,String>();
 		this.traversedNeighbors = new ArrayList<SemanticNode<?>>();
+		this.modals = new ArrayList<String>();
+		modals.add("might");
+		modals.add("should");
+		modals.add("must");
+		modals.add("may");
+		modals.add("can");
+		modals.add("could");
+		modals.add("ought");
+		modals.add("need");
+		modals.add("would");
+
 		
 		// read the file with the implicative/factive signatures
 		BufferedReader br = null;
@@ -242,7 +254,8 @@ public class ContextMapper implements Serializable {
 					(it is not enough that the head is the "not_" node because "not_" is also the node when the embedded verb of the implicative is negated, so
 					we have to make sure that this is case 2, where the implicative itself is negated)
 					*/
-					if (implCtxs.containsKey(ctxHead)  || (implCtxs.containsKey(graph.getContextGraph().getOutNeighbors(node).iterator().next()) && ctxHead.getLabel().contains("not_"))){
+					if (implCtxs.containsKey(ctxHead)  || (implCtxs.containsKey(graph.getContextGraph().getOutNeighbors(node).iterator().next()) && ctxHead.getLabel().contains("not_"))
+							|| (ctxHead instanceof SkolemNode && modals.contains(((SkolemNodeContent) ctxHead.getContent()).getStem())  )){
 						top = ctx;
 						connector = graph.getContextGraph().getEdges(ctx,node).iterator().next();
 						// do not put the head node of this node to the nodesToRemove
@@ -401,15 +414,7 @@ public class ContextMapper implements Serializable {
 	private void integrateModalContexts(){
 		Set<SemanticNode<?>> nodes = depGraph.getNodes();
 		for (SemanticNode<?> node : nodes){	
-			if (((SkolemNodeContent) node.getContent()).getStem().equals("might") 
-					|| ((SkolemNodeContent) node.getContent()).getStem().equals("should")
-					|| ((SkolemNodeContent) node.getContent()).getStem().equals("may")
-					|| ((SkolemNodeContent) node.getContent()).getStem().equals("must")
-					|| ((SkolemNodeContent) node.getContent()).getStem().equals("can")
-					|| ((SkolemNodeContent) node.getContent()).getStem().equals("could")
-					|| ((SkolemNodeContent) node.getContent()).getStem().equals("ought")
-					|| ((SkolemNodeContent) node.getContent()).getStem().equals("need")
-					|| ((SkolemNodeContent) node.getContent()).getStem().equals("would")){
+			if (modals.contains(((SkolemNodeContent) node.getContent()).getStem())){
 				// create the self node of the modal
 				SemanticNode<?> modalNode = addSelfContextNodeAndEdgeToGraph(node);
 				// get the head of the modal
