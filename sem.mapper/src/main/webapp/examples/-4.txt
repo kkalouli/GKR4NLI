@@ -99,7 +99,7 @@
     <mxCell edge="1" id="7" parent="1" source="5" target="6" value="ctx_hd">
       <mxGeometry as="geometry" relative="1"/>
     </mxCell>
-    <mxCell id="8" parent="1" style="defaultVertex;fillColor=#9CC1A5" value="ctx(win_4)" vertex="1">
+    <mxCell id="8" parent="1" style="defaultVertex;fillColor=#b3b5b8" value="top" vertex="1">
       <mxGeometry as="geometry" height="30.0" width="80.0" x="20.0" y="20.0"/>
     </mxCell>
     <mxCell id="9" parent="1" style="defaultVertex;fillColor=#bce7fd" value="win_4" vertex="1">

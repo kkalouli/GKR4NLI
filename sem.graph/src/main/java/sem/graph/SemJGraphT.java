@@ -324,17 +324,29 @@ public class SemJGraphT  extends JApplet implements  SemGraph, Serializable{
 			for (SemanticEdge edge : graph.edgeSet()){
 				Object v1 = null;
 				Object v2 = null;
-				if (!traversedNodes.containsKey(edge.getSourceVertexId())){
-					v1 = mx.insertVertex(parent, null, edge.getSourceVertexId(), 20, 20, 80, 30,"defaultVertex;fillColor="+getColorForVertex(edge.getSourceVertexId()));
-					traversedNodes.put(edge.getSourceVertexId(), v1);
-				} else {
-					v1 = traversedNodes.get(edge.getSourceVertexId());
+				String sourceId = edge.getSourceVertexId();
+				String targetId = edge.getDestVertexId();
+				String sourceColor = getColorForVertex(sourceId);
+				String targetColor = getColorForVertex(targetId);
+				if (sourceColor.equals("top")){
+					sourceColor = "#b3b5b8";
+					sourceId = "top";
 				}
-				if (!traversedNodes.containsKey(edge.getDestVertexId())){
-					v2 = mx.insertVertex(parent, null, edge.getDestVertexId(), 200, 150, 80, 30, "defaultVertex;fillColor="+getColorForVertex(edge.getDestVertexId()));
-					traversedNodes.put(edge.getDestVertexId(), v2);
+				if (targetColor.equals("top")){
+					targetColor = "#b3b5b8";
+					targetId = "top";
+				}
+				if (!traversedNodes.containsKey(sourceId)){
+					v1 = mx.insertVertex(parent, null, sourceId, 20, 20, 80, 30,"defaultVertex;fillColor="+sourceColor);
+					traversedNodes.put(sourceId, v1);
 				} else {
-					v2 = traversedNodes.get(edge.getDestVertexId());
+					v1 = traversedNodes.get(sourceId);
+				}
+				if (!traversedNodes.containsKey(targetId)){
+					v2 = mx.insertVertex(parent, null, targetId, 200, 150, 80, 30, "defaultVertex;fillColor="+targetColor);
+					traversedNodes.put(targetId, v2);
+				} else {
+					v2 = traversedNodes.get(targetId);
 				}
 				Object e1 = mx.insertEdge(parent, null, edge.getLabel(), v1, v2);
 			}
@@ -370,6 +382,8 @@ public class SemJGraphT  extends JApplet implements  SemGraph, Serializable{
 			color = "#B2B2FF";
 		} else if (nodeToGet instanceof TermNode){
 			color = "#FFA500";
+		} else if (nodeToGet == null){
+			color = "top";
 		} else {
 			color = "#9CC1A5";
 		}
