@@ -37,7 +37,7 @@ public class GKRServlet extends HttpServlet {
 		examples.put("-1", "The boy faked the illness.");
 		examples.put("-2", "Negotiations prevented the strike.");
 		examples.put("-3", "The dog is not eating the food.");
-		examples.put("-4", "The boy walked or drove to school.");
+		examples.put("-4", "John or Mary won the competition.");
 		examples.put("-5", " No woman is walking.");
 		examples.put("-6", "Max forgot to close the door.");
 		examples.put("-7", "John might apply for the position.");
