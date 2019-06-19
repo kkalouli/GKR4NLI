@@ -6,7 +6,7 @@ plugins {
 dependencies {
 	
 	// compile all jars that are not found in repositories 
-	compile fileTree(dir: '/home/kkalouli/Documents/diss/GKR_libs/', include: ['*.jar'])
+	compile fileTree(dir: '/Users/kkalouli/Documents/libraries/GKR_libs/', include: ['*.jar'])
 	// for CALD:
 	//compile fileTree(dir: '/Users/caldadmin/Documents/dissertation/GKR_libs/', include: ['*.jar'])
 	

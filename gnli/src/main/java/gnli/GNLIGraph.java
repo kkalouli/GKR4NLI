@@ -257,47 +257,18 @@ public class GNLIGraph implements Serializable {
 	 * Open graphical display of gnliGraph
 	 */
 	public void display() {
-		Set<SemanticNode<?>> nodes = new HashSet<SemanticNode<?>>();
-		Set<SemanticEdge> edges = new HashSet<SemanticEdge>();
-		Map<Color, List<SemanticNode<?>>> nodeProperties = new HashMap<Color, List<SemanticNode<?>>>();
-		Map<Color, List<SemanticEdge>> edgeProperties = new HashMap<Color, List<SemanticEdge>>();
-		List<SemanticNode<?>> textNodes = new ArrayList<SemanticNode<?>>();
-		nodeProperties.put(Color.GREEN, textNodes);
-		List<SemanticEdge> textEdges = new ArrayList<SemanticEdge>();
-		edgeProperties.put(Color.GREEN, textEdges);
-		List<SemanticNode<?>> hypothesisNodes = new ArrayList<SemanticNode<?>>();
-		nodeProperties.put(Color.ORANGE, hypothesisNodes);
-		List<SemanticEdge> hypothesisEdges = new ArrayList<SemanticEdge>();
-		edgeProperties.put(Color.ORANGE, hypothesisEdges);
-		List<SemanticEdge> matchEdges = new ArrayList<SemanticEdge>();
-		edgeProperties.put(Color.BLACK, matchEdges);
-
-		for (SemanticNode<?> tNode : this.textGraph.getRoleGraph()
-				.getNodes()) {
-			nodes.add(tNode);
-			textNodes.add(tNode);
-		}
-		for (SemanticEdge tEdge : this.textGraph.getRoleGraph().getEdges()) {
-			edges.add(tEdge);
-			textEdges.add(tEdge);
-		}
-		for (SemanticNode<?> hNode : this.hypothesisGraph.getRoleGraph()
-				.getNodes()) {
-			nodes.add(hNode);
-			hypothesisNodes.add(hNode);
-		}
-		for (SemanticEdge hEdge : this.hypothesisGraph.getRoleGraph()
-				.getEdges()) {
-			edges.add(hEdge);
-			hypothesisEdges.add(hEdge);
-		}
-		nodes.addAll(this.hypothesisGraph.getRoleGraph().getNodes());
-		edges.addAll(this.hypothesisGraph.getRoleGraph().getEdges());
-		//addDisplayLinks(nodes, edges, textNodes, textEdges, hypothesisNodes,
-				//hypothesisEdges, matchEdges);
-		SemGraph subGraph = this.gnliGraph.getSubGraph(nodes, edges);
-		subGraph.display(nodeProperties, edgeProperties);
+		Set<SemanticNode<?>> mergedNodes = new HashSet<SemanticNode<?>>();
+		mergedNodes.addAll(this.hypothesisGraph.getRoleGraph().getNodes());
+		mergedNodes.addAll(this.textGraph.getContextGraph().getNodes());
+		
+		Set<SemanticEdge> mergedEdges = new HashSet<SemanticEdge>();
+		mergedEdges.addAll(this.hypothesisGraph.getRoleGraph().getEdges());
+		mergedEdges.addAll(this.textGraph.getContextGraph().getEdges());
+		
+		SemGraph subgraph = this.gnliGraph.getSubGraph(mergedNodes, mergedEdges);
+		subgraph.display();
 	}
+	
 	
 	public static void main(String args[]) throws IOException {
 		DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();

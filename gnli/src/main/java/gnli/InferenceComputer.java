@@ -74,7 +74,7 @@ public class InferenceComputer {
 		// These matches will be recorded on the ecd graph as extra match edges
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli, kb);
 		initialTermMatcher.process();
-		//gnli.display();
+		gnli.display();
 		//gnli.matchGraph.display();
 		/*gnli.getHypothesisGraph().displayContexts();
 		gnli.getHypothesisGraph().displayDependencies();

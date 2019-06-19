@@ -9,9 +9,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.jgrapht.graph.DirectedSubgraph;
-import org.jgrapht.graph.Subgraph;
-
 import sem.graph.SemGraph;
 import sem.graph.SemJGraphT;
 import sem.graph.SemanticEdge;

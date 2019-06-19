@@ -1,13 +1,8 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
-	
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" />
-<link href="css/custom.css" rel="stylesheet" />
 <style type="text/css">
 #loader {
   display: none;
@@ -25,7 +20,6 @@
  
 </style>
 </head>
-
 <body style="background-color:#ffe4b2">
 
    
@@ -59,7 +53,6 @@
 
 	</p>
 	
-
 	<h2 class="tab" id="download"><font color="#349aff">Download</font></h2>
 	<p class="tab">
 		The source code of GKR is publicly available on <a
@@ -77,8 +70,7 @@
      <button class="btn btn-primary mb1 bg-blue" type="submit">Submit</button>
 </form>
 
-
-	<br>
+<br>
 
 
 	<h3 class="tab"><font color="#349aff">Examples</font></h3>
@@ -89,6 +81,7 @@
   <input type="radio" name="id" value="-4"> The boy walked or drove to school.<br>
   <input type="radio" name="id" value="-5"> No woman is walking.<br>
   <input type="radio" name="id" value="-6"> Max forgot to close the door.<br>
+  <input type="radio" name="id" value="-7"> John might apply for the position.<br>
   <button class="btn btn-primary" type="submit">Submit</button>
 	</form>
 	</p>
@@ -153,14 +146,3 @@ $(function() {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-

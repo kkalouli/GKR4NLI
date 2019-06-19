@@ -1,6 +1,7 @@
 package sem.graph;
 
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -9,7 +10,11 @@ import javax.swing.JFrame;
 
 import org.jgrapht.Graph;
 
+import com.mxgraph.swing.mxGraphComponent;
+import com.mxgraph.view.mxGraph;
+
 import java.awt.Color;
+import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 
@@ -18,6 +23,8 @@ import java.io.File;
  *
  */
 public interface SemGraph  {
+	
+	public Graph<SemanticNode<?>, SemanticEdge> getSemJGraphT();
 	
 	public void addNode(SemanticNode<?> node);
 	
@@ -68,15 +75,16 @@ public interface SemGraph  {
 	public List<SemanticEdge> getShortestUndirectedPath(SemanticNode<?> start, SemanticNode<?> end);
 	
 	public SemGraph getSubGraph(Set<SemanticNode<?>> nodes, Set<SemanticEdge> edges);
-
-	public void display();
 	
-	public void display(Map<Color, List<SemanticNode<?>>> nodeProperties, Map<Color, List<SemanticEdge>> edgeProperties);
-
+	public JFrame display();
+	
+	public void exportGraphAsJson();
+	
 	public BufferedImage saveGraphAsImage();
 	
-	public BufferedImage saveGraphAsImage(Map<Color, List<SemanticNode<?>>> nodeProperties, Map<Color, List<SemanticEdge>> edgeProperties);
+	public String getMxGraph();
 	
-	public JFrame saveGraphAsImageTest();
+	//public BufferedImage saveGraphAsImage(Map<Color, List<SemanticNode<?>>> nodeProperties, Map<Color, List<SemanticEdge>> edgeProperties);
+	
 
 }

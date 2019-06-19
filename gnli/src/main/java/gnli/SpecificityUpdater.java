@@ -469,7 +469,7 @@ public class SpecificityUpdater {
 			String specifier = "";
 			ArrayList<String> cardSpec = new ArrayList<String>();
 			for (SemanticEdge edge : graph.getPropertyGraph().getOutEdges(term)) {
-				if (edge.getLabel().equals(GraphLabels.CARDINALITY)) {
+				if (edge.getLabel().equals(GraphLabels.CARDINAL)) {
 					cardinality = gnliGraph.getFinishNode(edge).getLabel();
 				} else if (edge.getLabel().equals(GraphLabels.SPECIFIER)) {
 					specifier = gnliGraph.getFinishNode(edge).getLabel();

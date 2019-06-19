@@ -64,14 +64,14 @@ public class GraphLabels implements Serializable{
 	}));
 	
 	
-	public static final String CARDINALITY = "cardinality";
+	public static final String CARDINAL = "cardinal";
 	public static final String SPECIFIER = "specifier";
 	public static final String TENSE = "tense";
 	public static final String ASPECT = "aspect";
 	public static final String PART_OF = "part_of";
 	public static final String NTYPE = "name";
 	public static final Set<String> propertyEdgeLabels = new HashSet<String>(Arrays.asList(new String[] {
-			CARDINALITY, SPECIFIER, TENSE, ASPECT, PART_OF, NTYPE
+			CARDINAL, SPECIFIER, TENSE, ASPECT, PART_OF, NTYPE
 	}));
 	
 	
