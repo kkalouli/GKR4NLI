@@ -41,7 +41,6 @@ import edu.stanford.nlp.util.Pair;
 import sem.graph.EdgeContent;
 import sem.graph.NodeContent;
 import sem.graph.SemGraph;
-import sem.graph.SemGraphDisplayer;
 import sem.graph.SemJGraphT;
 import sem.graph.SemanticEdge;
 import sem.graph.SemanticNode;

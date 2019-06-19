@@ -109,8 +109,9 @@ public class GKRServlet extends HttpServlet {
     protected ArrayList<String> getXmlsAsList(String id) {
     	BufferedReader br;
     	ArrayList<String> xmls = new ArrayList<String>();
+    	String path = "/home/kkalouli/Documents/Programs/apache-tomcat-9.0.20/webapps/sem.mapper/";
 		try {
-			br = new BufferedReader(new InputStreamReader(new FileInputStream("src/main/webapp/examples/"+id+".txt"), "UTF-8"));	
+			br = new BufferedReader(new InputStreamReader(new FileInputStream(path+"examples/"+id+".txt"), "UTF-8"));	
 	    	String strLine;
 	    	String toAdd = "";
 	    	while ((strLine = br.readLine()) != null) {
