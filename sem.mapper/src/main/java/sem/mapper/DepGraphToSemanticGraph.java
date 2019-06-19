@@ -646,19 +646,20 @@ public class DepGraphToSemanticGraph implements Serializable {
 		if (!wholeCtx.endsWith("."))
 			wholeCtx = wholeCtx+".";
 		sem.graph.SemanticGraph graph = this.sentenceToGraph(sentence, wholeCtx);
-		/*graph.displayRoles();
+		graph.displayRoles();
 		graph.displayDependencies();
 		graph.displayProperties();
 		graph.displayLex();
 		graph.displayContexts();
-		graph.displayRolesAndCtxs();*/
-		String roles = graph.getRoleGraph().getMxGraph();
+		graph.displayRolesAndCtxs();
+		graph.displayCoref();
+		/*String roles = graph.getRoleGraph().getMxGraph();
 		String deps = graph.getDependencyGraph().getMxGraph();
 		String ctxs = graph.getContextGraph().getMxGraph();
 		String props = graph.getPropertyGraph().getMxGraph();
 		String lex = graph.getLexGraph().getMxGraph();
 		String coref = graph.getLinkGraph().getMxGraph();
-		BufferedWriter writer = new BufferedWriter( new FileWriter("-7.txt", true));
+		BufferedWriter writer = new BufferedWriter( new FileWriter("-4.txt", true));
 		writer.write(roles);
 		writer.write("\n\n");
 		writer.write(deps);
@@ -672,7 +673,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		writer.write(coref);
 		writer.write("\n\n");
 		writer.flush();
-		writer.close();
+		writer.close();*/
 		//ImageIO.write(graph.saveDepsAsImage(),"png", new File("/Users/kkalouli/Desktop/deps.png"));
 		System.out.println(graph.displayAsString());
 		for (SemanticNode<?> node : graph.getDependencyGraph().getNodes()){
@@ -709,7 +710,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
 		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
-		String sentence = "John might apply for the position.";//"A family is watching a little boy who is hitting a baseball.";
+		String sentence = "The boy faked the illness and the headache.";//"A family is watching a little boy who is hitting a baseball.";
 		String context = "The boy faked the illness.";
 		semConverter.processSentence(sentence, sentence+" "+context);	
 	}

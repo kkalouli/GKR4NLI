@@ -625,7 +625,9 @@ public class RolesMapper implements Serializable {
 			role = GraphLabels.NMOD;	
 		}  else if (role.equals("") && edgeLabel.contains("advcl")){
 			role = GraphLabels.AMOD;	
-		}
+		} else if (role.equals("") && edgeLabel.contains("appos")){
+			role = GraphLabels.NMOD;	
+		} 
 		
 		// if the role is not empty, create the edge for this role and set the contexts
 		if (!role.equals("")){

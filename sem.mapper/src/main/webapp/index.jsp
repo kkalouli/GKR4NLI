@@ -78,7 +78,7 @@
   <input type="radio" name="id" value="-1" checked> The boy faked the illness. <br>
   <input type="radio" name="id" value="-2"> Negotiations prevented the strike.<br>
   <input type="radio" name="id" value="-3"> The dog is not eating the food. <br>
-  <input type="radio" name="id" value="-4"> The boy walked or drove to school.<br>
+  <input type="radio" name="id" value="-4"> John or Mary won the competition.<br>
   <input type="radio" name="id" value="-5"> No woman is walking.<br>
   <input type="radio" name="id" value="-6"> Max forgot to close the door.<br>
   <input type="radio" name="id" value="-7"> John might apply for the position.<br>
