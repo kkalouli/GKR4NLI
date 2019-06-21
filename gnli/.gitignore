@@ -1,3 +1,5 @@
 /build/
 /bin/
 .gradle/
+/gradle/
+.DS_Store
