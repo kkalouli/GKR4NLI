@@ -5,15 +5,16 @@
 <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet" />
 <style type="text/css">
 #loader {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  background: rgba(0,0,0,0.75) url(images_default/bunny_loop.gif) no-repeat center center;
-  z-index: 10000;
+display: none;
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+width: 100%;
+background: rgba(0,0,0,0.75) url(images_default/bunny_loop.gif) no-repeat center center;
+z-index: 10000;
 }
 
  .tab { margin-left: 30px; }
@@ -33,7 +34,7 @@
 	<p class="tab">
 		This is the Graphical Knowledge Representation (GKR) parser. It
 		transforms a given sentence into a layered semantic graph. The
-		semantic graph consists of (currently) 6 subgraphs/layers: dependency graph,
+		semantic graph (currently) consists of 6 subgraphs/layers: dependency graph,
 		concept graph, context graph, lexical graph, properties graph and
 		coreference graph. This separation in layers is analogous to the separation in levels
 		in the LFG architecture (Kaplan, 1995): each layer encodes different kinds of
@@ -44,9 +45,10 @@
 		in end-to-end deep learning approaches. The
 		representation is especially targeted towards Natural Language
 		Inference (NLI) but is also suitable for other semantic processing tasks, e.g. semantic similarity tasks. <br>
-		This demo seeks to give interested researchers a taste of GKR. 
-		GKR is constantly being improved and we are
-		thankful for any comments or discussions. <br> We are currently
+		This demo seeks to give interested researchers a taste of GKR. Currently, GKR can deal with various contextual phenomena, such as negation, 
+		modals, clausal contexts of propositional attitudes (e.g. belief, knowledge, obligation),  implicatives, interrogative and imperative clauses, 
+		disjunction and conjunction. The treatment of conditionals, distributivity and ellipsis is not implemented yet, but planned for the future.     
+		GKR is constantly being improved and we are thankful for any comments or discussions. <br> We are currently
 		also implementing a hybrid, structural/linguistic and distributional, NLI system
 		based on GKR. Its preliminary version will be made available soon. 
 	</p>
@@ -82,6 +84,12 @@
   <input type="radio" name="id" value="-5"> No woman is walking.<br>
   <input type="radio" name="id" value="-6"> Max forgot to close the door.<br>
   <input type="radio" name="id" value="-7"> John might apply for the position.<br>
+  <input type="radio" name="id" value="-8"> Did Ann manage to close the window?<br>
+  <input type="radio" name="id" value="-9"> Fred believes that John doesn't love Mary.<br>
+  <input type="radio" name="id" value="-10"> The boy and the girl are walking. <br>
+  <input type="radio" name="id" value="-11"> Nicole Kidman, the actress, won the oscar.<br>
+  <input type="radio" name="id" value="-12"> Be patient! <br>
+   <input type="radio" name="id" value="-13"> The director, who edited the first movie, released the second part. <br>
   <button class="btn btn-primary" type="submit">Submit</button>
 	</form>
 	</p>
@@ -125,7 +133,7 @@
 <!-- Latest compiled and minified JavaScript  -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 <script>
-var spinner = $('#loader');
+var spinner = $('-webkit-#loader');
 $(function() {
   $('form').submit(function(e) {
    <!-- e.preventDefault(); -->

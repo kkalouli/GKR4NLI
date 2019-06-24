@@ -152,7 +152,7 @@ public class RolesMapper implements Serializable {
 		// make sure that the role graph has a subject in the case of an imperative verb .
 		// first case: role graph is completely empty (intransitive imperative)
 		// second case: only asubject is missing (transitive imperative)
-		if ((graph.getRoleGraph().getNodes().isEmpty() || foundSubj == false) && passivePerm == true){
+		if ((graph.getRoleGraph().getNodes().isEmpty() || foundSubj == false) && passivePerm == false){
 			RoleEdge roleEdge = new RoleEdge(GraphLabels.SUBJ, new RoleEdgeContent());
 			SkolemNodeContent subjNodeContent = new SkolemNodeContent();
 			subjNodeContent.setSurface("you");

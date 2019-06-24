@@ -129,6 +129,8 @@
 
 	<h3 class="tab" align="left"> <small> Does this GKR graph seem wrong to you? Let us know <a
 			href="mailto:aikaterini-lida.kalouli@uni-konstanz.de"> why!</a> </small> </h3>
+			
+	<h3 class="tab" align="left"> <small> Feel free to scroll up and down the graphs and to move the nodes and the edges to get a better view, if needed. </small> </h3>
 
 	<% if(request.getAttribute("error") != null){ %>
 			<h2 class="tab" style="color:red">${error}</h2>

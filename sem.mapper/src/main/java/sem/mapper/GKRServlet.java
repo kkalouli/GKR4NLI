@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 
 
 // uncomment to use through Gretty plugin
-//@WebServlet(name = "GKRServlet", urlPatterns = {"gkr"}, loadOnStartup = 1) 
+@WebServlet(name = "GKRServlet", urlPatterns = {"gkr"}, loadOnStartup = 1) 
 public class GKRServlet extends HttpServlet {
 	
 	/**
@@ -41,6 +41,12 @@ public class GKRServlet extends HttpServlet {
 		examples.put("-5", " No woman is walking.");
 		examples.put("-6", "Max forgot to close the door.");
 		examples.put("-7", "John might apply for the position.");
+		examples.put("-8", "Did Ann manage to close the window?");
+		examples.put("-9", "Fred believes that John doesn't love Mary.");
+		examples.put("-10", "The boy and the girl are walking.");
+		examples.put("-11", "Nicole Kidman, the actress, won the oscar.");
+		examples.put("-12", "Be patient!");
+		examples.put("-13", "The director, who edited the first movie, released the second part.");
 
 	}
 	
@@ -77,8 +83,9 @@ public class GKRServlet extends HttpServlet {
         	 request.getRequestDispatcher("index.html").forward(request, response); 
         	 return;
         }
-        if (!sentence.endsWith("."))
-        	sentence = sentence.concat(".");
+        if (!sentence.endsWith(".") && !sentence.endsWith("?") && !sentence.endsWith("!")){
+        	sentence = sentence+".";
+        }
         this.graph = semConverter.sentenceToGraph(sentence, sentence);
         if (this.graph == null) this.graph = new sem.graph.SemanticGraph();
         String roleGraph = graph.getRoleGraph().getMxGraph();
@@ -109,7 +116,7 @@ public class GKRServlet extends HttpServlet {
     protected ArrayList<String> getXmlsAsList(String id) {
     	BufferedReader br;
     	ArrayList<String> xmls = new ArrayList<String>();
-    	String path = "/home/kkalouli/Documents/Programs/apache-tomcat-9.0.20/webapps/sem.mapper/";
+    	String path = "src/main/webapp/";
 		try {
 			br = new BufferedReader(new InputStreamReader(new FileInputStream(path+"examples/"+id+".txt"), "UTF-8"));	
 	    	String strLine;

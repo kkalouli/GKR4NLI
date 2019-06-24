@@ -71,6 +71,7 @@ public class SenseMappingsRetriever implements Serializable {
 	private String sumoInstall;
 	private String jigsawProps;
 	private WordVectors glove;
+	//private Bert bert;
 	private Integer indexOfPunct;
 	
 	public SenseMappingsRetriever(InputStream configFile){
@@ -104,6 +105,7 @@ public class SenseMappingsRetriever implements Serializable {
         this.sumoInstall = props.getProperty("sumo_location");
         this.jigsawProps = props.getProperty("jigsaw_props");
 		this.jigsaw = new JIGSAW(new File(jigsawProps));
+		// for glove embeddings
 		InputStream gloveFile = getClass().getClassLoader().getResourceAsStream("glove.6B.300d.txt");
 		try {
 			this.glove = WordVectorSerializer.readWord2VecModel(stream2file(gloveFile));
@@ -111,6 +113,10 @@ public class SenseMappingsRetriever implements Serializable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		// for Bert (contextualized) embeddings
+		/*try {
+			this.bert = Bert.load("/resource/path/to/your/model");
+		}*/
 	}
 	
 	
