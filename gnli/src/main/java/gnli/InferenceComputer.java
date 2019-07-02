@@ -200,13 +200,13 @@ public class InferenceComputer {
 		InferenceComputer comp = new InferenceComputer();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "There is no man in a black jacket doing tricks on a motorbike.";
-		String hypothesis = "A person in a black jacket is doing tricks on a motorbike.";
+		String premise = "This is a red table.";
+		String hypothesis = "This table is red.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
-		String file = "/Users/caldadmin/Documents/dissertation/to_check.txt";
+		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/SICK_trial_and_train_both_dirs_corrected_only_entail.txt";
 		//String file = "/home/kkalouli/Documents/diss/to_check.txt";
-		comp.computeInferenceOfPair(semGraph, premise, hypothesis, "C", kb);
-		//comp.computeInferenceOfTestsuite(file, semGraph, kb);
+		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
+		comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//comp.deserializeFileWithComputedPairs(file);
 	}
 	

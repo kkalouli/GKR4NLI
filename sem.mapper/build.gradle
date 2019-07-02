@@ -40,6 +40,11 @@ dependencies {
 	// bert pretrained model
 	implementation 'com.robrua.nlp.models:easy-bert-uncased-L-12-H-768-A-12:1.0.0'
 	
+	// python wrapper for java
+	// https://mvnrepository.com/artifact/black.ninia/jep
+	compile group: 'black.ninia', name: 'jep', version: '3.7.0'
+	
+	
 		// https://mvnrepository.com/artifact/org.tartarus.snowball/libstemmer
 	//compile group: 'org.tartarus.snowball', name: 'libstemmer', version: '1.0.0'
 

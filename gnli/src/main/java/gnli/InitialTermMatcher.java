@@ -446,9 +446,9 @@ public class InitialTermMatcher {
 		}
 		TermNode hTerm = cHTerm.node;
 		for (final SenseNode tSenseNode : gnliGraph.getTextGraph().getSenses(tTerm)) {
-			double[] tEmbed =  ((SenseNodeContent) tSenseNode.getContent()).getEmbed();
+			float[] tEmbed =  ((SenseNodeContent) tSenseNode.getContent()).getEmbed();
 			for (final SenseNode hSenseNode : gnliGraph.getHypothesisGraph().getSenses(hTerm)) {
-				double[] hEmbed = ((SenseNodeContent) hSenseNode.getContent()).getEmbed();
+				float[] hEmbed = ((SenseNodeContent) hSenseNode.getContent()).getEmbed();
 				// exclude high frequency, functional elements from being matched
 				if (tEmbed != null && hEmbed != null && !POSToExclude.contains(((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech()) &&
 					!POSToExclude.contains(((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech()) 
@@ -483,11 +483,11 @@ public class InitialTermMatcher {
 		return retval;
 	}
 	
-	private double computeCosineSimilarity(double[] vectorA, double[] vectorB) {
-	    double dotProduct = 0.0;
-	    double normA = 0.0;
-	    double normB = 0.0;
-	    double cosSimil = 0.0;
+	private double computeCosineSimilarity(float[] vectorA, float[] vectorB) {
+	    float dotProduct = 0;
+	    float normA = 0;
+	    float normB = 0;
+	    double cosSimil = 0;
 	    for (int i = 0; i < vectorA.length; i++) {
 	        dotProduct += vectorA[i] * vectorB[i];
 	        normA += Math.pow(vectorA[i], 2);

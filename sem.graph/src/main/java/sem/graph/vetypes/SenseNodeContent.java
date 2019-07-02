@@ -24,7 +24,7 @@ public class SenseNodeContent extends NodeContent implements Serializable {
 	 */
 	private static final long serialVersionUID = -5405041614966233844L;
 	private String senseId;
-	private double[] embed;
+	private float[] embed;
 	private List<String> concepts;
 	private List<String> synonyms;
 	private List<String> hypernyms;
@@ -39,7 +39,7 @@ public class SenseNodeContent extends NodeContent implements Serializable {
 	 */
 	public SenseNodeContent() {
 		senseId = "";
-		embed = new double[300];
+		embed = new float[768];
 		concepts = new ArrayList<String>();
 		synonyms = new ArrayList<String>();
 		hypernyms = new ArrayList<String>();
@@ -84,11 +84,11 @@ public class SenseNodeContent extends NodeContent implements Serializable {
 		this.concepts = concepts;
 	}
 	
-	public double[] getEmbed() {
+	public float[] getEmbed() {
 		return embed;
 	}
 
-	public void setEmbed(double[] embed) {
+	public void setEmbed(float[] embed) {
 		this.embed = embed;
 	}
 	

@@ -34,6 +34,7 @@ import java.util.Set;
 
 
 import org.jgrapht.Graph;
+import org.jgrapht.GraphPath;
 import org.jgrapht.ListenableGraph;
 import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
 import org.jgrapht.ext.JGraphXAdapter;
@@ -74,7 +75,7 @@ import sem.graph.vetypes.ValueNode;
  * Implementation of SemGraph via JGraphT
  *
  */
-public class SemJGraphT  extends JApplet implements  SemGraph, Serializable{
+public class SemJGraphT implements  SemGraph, Serializable{
 
 	private static final long serialVersionUID = 4437969385952923418L;
 	private Graph<SemanticNode<?>, SemanticEdge> graph;
@@ -87,11 +88,7 @@ public class SemJGraphT  extends JApplet implements  SemGraph, Serializable{
 			this.graph = graph;
 	}
 	
-	public Graph<SemanticNode<?>, SemanticEdge> getSemJGraphT(){
-		return graph;
-	}
 	
-
 	@Override
 	public void addNode(SemanticNode<?> node) {
 		graph.addVertex(node);	
@@ -303,7 +300,11 @@ public class SemJGraphT  extends JApplet implements  SemGraph, Serializable{
 	@Override
 	public List<SemanticEdge> getShortestPath(SemanticNode<?> start,SemanticNode<?> end) {
 		DijkstraShortestPath<SemanticNode<?>, SemanticEdge> dsp = new DijkstraShortestPath<SemanticNode<?>, SemanticEdge>(this.graph);
-		return dsp.getPath(start,end).getEdgeList(); 
+		GraphPath<SemanticNode<?>, SemanticEdge> path = dsp.getPath(start, end);
+		if (path != null)
+			return dsp.getPath(start,end).getEdgeList(); 
+		else
+			return new ArrayList<SemanticEdge>();
 		
 	}
 

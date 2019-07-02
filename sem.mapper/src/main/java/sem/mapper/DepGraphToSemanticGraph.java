@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,6 +83,8 @@ public class DepGraphToSemanticGraph implements Serializable {
 	private List<SemanticGraphEdge> traversed;
 	private StanfordParser parser;
 	private SenseMappingsRetriever retriever;
+	private BufferedWriter	plainSkolemsWriter;
+	public Logger logger;
 
 
 	public DepGraphToSemanticGraph() {
@@ -117,6 +121,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		this.graph = null;
 		this.stanGraph = null;
 		this.traversed = new ArrayList<SemanticGraphEdge>();
+		this.logger = Logger.getLogger(DepGraphToSemanticGraph.class.getName());;
 		try {
 			this.parser = new StanfordParser();
 		} catch (FileNotFoundException e) {
@@ -129,6 +134,12 @@ public class DepGraphToSemanticGraph implements Serializable {
 		InputStream configFile = getClass().getClassLoader().getResourceAsStream("gkr.properties");
 		this.retriever = new SenseMappingsRetriever(configFile);
 		this.interrogative = false;
+		try {
+			this.plainSkolemsWriter = new BufferedWriter(new FileWriter("SICK_only_SkolemNodes.csv", true));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 
@@ -142,13 +153,20 @@ public class DepGraphToSemanticGraph implements Serializable {
 		this.graph = new sem.graph.SemanticGraph();
 		this.graph.setName(stanGraph.toRecoveredSentenceString());
 		traversed.clear();
+		//logger.log(Level.INFO, "Creating dependency graph");
 		integrateDependencies();
-		//graph.displayDependencies();	
+		//logger.log(Level.INFO, "Creating concept graph");
 		integrateRoles();
+		//logger.log(Level.INFO, "Creating context graph");
 		integrateContexts();
+		//logger.log(Level.INFO, "Creating properties graph");
 		integrateProperties();
+		//logger.log(Level.INFO, "Creating lexical graph");
 		integrateLexicalFeatures(wholeCtx);		
+		//logger.log(Level.INFO, "Creating coreference graph");
 		integrateCoRefLinks(sentence);
+		//logger.log(Level.INFO, "Creating distributional graph");
+		integrateDistributionalReps();
 		return this.graph;
 	}
 
@@ -464,6 +482,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		HashMap <String, Map<String,Float>> senses = null;
 		try {
 			senses = retriever.disambiguateSensesWithJIGSAW(wholeCtx); // stanGraph.toRecoveredSentenceString());
+			retriever.getEmbedForWholeCtx(wholeCtx);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -472,12 +491,13 @@ public class DepGraphToSemanticGraph implements Serializable {
 		Set<SemanticNode<?>> roleNodes = roleGraph.getNodes();
 		for (SemanticNode<?> node: roleNodes){
 			if (node instanceof SkolemNode){
+				retriever.extractNodeEmbedFromSequenceEmbed((SkolemNode) node);
 				HashMap<String,String> lexSem = retriever.mapNodeToSenseAndConcept((SkolemNode) node, graph, senses); 
 				for (String key : lexSem.keySet()){
 					String sense = key;
 					try {
 						retriever.getLexRelationsOfSynset(((SkolemNode) node).getStem(), sense, ((SkolemNode) node).getPartOfSpeech());
-						retriever.mapNodeToEmbed((SkolemNode) node);
+						
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -524,6 +544,20 @@ public class DepGraphToSemanticGraph implements Serializable {
 		ctxMapper.integrateAllContexts();
 	}
 	
+	/*** 
+	 * create the distributional graph by computing a distributional representation for each subgraph introduced
+	 * by a context of the context graph  
+	 */
+	private void integrateDistributionalReps(){
+		DistributionMapper distrMapper = new DistributionMapper(graph);
+		try {
+			distrMapper.mapCtxsToDistrReps(plainSkolemsWriter);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		};
+	}
+	
 	/***
 	 * Create the link graph by resolving the coreferences. Uses the stanford CoreNLP software but also the stanford dependencies directly.
 	 * @param sentence
@@ -537,14 +571,16 @@ public class DepGraphToSemanticGraph implements Serializable {
 			for (IntPair k : cc.getMentionMap().keySet()){
 				// find in the role graph the node with the position equal to the position that the coreference element has
 				for (SemanticNode<?> n : graph.getRoleGraph().getNodes()){
-					if (((SkolemNodeContent) n.getContent()).getPosition() == k.getTarget()){
-						// in the first pass of this chain, set the startNode, in all other ones set the finishNode (the start Node remains the same)
-						if (startNode == null){
-							startNode = n;
-						} else {
-							finishNode = n;
+						if (n instanceof SkolemNode){
+							if (((SkolemNodeContent) n.getContent()).getPosition() == k.getTarget()){
+								// in the first pass of this chain, set the startNode, in all other ones set the finishNode (the start Node remains the same)
+								if (startNode == null){
+									startNode = n;
+								} else {
+									finishNode = n;
+								}
+							}
 						}
-					}
 				}
 				// if all passes are over and there is coreference, add the links
 				if (startNode != null && finishNode != null){
@@ -597,23 +633,23 @@ public class DepGraphToSemanticGraph implements Serializable {
 	public void processTestsuite(String file) throws IOException{
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 		// true stands for append = true (dont overwrite)
-		BufferedWriter writer = new BufferedWriter( new FileWriter(file.substring(0,file.indexOf(".txt"))+"_processed.csv", true));
+		//BufferedWriter writer = new BufferedWriter( new FileWriter(file.substring(0,file.indexOf(".txt"))+"_processed.csv", true));
 		FileOutputStream fileSer = null;
         ObjectOutputStream writerSer = null;
 		String strLine;
 		ArrayList<sem.graph.SemanticGraph> semanticGraphs = new ArrayList<sem.graph.SemanticGraph>();
 		while ((strLine = br.readLine()) != null) {
 			if (strLine.startsWith("####")){
-				writer.write(strLine+"\n\n");
-				writer.flush();
+				//writer.write(strLine+"\n\n");
+				//writer.flush();
 				continue;
 			}
 			String text = strLine.split("\t")[1];
 			SemanticGraph stanGraph = parser.parseOnly(text);
 			sem.graph.SemanticGraph graph = this.getGraph(stanGraph, text, text);
 			//System.out.println(graph.displayAsString());
-			writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
-			writer.flush();
+			//writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
+			//writer.flush();
 			System.out.println("Processed sentence "+ strLine.split("\t")[0]);
 			if (graph != null)
 				semanticGraphs.add(graph);
@@ -630,9 +666,10 @@ public class DepGraphToSemanticGraph implements Serializable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
-		writer.close();
+		//writer.close();
 		br.close();
 		writerSer.close();
+		plainSkolemsWriter.close();
 	}
 
 	/***
@@ -709,9 +746,9 @@ public class DepGraphToSemanticGraph implements Serializable {
 	public static void main(String args[]) throws IOException {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
-		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
-		String sentence = "The house is being build.";//"A family is watching a little boy who is hitting a baseball.";
-		String context = "The boy faked the illness.";
-		semConverter.processSentence(sentence, sentence+" "+context);	
+		//emConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/expriment_InferSent/SICK_unique_sent_test_InferSent_onlySkolems.txt");
+		String sentence = "The boy faked the illness.";//"A family is watching a little boy who is hitting a baseball.";
+		String context = "The kid faked the illness.";
+		semConverter.processSentence(sentence, sentence+" "+context);
 	}
 }

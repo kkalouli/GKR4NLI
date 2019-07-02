@@ -66,6 +66,7 @@ public class SemanticGraph implements Serializable  {
 	protected SemGraph lexGraph;
 	protected SemGraph linkGraph;
 	protected SemGraph dependencyGraph;
+	protected SemGraph distrGraph;
 	protected SemanticNode<?> rootNode;
 	protected String name;
 	
@@ -77,7 +78,7 @@ public class SemanticGraph implements Serializable  {
 		this.name = name;
 	}
 
-	enum SemanticSubGraph {ROLE, CONTEXT, PROPERTY, LEX, LINK, DEPENDENCY}
+	enum SemanticSubGraph {ROLE, CONTEXT, PROPERTY, LEX, LINK, DEPENDENCY, DISTRIBUTION}
 	
 	/**
 	 * Get underlying SemGraph for entire graph
@@ -134,10 +135,14 @@ public class SemanticGraph implements Serializable  {
 	public SemGraph getDependencyGraph() {
 		return dependencyGraph;
 	}
-
-	//public SemanticGraphFactory getFactory() {
-	//	return factory;
-	//}
+	
+	/**
+	 * Get underlying SemGraph for distributional graph
+	 * @return
+	 */
+	public SemGraph getDistrGraph() {
+		return distrGraph;
+	}
 
 	public void setRootNode(SemanticNode<?> root) {
 		this.rootNode = root;
@@ -163,6 +168,7 @@ public class SemanticGraph implements Serializable  {
 		this.lexGraph = new SemJGraphT();
 		this.linkGraph = new SemJGraphT();
 		this.dependencyGraph = new SemJGraphT();
+		this.distrGraph = new SemJGraphT();
 		this.rootNode = null;
 		this.name = "";
 	}
@@ -273,6 +279,18 @@ public class SemanticGraph implements Serializable  {
 		addDirectedEdge(edge, start, finish, SemanticSubGraph.DEPENDENCY);
 	}
 	
+	/**
+	 * Add a directed  edge from start node to finish node in the distributional subgraph
+	 * <p> Will add nodes to the graph if they have not already been added.
+	 * @param edge
+	 * @param start
+	 * @param finish
+	 */
+	public void addDistributionalEdge(SemanticEdge edge, SemanticNode<?> start, SemanticNode<?> finish) {
+		addDirectedEdge(edge, start, finish, SemanticSubGraph.DISTRIBUTION);
+	}
+	
+	
 	private void addDirectedEdge(SemanticEdge edge, SemanticNode<?> start, SemanticNode<?> finish, SemanticSubGraph subGraph) {
 		if (edge == null || start == null || finish == null) {
 			return;
@@ -293,12 +311,15 @@ public class SemanticGraph implements Serializable  {
 			break;
 		case CONTEXT:
 			this.contextGraph.addEdge(start, finish, edge);
+			this.distrGraph.addEdge(start, finish, edge);
 			break;
 		case ROLE:
 			this.propertyGraph.addEdge(start, finish, edge);
 			this.lexGraph.addEdge(start, finish, edge);
 			this.roleGraph.addEdge(start, finish, edge);
 			break;
+		case DISTRIBUTION:
+			this.distrGraph.addEdge(start, finish, edge);
 		default:
 			break;
 

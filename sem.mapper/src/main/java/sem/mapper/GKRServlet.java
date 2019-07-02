@@ -5,9 +5,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 
@@ -49,14 +51,25 @@ public class GKRServlet extends HttpServlet {
 		examples.put("-13", "The director, who edited the first movie, released the second part.");
 
 	}
-	
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
-        response.getWriter().print("");     
+    	response.setContentType("text/html;charset=UTF-8");
+    	PrintWriter out = response.getWriter();
+    	Random r = new Random();
+    	try {
+    		int pval = Integer.parseInt(request.getParameter("pval"));
+    		float randomval = r.nextFloat();
+    		int seedval = (int)(10.0F * randomval);
+    		out.print(pval + seedval);
+    	}
+    	finally {
+    		out.close();
+    	}
     }
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
+ 
     	// if one of the examples was selected (recognized at the presense of an id), get the xml from the file
         if ( request.getParameter("id") != null){
         	String id = request.getParameter("id");

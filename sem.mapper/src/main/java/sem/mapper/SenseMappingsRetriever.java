@@ -10,11 +10,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -26,11 +30,17 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.IOUtils;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
+import com.google.common.io.Resources;
+import com.robrua.nlp.bert.BasicTokenizer;
+import com.robrua.nlp.bert.Bert;
+import com.robrua.nlp.bert.FullTokenizer;
 
 import edu.mit.jwi.Dictionary;
 import edu.mit.jwi.IDictionary;
@@ -51,30 +61,39 @@ import sem.graph.SemanticGraph;
 import sem.graph.vetypes.SkolemNode;
 
 
+
 public class SenseMappingsRetriever implements Serializable {
 	
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -5353876989060718577L;
-	HashMap<String,String> hashOfPOS = new HashMap<String,String>();
-	public Map<String, Integer> subConcepts = new HashMap<String,Integer>();
-	public Map<String, Integer> superConcepts =new HashMap<String,Integer>();
-	public ArrayList<String> synonyms = new ArrayList<String>();
-	public ArrayList<String> hypernyms = new ArrayList<String>();
-	public ArrayList<String> hyponyms = new ArrayList<String>();
-	public ArrayList<String> antonyms = new ArrayList<String>();
-	public double[] embed = new double[300];
+	private HashMap<String,String> hashOfPOS;
+	public Map<String, Integer> subConcepts;
+	public Map<String, Integer> superConcepts;
+	public ArrayList<String> synonyms;
+	public ArrayList<String> hypernyms;
+	public ArrayList<String> hyponyms ;
+	public ArrayList<String> antonyms;
+	public float[] embed;
 	private JIGSAW jigsaw;
 	private Properties props;
 	private String wnInstall;
 	private String sumoInstall;
 	private String jigsawProps;
 	private WordVectors glove;
-	//private Bert bert;
+	private Bert bert;
+	private HashMap<String,float[]> embedMap;
 	private Integer indexOfPunct;
 	
 	public SenseMappingsRetriever(InputStream configFile){
+		this.hashOfPOS = new HashMap<String,String>();
+		this.subConcepts = new HashMap<String,Integer>();
+		this.superConcepts =new HashMap<String,Integer>();
+		this.synonyms = new ArrayList<String>();
+		this.hypernyms = new ArrayList<String>();
+		this.hyponyms = new ArrayList<String>();
+		this.antonyms = new ArrayList<String>();
 		/* fill hash with the POS tags of the Penn treebank. The POS
 		have to be matched to the generic POS used in SUMO and PWN.  */
 		hashOfPOS.put("JJ","ADJECTIVE");
@@ -106,19 +125,20 @@ public class SenseMappingsRetriever implements Serializable {
         this.jigsawProps = props.getProperty("jigsaw_props");
 		this.jigsaw = new JIGSAW(new File(jigsawProps));
 		// for glove embeddings
-		InputStream gloveFile = getClass().getClassLoader().getResourceAsStream("glove.6B.300d.txt");
+		/*InputStream gloveFile = getClass().getClassLoader().getResourceAsStream("glove.6B.300d.txt");
 		try {
 			this.glove = WordVectorSerializer.readWord2VecModel(stream2file(gloveFile));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		// for Bert (contextualized) embeddings
-		/*try {
-			this.bert = Bert.load("/resource/path/to/your/model");
 		}*/
+		this.bert = Bert.load("com/robrua/nlp/easy-bert/bert-uncased-L-12-H-768-A-12");
+		this.embedMap = new HashMap<String,float[]>();
+		this.embed = new float[768];
 	}
 	
+	
+
 	
     public static File stream2file (InputStream in) throws IOException {
         final File tempFile = File.createTempFile("stream2file.", ".txt");
@@ -130,11 +150,11 @@ public class SenseMappingsRetriever implements Serializable {
     }
 	
 	
-	public double[] getEmbed() {
+	public float[] getEmbed() {
 		return embed;
 	}
 
-	public void setEmbed(double[] embed) {
+	public void setEmbed(float[] embed) {
 		this.embed = embed;
 	}
 	
@@ -536,11 +556,76 @@ public class SenseMappingsRetriever implements Serializable {
 	}
 
 	
-	
-	public void mapNodeToEmbed(SkolemNode node){
+	/***
+	 * Sets the embedding matching to the given node. Uses the glove embeddings: not used for now.
+	 * @param wholeCtx
+	 */
+	/*public void mapNodeToEmbed(SkolemNode node){
 		String lemma = node.getStem();
-        double[] wordVector = glove.getWordVector(lemma);
+		double[] wordVector = glove.getWordVector(lemma);
         this.embed = wordVector;
+	}*/
+		
+	/**
+	 * Matches the original tokens (each word) to the token assumed from BERT after applying wordpiece tokenization.
+	 * @param originalTokens
+	 * @return
+	 */
+	public HashMap<String,Integer> matchOriginalTokens2BERTTokens(String[] originalTokens ){
+		ArrayList<String> bertTokens = new ArrayList<String>();
+		HashMap<String,Integer> orig2TokenMap = new HashMap<String,Integer>();
+		// create a wordpiece tokenizer
+		FullTokenizer tokenizer = new FullTokenizer(new File("/Users/kkalouli/Documents/project/sem.mapper/src/main/resources/vocab.txt"), true);
+		// bert tokens start with CLS
+		bertTokens.add("CLS");
+		// counter for position of each token in the sentence
+		int i = 1;
+		// go through the original tokens
+		for (String origToken :originalTokens ){
+			// bertTokens.size() always corresponds to the "hops" that were made from the previous bert token to this one
+			orig2TokenMap.put(origToken+"_"+i,bertTokens.size());
+			// tokenize the current original token with the wordpiece tokenizer
+			String[] tokToken = tokenizer.tokenize(origToken);
+			// add each of those new tokens to the bertTokens, so that the latter increases its size
+			for (String tok : tokToken){
+				bertTokens.add(tok);	
+			}
+			i++;
+		}
+		// bert tokens end with SEP
+		bertTokens.add("SEP");
+		return orig2TokenMap;
+	}
+	
+	/**
+	 * Maps the whole context (2 sentences) to a sequence embedding with BERT. The resulting embedding of each
+	 * sentence is a float[128][768] no matter the length of the sentence. There is a standard length of 128 
+	 * per sentence. For this reason, we need a "decoder" which "decodes" back the exact embedding that matches to
+	 * each token of the sentence (due to no one-to-one relation) 
+	 * @param wholeCtx
+	 */
+	public void getEmbedForWholeCtx(String wholeCtx){
+		String[] splitCtx = wholeCtx.split("(?<=(\\.|\\?|!))\\s");
+		String str1 = splitCtx[0];
+		//create a basic BERT tokenizer to tokenize the first sentence of the wholeCtx (first sent = current sent)
+		BasicTokenizer tokenizer = new BasicTokenizer(true);
+		String[] plainlyTokenizedSent = tokenizer.tokenize(str1);
+		// match each of those original tokens to a token in the bert 128 sequence 
+		HashMap<String,Integer> orig2TokenMap  = matchOriginalTokens2BERTTokens(plainlyTokenizedSent);
+		// get the BERT sequence
+		float[][] bertSeq = bert.embedTokens(str1);
+		// match each original token to a specifc vector of the BERT sequence
+		for (String key : orig2TokenMap.keySet()){
+			this.embedMap.put(key,bertSeq[orig2TokenMap.get(key)]);
+		}
+	}
+	
+	/**
+	 * Extracts the specific embedding of the given node from the BERT sequence embedding.
+	 * @param node
+	 */
+	public void extractNodeEmbedFromSequenceEmbed(SkolemNode node){
+		this.embed = this.embedMap.get(node.getLabel());
 	}
 
 }
