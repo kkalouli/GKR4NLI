@@ -1,6 +1,5 @@
 package gnli;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,10 +8,8 @@ import java.util.Set;
 import sem.graph.SemanticEdge;
 import sem.graph.SemanticGraph;
 import sem.graph.SemanticNode;
-import sem.graph.vetypes.ContextNode;
 import sem.graph.vetypes.SkolemNode;
 import sem.graph.vetypes.SkolemNodeContent;
-import sem.graph.vetypes.TermNode;
 
 
 

@@ -13,6 +13,12 @@ plugins {
 	// https://mvnrepository.com/artifact/com.github.ontologyportal/sigma-component
 	compile group: 'com.github.ontologyportal', name: 'sigma-component', version: '2.12'
 
+		// bert wrapper for java
+	implementation 'com.robrua.nlp:easy-bert:1.0.3'
+	// bert pretrained model
+	implementation 'com.robrua.nlp.models:easy-bert-uncased-L-12-H-768-A-12:1.0.0'
+	
+	
 	
 	// https://mvnrepository.com/artifact/org.jgrapht/jgrapht-ext
 	//runtime group: 'org.jgrapht', name: 'jgrapht-ext', version: '1.0.1'

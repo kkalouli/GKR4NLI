@@ -10,6 +10,11 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 
@@ -19,9 +24,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import sem.graph.SemGraph;
+
 
 // uncomment to use through Gretty plugin
-@WebServlet(name = "GKRServlet", urlPatterns = {"gkr"}, loadOnStartup = 1) 
+//@WebServlet(name = "GKRServlet", urlPatterns = {"gkr"}, loadOnStartup = 1) 
 public class GKRServlet extends HttpServlet {
 	
 	/**
@@ -86,7 +93,7 @@ public class GKRServlet extends HttpServlet {
         		return;
         	}
         }
-        if(!request.getParameter("sentence").matches("(\\w*(\\s|,|\\.|\\?|!|\")*)*")){
+        if(!request.getParameter("sentence").matches("(\\w*(\\s|,|\\.|\\?|!|\"|-)*)*")){
 			request.setAttribute("error", "Please enter only letters, numbers, and spaces.");
 			request.getRequestDispatcher("response.jsp").forward(request,response);
 			return;
@@ -101,13 +108,53 @@ public class GKRServlet extends HttpServlet {
         }
         this.graph = semConverter.sentenceToGraph(sentence, sentence);
         if (this.graph == null) this.graph = new sem.graph.SemanticGraph();
-        String roleGraph = graph.getRoleGraph().getMxGraph();
-        String depsGraph = graph.getDependencyGraph().getMxGraph();
-        String ctxGraph = graph.getContextGraph().getMxGraph();
-        String lexGraph = graph.getLexGraph().getMxGraph();
-        String propsGraph = graph.getPropertyGraph().getMxGraph();
-        String corefGraph = graph.getLinkGraph().getMxGraph();
-        //System.out.println(mx);
+        // for non/multithreading
+        /*String roleGraph = graph.getRoleGraph().getMxGraph();
+		String depsGraph = graph.getDependencyGraph().getMxGraph();
+		String ctxGraph = graph.getContextGraph().getMxGraph();
+		String corefGraph = graph.getLinkGraph().getMxGraph();
+		String lexGraph = graph.getLexGraph().getMxGraph();
+		String propsGraph = graph.getPropertyGraph().getMxGraph();
+		*/
+		
+        //next code for multithreading
+        SemGraph roleGraphIn = graph.getRoleGraph();
+        SemGraph depsGraphIn =graph.getDependencyGraph();
+        SemGraph ctxGraphIn = graph.getContextGraph();
+        SemGraph corefGraphIn = graph.getLinkGraph();
+        SemGraph lexGraphIn = graph.getLexGraph();
+        SemGraph propsGraphIn = graph.getPropertyGraph();
+    	ExecutorService es = Executors.newFixedThreadPool(6);
+	    Future<String> roles = es.submit(new getMxGraphConcurrentTask(roleGraphIn));
+	    Future<String> deps = es.submit(new getMxGraphConcurrentTask(depsGraphIn));
+	    Future<String> ctx = es.submit(new getMxGraphConcurrentTask(ctxGraphIn));
+	    Future<String> lex = es.submit(new getMxGraphConcurrentTask(lexGraphIn));
+	    Future<String> props = es.submit(new getMxGraphConcurrentTask(propsGraphIn));
+	    Future<String> coref = es.submit(new getMxGraphConcurrentTask(corefGraphIn));
+
+		String ctxGraph = null;
+		String lexGraph = null;
+		String corefGraph = null;
+		String propsGraph = null;
+		String depsGraph = null;
+		String roleGraph = null;
+		try {
+			roleGraph = roles.get();
+		    depsGraph = deps.get();
+	        ctxGraph = ctx.get();
+	        lexGraph = lex.get();
+	        propsGraph = props.get();
+	        corefGraph = coref.get();
+	 
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (ExecutionException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+         //System.out.println(mx);
         //createImages(counter);
         try {
 			TimeUnit.SECONDS.sleep(3);
@@ -129,7 +176,7 @@ public class GKRServlet extends HttpServlet {
     protected ArrayList<String> getXmlsAsList(String id) {
     	BufferedReader br;
     	ArrayList<String> xmls = new ArrayList<String>();
-    	String path = "src/main/webapp/";
+    	String path = "/home/kkalouli/Documents/Programs/apache-tomcat-9.0.20/webapps/sem.mapper/";
 		try {
 			br = new BufferedReader(new InputStreamReader(new FileInputStream(path+"examples/"+id+".txt"), "UTF-8"));	
 	    	String strLine;
@@ -157,6 +204,18 @@ public class GKRServlet extends HttpServlet {
 		}
 		return xmls;
     }
+    
+    public class getMxGraphConcurrentTask implements Callable<String> {
+		 private SemGraph graphProcessed;
+	 
+	    public getMxGraphConcurrentTask(SemGraph graphProcessed) {
+	    	this.graphProcessed = graphProcessed;
+	    }
+	 
+	    public String call() {
+	    	return graphProcessed.getMxGraph();
+	    }
+	}
     
     /*protected void createImages(Integer counter){
     	ServletContext context = getServletContext();

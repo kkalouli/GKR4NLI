@@ -1,34 +1,22 @@
 package sem.mapper;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
 import java.util.Map.Entry;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import sem.graph.EdgeContent;
 import sem.graph.SemGraph;
 import sem.graph.SemanticEdge;
-import sem.graph.SemanticGraph;
 import sem.graph.SemanticNode;
 import sem.graph.vetypes.ContextHeadEdge;
 import sem.graph.vetypes.ContextNode;
 import sem.graph.vetypes.ContextNodeContent;
 import sem.graph.vetypes.GraphLabels;
-import sem.graph.vetypes.RoleEdge;
 import sem.graph.vetypes.RoleEdgeContent;
 import sem.graph.vetypes.SkolemNode;
 import sem.graph.vetypes.SkolemNodeContent;
@@ -81,7 +69,6 @@ public class ContextMapper implements Serializable {
 		// read the file with the implicative/factive signatures
 		BufferedReader br = null;
 		try {
-			ClassLoader classLoader = getClass().getClassLoader();
 			InputStream implFile = getClass().getClassLoader().getResourceAsStream("implicatives3.txt");
 			//File implFile = new File(classLoader.getResource("implicatives3.txt").getFile());
 			br = new BufferedReader(new InputStreamReader(implFile, "UTF-8"));

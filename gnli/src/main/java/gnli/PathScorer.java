@@ -14,7 +14,6 @@ import java.util.List;
 import sem.graph.SemanticEdge;
 import sem.graph.vetypes.SenseNode;
 import sem.graph.vetypes.SkolemNode;
-import sem.graph.vetypes.TermNode;
 
 
 

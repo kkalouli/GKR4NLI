@@ -10,15 +10,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -27,17 +23,14 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-
 import org.apache.commons.io.IOUtils;
-import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
-import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
+//import org.deeplearning4j.models.embeddings.wordvectors.WordVectors;
 
-import com.google.common.io.Resources;
 import com.robrua.nlp.bert.BasicTokenizer;
 import com.robrua.nlp.bert.Bert;
 import com.robrua.nlp.bert.FullTokenizer;
@@ -76,15 +69,63 @@ public class SenseMappingsRetriever implements Serializable {
 	public ArrayList<String> hyponyms ;
 	public ArrayList<String> antonyms;
 	public float[] embed;
-	private JIGSAW jigsaw;
 	private Properties props;
 	private String wnInstall;
 	private String sumoInstall;
 	private String jigsawProps;
-	private WordVectors glove;
+	//private WordVectors glove;
 	private Bert bert;
 	private HashMap<String,float[]> embedMap;
-	private Integer indexOfPunct;
+	
+	public SenseMappingsRetriever(InputStream configFile, Bert bert){
+		this.hashOfPOS = new HashMap<String,String>();
+		this.subConcepts = new HashMap<String,Integer>();
+		this.superConcepts =new HashMap<String,Integer>();
+		this.synonyms = new ArrayList<String>();
+		this.hypernyms = new ArrayList<String>();
+		this.hyponyms = new ArrayList<String>();
+		this.antonyms = new ArrayList<String>();
+		/* fill hash with the POS tags of the Penn treebank. The POS
+		have to be matched to the generic POS used in SUMO and PWN.  */
+		hashOfPOS.put("JJ","ADJECTIVE");
+		hashOfPOS.put("JJR","ADJECTIVE");
+		hashOfPOS.put("JJS","ADJECTIVE");
+		hashOfPOS.put("MD","VERB");
+		hashOfPOS.put("NN","NOUN");
+		hashOfPOS.put("NNP","NOUN");
+		hashOfPOS.put("NNPS","NOUN");
+		hashOfPOS.put("NNS","NOUN");
+		hashOfPOS.put("RB","ADVERB");
+		hashOfPOS.put("RBR","ADVERB");
+		hashOfPOS.put("RBS","ADVERB");
+		hashOfPOS.put("VB","VERB");
+		hashOfPOS.put("VBD","VERB");
+		hashOfPOS.put("VBG","VERB");
+		hashOfPOS.put("VBN","VERB");
+		hashOfPOS.put("VBP","VERB");
+		hashOfPOS.put("VBZ","VERB");
+		this.props = new Properties();
+		try {
+			props.load(new InputStreamReader(configFile));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        this.wnInstall = props.getProperty("wn_location");
+        this.sumoInstall = props.getProperty("sumo_location");
+        this.jigsawProps = props.getProperty("jigsaw_props");
+        this.bert = bert;
+		// for glove embeddings
+		/*InputStream gloveFile = getClass().getClassLoader().getResourceAsStream("glove.6B.300d.txt");
+		try {
+			this.glove = WordVectorSerializer.readWord2VecModel(stream2file(gloveFile));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
+		this.embedMap = new HashMap<String,float[]>();
+		this.embed = new float[768];
+	}
 	
 	public SenseMappingsRetriever(InputStream configFile){
 		this.hashOfPOS = new HashMap<String,String>();
@@ -123,7 +164,7 @@ public class SenseMappingsRetriever implements Serializable {
         this.wnInstall = props.getProperty("wn_location");
         this.sumoInstall = props.getProperty("sumo_location");
         this.jigsawProps = props.getProperty("jigsaw_props");
-		this.jigsaw = new JIGSAW(new File(jigsawProps));
+        this.bert = Bert.load("com/robrua/nlp/easy-bert/bert-uncased-L-12-H-768-A-12");
 		// for glove embeddings
 		/*InputStream gloveFile = getClass().getClassLoader().getResourceAsStream("glove.6B.300d.txt");
 		try {
@@ -132,7 +173,6 @@ public class SenseMappingsRetriever implements Serializable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}*/
-		this.bert = Bert.load("com/robrua/nlp/easy-bert/bert-uncased-L-12-H-768-A-12");
 		this.embedMap = new HashMap<String,float[]>();
 		this.embed = new float[768];
 	}
@@ -435,6 +475,8 @@ public class SenseMappingsRetriever implements Serializable {
 	 * @throws Exception
 	 */
 	public HashMap <String, Map<String,Float>> disambiguateSensesWithJIGSAW(String wholeCtx){
+		Logger.getLogger(JIGSAW.class.getName()).setLevel(Level.OFF);
+		JIGSAW jigsaw = new JIGSAW(new File(jigsawProps));
 		HashMap <String, String> listOfSenses = new HashMap<String,String>();
 		HashMap <String, Map<String,Float>> mapOfSensesSorted = new HashMap<String,Map<String,Float>>();
 		// create a file containing the sentence to be tokenized
@@ -575,7 +617,7 @@ public class SenseMappingsRetriever implements Serializable {
 		ArrayList<String> bertTokens = new ArrayList<String>();
 		HashMap<String,Integer> orig2TokenMap = new HashMap<String,Integer>();
 		// create a wordpiece tokenizer
-		FullTokenizer tokenizer = new FullTokenizer(new File("/Users/kkalouli/Documents/project/sem.mapper/src/main/resources/vocab.txt"), true);
+		FullTokenizer tokenizer = new FullTokenizer(new File("/home/kkalouli/Documents/project/semantic_processing/sem.mapper/src/main/resources/vocab.txt"), true);
 		// bert tokens start with CLS
 		bertTokens.add("CLS");
 		// counter for position of each token in the sentence
@@ -625,7 +667,7 @@ public class SenseMappingsRetriever implements Serializable {
 	 * @param node
 	 */
 	public void extractNodeEmbedFromSequenceEmbed(SkolemNode node){
-		this.embed = this.embedMap.get(node.getLabel());
+		this.embed = this.embedMap.get(node.getSurface()+"_"+node.getPosition());
 	}
 
 }

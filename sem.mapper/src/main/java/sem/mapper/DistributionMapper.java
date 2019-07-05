@@ -88,7 +88,7 @@ public class DistributionMapper {
 	    }
 	}
 	
-	public static void getInferSentEmbedFromPython() throws JepException{
+	/*public static void getInferSentEmbedFromPython() throws JepException{
 		try(Jep jep = new Jep(false, "/Users/kkalouli/Documents/libraries/InferSent/InferSent/")) {
 			jep.eval("import torch");
 			jep.eval("from random import randint");
@@ -125,17 +125,17 @@ public class DistributionMapper {
 			// using runScript
 			jep.runScript("path/To/Script");
 			*/
-		}
-	}
+		//}
+	//}
 	
-	public static void main(String args[]) throws IOException {
+	/*public static void main(String args[]) throws IOException {
 		try {
 			getInferSentEmbedFromPython();
 		} catch (JepException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
+	}*/
 	
 
 

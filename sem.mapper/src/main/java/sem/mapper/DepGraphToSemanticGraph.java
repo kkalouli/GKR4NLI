@@ -1,13 +1,9 @@
 package sem.mapper;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.EOFException;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -17,38 +13,27 @@ import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Stack;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import javax.imageio.ImageIO;
-
-import org.jgrapht.Graph;
+import com.robrua.nlp.bert.Bert;
 
 import edu.stanford.nlp.coref.data.CorefChain;
-import edu.stanford.nlp.coref.data.CorefChain.CorefMention;
 import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.semgraph.SemanticGraph;
 import edu.stanford.nlp.semgraph.SemanticGraphEdge;
-import edu.stanford.nlp.trees.GrammaticalRelation;
 import edu.stanford.nlp.util.IntPair;
-import edu.stanford.nlp.util.Pair;
-import sem.graph.EdgeContent;
-import sem.graph.NodeContent;
+import jigsaw.JIGSAW;
 import sem.graph.SemGraph;
-import sem.graph.SemJGraphT;
 import sem.graph.SemanticEdge;
 import sem.graph.SemanticNode;
-import sem.graph.vetypes.ContextHeadEdge;
-import sem.graph.vetypes.ContextNode;
-import sem.graph.vetypes.ContextNodeContent;
 import sem.graph.vetypes.DefaultEdgeContent;
 import sem.graph.vetypes.GraphLabels;
 import sem.graph.vetypes.LexEdge;
@@ -62,8 +47,6 @@ import sem.graph.vetypes.SenseNode;
 import sem.graph.vetypes.SenseNodeContent;
 import sem.graph.vetypes.SkolemNode;
 import sem.graph.vetypes.SkolemNodeContent;
-import sem.graph.vetypes.TermNode;
-import sem.graph.vetypes.TermNodeContent;
 import sem.graph.vetypes.ValueNode;
 import sem.graph.vetypes.ValueNodeContent;
 
@@ -83,10 +66,68 @@ public class DepGraphToSemanticGraph implements Serializable {
 	private List<SemanticGraphEdge> traversed;
 	private StanfordParser parser;
 	private SenseMappingsRetriever retriever;
-	private BufferedWriter	plainSkolemsWriter;
-	public Logger logger;
+	private InputStream configFile;
+	private Bert bert;
+	//private BufferedWriter	plainSkolemsWriter;
+	//public Logger logger;
 
 
+	public DepGraphToSemanticGraph(Bert bert) {
+		verbalForms.add("MD");
+		verbalForms.add("VB");
+		verbalForms.add("VBD");
+		verbalForms.add("VBG");
+		verbalForms.add("VBN");
+		verbalForms.add("VBP");
+		verbalForms.add("VBZ");
+		nounForms.add("NN");
+		nounForms.add("NNP");
+		nounForms.add("NNS");
+		nounForms.add("NNPS");
+		quantifiers.add("many");
+		quantifiers.add("much");
+		quantifiers.add("plenty");
+		quantifiers.add("several");
+		quantifiers.add("some");
+		quantifiers.add("most");
+		quantifiers.add("all");
+		quantifiers.add("every");
+		whinterrogatives.add("who");
+		whinterrogatives.add("when");
+		whinterrogatives.add("where");
+		whinterrogatives.add("why");
+		whinterrogatives.add("how");
+		whinterrogatives.add("which");
+		whinterrogatives.add("what");
+		whinterrogatives.add("whose");
+		whinterrogatives.add("whom");
+		whinterrogatives.add("whether");
+		whinterrogatives.add("if");
+		this.graph = null;
+		this.stanGraph = null;
+		this.traversed = new ArrayList<SemanticGraphEdge>();
+		this.bert = bert;
+		try {
+			this.parser = new StanfordParser();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		this.configFile = getClass().getClassLoader().getResourceAsStream("gkr.properties");
+		this.retriever = new SenseMappingsRetriever(configFile, bert);
+		this.interrogative = false;
+		/*try {
+			this.plainSkolemsWriter = new BufferedWriter(new FileWriter("SICK_only_SkolemNodes.csv", true));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
+
+	}
+	
 	public DepGraphToSemanticGraph() {
 		verbalForms.add("MD");
 		verbalForms.add("VB");
@@ -121,7 +162,6 @@ public class DepGraphToSemanticGraph implements Serializable {
 		this.graph = null;
 		this.stanGraph = null;
 		this.traversed = new ArrayList<SemanticGraphEdge>();
-		this.logger = Logger.getLogger(DepGraphToSemanticGraph.class.getName());;
 		try {
 			this.parser = new StanfordParser();
 		} catch (FileNotFoundException e) {
@@ -131,17 +171,18 @@ public class DepGraphToSemanticGraph implements Serializable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		InputStream configFile = getClass().getClassLoader().getResourceAsStream("gkr.properties");
+		this.configFile = getClass().getClassLoader().getResourceAsStream("gkr.properties");
 		this.retriever = new SenseMappingsRetriever(configFile);
 		this.interrogative = false;
-		try {
+		/*try {
 			this.plainSkolemsWriter = new BufferedWriter(new FileWriter("SICK_only_SkolemNodes.csv", true));
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 
 	}
+
 
 	/***
 	 * Convert the stanford graph to a SemanticGraph with dependencies, properties, lex features, roles, etc.
@@ -161,12 +202,13 @@ public class DepGraphToSemanticGraph implements Serializable {
 		integrateContexts();
 		//logger.log(Level.INFO, "Creating properties graph");
 		integrateProperties();
+		//graph.displayRoles();
 		//logger.log(Level.INFO, "Creating lexical graph");
 		integrateLexicalFeatures(wholeCtx);		
 		//logger.log(Level.INFO, "Creating coreference graph");
 		integrateCoRefLinks(sentence);
 		//logger.log(Level.INFO, "Creating distributional graph");
-		integrateDistributionalReps();
+		//integrateDistributionalReps();
 		return this.graph;
 	}
 
@@ -216,15 +258,15 @@ public class DepGraphToSemanticGraph implements Serializable {
 			otherwise, the coord node /controlled subj is inserted twice because of the explicit enhanced dependencies. If however it is a verb (the same verb), 
 			then we have a sentence of the type John works for Mary and for Anna. where we have to assume to different (same) verbs. */
 			for (SemanticNode<?> node : graph.getDependencyGraph().getNodes()){
-					if (node.getLabel().equals(finish.getLabel()) && !role.contains("conj")){ //!verbalForms.contains(finish.getPartOfSpeech())){
-						finish = (SkolemNode) node;
-					}
+				if (node.getLabel().equals(finish.getLabel()) && !role.contains("conj")){ //!verbalForms.contains(finish.getPartOfSpeech())){
+					finish = (SkolemNode) node;
+				}
 			}
 			// add the dependency between the parent and the current child only if the parentNode != finish, otherwise loops
 			if (!parentNode.equals(finish)){
 				graph.addDependencyEdge(roleEdge, parentNode, finish);
 			}
-			
+
 			// recursively, go back and do the same for each of the children of the child
 			stanChildrenToSemGraphChildren(child.getDependent(), finish);		
 		}
@@ -260,7 +302,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 			// based on the root node, go and find all children (and children of children)
 			stanChildrenToSemGraphChildren(rootN, root);
 		}
-		
+
 		/*
 		 * Go through the finished dep graph and fix any cases that are dealt differently by CoreNLP than by us.
 		 * For now, 2 things:
@@ -274,6 +316,8 @@ public class DepGraphToSemanticGraph implements Serializable {
 		 * capture accordingly the contexts: few people = not many people
 		 * For the moment, it doesnt work with "little". The quantifier "no" (not some) is separately treated in the context mapping. 
 		 */
+		boolean quantPresent = false;
+		ArrayList<SemanticNode<?>> headsOfQuant = new ArrayList<SemanticNode<?>>();
 		for (SemanticNode<?> node : graph.getDependencyGraph().getNodes()){
 			if ( (((SkolemNodeContent) node.getContent()).getStem().equals("ought")
 					|| ((SkolemNodeContent) node.getContent()).getStem().equals("need")) && graph.getInEdges(node).isEmpty()) {
@@ -289,8 +333,17 @@ public class DepGraphToSemanticGraph implements Serializable {
 					graph.removeDependencyEdge(out);
 				}		
 			} else if ( (((SkolemNodeContent) node.getContent()).getStem().equals("few"))) { 
+				quantPresent = true;
+				SemanticNode<?> head = graph.getInNeighbors(node).iterator().next();
+				SemanticNode<?> headOfHead = graph.getInNeighbors(head).iterator().next();
+				headsOfQuant.add(headOfHead);
+			}
+		}
+		// if there are quantifiers like few and little (only few for now), add the 
+		// not node at this step (cannot do it in previous step because concurrentmodificationException
+		if (quantPresent == true) {
+			for (SemanticNode<?> headOfHead : headsOfQuant) {
 				RoleEdge depEdge = new RoleEdge("neg", new RoleEdgeContent());
-				SemanticNode<?> head = graph.getOutNeighbors(node).iterator().next();
 				SkolemNodeContent notContent = new SkolemNodeContent();
 				notContent.setSurface("not");
 				notContent.setStem("not");
@@ -301,11 +354,12 @@ public class DepGraphToSemanticGraph implements Serializable {
 				notContent.setDerived(false);
 				notContent.setSkolem("not_0");
 				SkolemNode not = new SkolemNode(notContent.getSkolem(), notContent);
-				graph.addDependencyEdge(depEdge, head, not);	
+				graph.addDependencyEdge(depEdge, headOfHead, not);	
 			}
+
 		}
 	}
-	
+
 	/**
 	 * Integrate the semantic roles of the graph.
 	 */
@@ -352,7 +406,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 						continue;
 					}
 				}
-				
+
 				// adding the property edge tense
 				if (!tense.equals("")){
 					PropertyEdge tenseEdge = new PropertyEdge(GraphLabels.TENSE, new PropertyEdgeContent());
@@ -363,7 +417,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 					PropertyEdge aspectEdge = new PropertyEdge(GraphLabels.ASPECT, new PropertyEdgeContent());
 					graph.addPropertyEdge(aspectEdge, node, new ValueNode(aspect, new ValueNodeContent()));
 				}
-			// define the properties for nouns
+				// define the properties for nouns
 			} else if (nounForms.contains(pos) && !node.getLabel().toLowerCase().contains("none")){
 				if (pos.equals("NN")){
 					cardinality = "sg";
@@ -386,33 +440,41 @@ public class DepGraphToSemanticGraph implements Serializable {
 					String depOfDependent = edge.getLabel();			
 					String determiner = ((SkolemNodeContent) graph.getFinishNode(edge).getContent()).getStem(); //edge.getDestVertexId().substring(0,edge.getDestVertexId().indexOf("_"));
 					if (depOfDependent.equals("det") && existsQMod == false) {					
-							specifier = determiner; 
-					// only if there is no quantification with of, assign this determiner as the cardinatlity
+						specifier = determiner; 
+						// only if there is no quantification with of, assign this determiner as the cardinatlity
 					} else if (depOfDependent.equals("nummod") && existsQMod == false){
 						specifier = determiner;
-					// otherwise we introduce the part_of edge
+						// otherwise we introduce the part_of edge
 					} else if (depOfDependent.equals("nummod") && existsQMod == true){
 						part_of = determiner;
-					// if there is det:qmod there is quantification with of. We also check if there is any quantification on the quantification, e.g.
-					// "any five of the seven". In this case,  any becomes the specifier of the five
+						// if there is det:qmod there is quantification with of. We also check if there is any quantification on the quantification, e.g.
+						// "any five of the seven". In this case,  any becomes the specifier of the five
 					}else if (depOfDependent.equals("det:qmod")){
-							specifier = determiner;
-							existsQMod = true;
-							// get the outNode (the node corresponding to the string determiner)
-							SemanticNode<?> outNode = graph.getDependencyGraph().getEndNode(edge);
-							// check if there are outEdges that are "det"
-							for (SemanticEdge outEdge : graph.getDependencyGraph().getOutEdges(outNode)){
-								if (outEdge.getLabel().equals("det")){
-									specifier = outEdge.getDestVertexId().substring(0,outEdge.getDestVertexId().indexOf("_"));
-								}
+						specifier = determiner;
+						existsQMod = true;
+						// get the outNode (the node corresponding to the string determiner)
+						SemanticNode<?> outNode = graph.getDependencyGraph().getEndNode(edge);
+						// check if there are outEdges that are "det"
+						for (SemanticEdge outEdge : graph.getDependencyGraph().getOutEdges(outNode)){
+							if (outEdge.getLabel().equals("det")){
+								specifier = outEdge.getDestVertexId().substring(0,outEdge.getDestVertexId().indexOf("_"));
 							}
+						}
 					} else if (depOfDependent.equals("amod") && (quantifiers.contains(determiner.toLowerCase()) )  ){
 						specifier = determiner;
-					// do the following adjustments for quantifiers with negative monotonicity in restriction type
+						// do the following adjustments for quantifiers with negative monotonicity in restriction type
 					} else if (determiner.equals("no")){
 						specifier = "some";
+						((SkolemNodeContent) graph.getFinishNode(edge).getContent()).setSurface("some");
+						((SkolemNodeContent) graph.getFinishNode(edge).getContent()).setStem("some");
+						((SkolemNodeContent) graph.getFinishNode(edge).getContent()).setSkolem("some_"+Integer.toString(((SkolemNodeContent) graph.getFinishNode(edge).getContent()).getPosition()));
+						graph.getFinishNode(edge).setLabel(((SkolemNodeContent) graph.getFinishNode(edge).getContent()).getSkolem());					
 					} else if (determiner.equals("few")){
-						specifier = "many";
+						specifier = "many";	
+						((SkolemNodeContent) graph.getFinishNode(edge).getContent()).setSurface("many");
+						((SkolemNodeContent) graph.getFinishNode(edge).getContent()).setStem("many");
+						((SkolemNodeContent) graph.getFinishNode(edge).getContent()).setSkolem("many_"+Integer.toString(((SkolemNodeContent) graph.getFinishNode(edge).getContent()).getPosition()));
+						graph.getFinishNode(edge).setLabel(((SkolemNodeContent) graph.getFinishNode(edge).getContent()).getSkolem());					
 					}
 				}
 				// check if there is a "none" involved: "none" is not recognized as a det:qmod so we have to look for it separately
@@ -469,7 +531,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 			}
 		}
 	}
-	
+
 	/**
 	 * Maps each node to its lexical semantics and adds the corresponding sense nodes and lex edges to
 	 * the semantic graph . For the moment, it maps the disambiguated sense of the node (this gets to be
@@ -480,24 +542,34 @@ public class DepGraphToSemanticGraph implements Serializable {
 	 */
 	private void integrateLexicalFeatures(String wholeCtx){
 		HashMap <String, Map<String,Float>> senses = null;
-		try {
+		//long startTime = System.currentTimeMillis();	
+		// computer embeds in a different thread
+		 ExecutorService executorService = Executors.newSingleThreadExecutor();
+		 Future future = executorService.submit(new LexicalGraphConcurrentTask(wholeCtx));
+		 executorService.shutdown();
+		try {		
 			senses = retriever.disambiguateSensesWithJIGSAW(wholeCtx); // stanGraph.toRecoveredSentenceString());
-			retriever.getEmbedForWholeCtx(wholeCtx);
+			// next line needed for non-multithreading
+			//retriever.getEmbedForWholeCtx(wholeCtx);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		//long endTime = System.currentTimeMillis();
+		//System.out.println("That took " + (endTime - startTime) + " milliseconds");
+
 		SemGraph roleGraph = graph.getRoleGraph();
 		Set<SemanticNode<?>> roleNodes = roleGraph.getNodes();
 		for (SemanticNode<?> node: roleNodes){
 			if (node instanceof SkolemNode){
 				retriever.extractNodeEmbedFromSequenceEmbed((SkolemNode) node);
-				HashMap<String,String> lexSem = retriever.mapNodeToSenseAndConcept((SkolemNode) node, graph, senses); 
+				HashMap<String, String> lexSem;
+				lexSem = retriever.mapNodeToSenseAndConcept((SkolemNode) node, graph, senses);
 				for (String key : lexSem.keySet()){
 					String sense = key;
 					try {
 						retriever.getLexRelationsOfSynset(((SkolemNode) node).getStem(), sense, ((SkolemNode) node).getPartOfSpeech());
-						
+
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -514,27 +586,46 @@ public class DepGraphToSemanticGraph implements Serializable {
 					senseContent.setHyponyms(retriever.getHyponyms());
 					senseContent.setAntonyms(retriever.getAntonyms());
 					senseContent.setEmbed(retriever.getEmbed());
-					
+
 					// create new Sense Node
 					SenseNode senseNode = new SenseNode(sense, senseContent);
 					// create new LexEdge
 
 					LexEdge edge = new LexEdge(GraphLabels.LEX, new LexEdgeContent());
 					graph.addLexEdge(edge, node, senseNode);
-					
+
 					retriever.setSubConcepts(new HashMap<String,Integer>());
 					retriever.setSuperConcepts(new HashMap<String,Integer>());
 					retriever.setSynonyms(new ArrayList<String>());
 					retriever.setHypernyms(new ArrayList<String>());
 					retriever.setHyponyms(new ArrayList<String>());
-					retriever.setAntonyms(new ArrayList<String>());
-					retriever.embed = null;
+					retriever.setAntonyms(new ArrayList<String>());					
 				}	
+
 			}
+			// for now, embed is the same for all senses of a given word, so only initialize at the end of each node 
+			retriever.embed = null;
 		}
 	}
-	
-	
+
+	/** 
+	 * 
+	 * @author kkalouli
+	 * Computes embeds in a different thread for faster processing. 
+	 */
+	public class LexicalGraphConcurrentTask implements Runnable{
+		private String wholeCtx;
+
+		public LexicalGraphConcurrentTask(String wholeCtx) {
+			this.wholeCtx = wholeCtx;
+		}
+
+		public void run() {
+			retriever.getEmbedForWholeCtx(wholeCtx);
+		}
+	}
+
+
 	/*** 
 	 * create the context graph by taking into account the different "markers of contexts".
 	 * Once the graph is created, go through it and assign contexts to each skolem of the dependency graph. 
@@ -543,21 +634,21 @@ public class DepGraphToSemanticGraph implements Serializable {
 		ContextMapper ctxMapper = new ContextMapper(graph, verbalForms);
 		ctxMapper.integrateAllContexts();
 	}
-	
+
 	/*** 
 	 * create the distributional graph by computing a distributional representation for each subgraph introduced
 	 * by a context of the context graph  
 	 */
 	private void integrateDistributionalReps(){
 		DistributionMapper distrMapper = new DistributionMapper(graph);
-		try {
+		/*try {
 			distrMapper.mapCtxsToDistrReps(plainSkolemsWriter);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		};
+		};*/
 	}
-	
+
 	/***
 	 * Create the link graph by resolving the coreferences. Uses the stanford CoreNLP software but also the stanford dependencies directly.
 	 * @param sentence
@@ -571,16 +662,16 @@ public class DepGraphToSemanticGraph implements Serializable {
 			for (IntPair k : cc.getMentionMap().keySet()){
 				// find in the role graph the node with the position equal to the position that the coreference element has
 				for (SemanticNode<?> n : graph.getRoleGraph().getNodes()){
-						if (n instanceof SkolemNode){
-							if (((SkolemNodeContent) n.getContent()).getPosition() == k.getTarget()){
-								// in the first pass of this chain, set the startNode, in all other ones set the finishNode (the start Node remains the same)
-								if (startNode == null){
-									startNode = n;
-								} else {
-									finishNode = n;
-								}
+					if (n instanceof SkolemNode){
+						if (((SkolemNodeContent) n.getContent()).getPosition() == k.getTarget()){
+							// in the first pass of this chain, set the startNode, in all other ones set the finishNode (the start Node remains the same)
+							if (startNode == null){
+								startNode = n;
+							} else {
+								finishNode = n;
 							}
 						}
+					}
 				}
 				// if all passes are over and there is coreference, add the links
 				if (startNode != null && finishNode != null){
@@ -603,7 +694,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 			}
 		}
 	}
-	
+
 	/**
 	 * Returns the semantic graph of the given sentence. 
 	 * It runs the stanford parser, gets the graph and turns this graph to the semantic graph.
@@ -629,13 +720,13 @@ public class DepGraphToSemanticGraph implements Serializable {
 	 * @param semConverter
 	 * @throws IOException
 	 */
-	
+
 	public void processTestsuite(String file) throws IOException{
 		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
 		// true stands for append = true (dont overwrite)
 		//BufferedWriter writer = new BufferedWriter( new FileWriter(file.substring(0,file.indexOf(".txt"))+"_processed.csv", true));
 		FileOutputStream fileSer = null;
-        ObjectOutputStream writerSer = null;
+		ObjectOutputStream writerSer = null;
 		String strLine;
 		ArrayList<sem.graph.SemanticGraph> semanticGraphs = new ArrayList<sem.graph.SemanticGraph>();
 		while ((strLine = br.readLine()) != null) {
@@ -669,7 +760,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		//writer.close();
 		br.close();
 		writerSer.close();
-		plainSkolemsWriter.close();
+		//plainSkolemsWriter.close();
 	}
 
 	/***
@@ -714,40 +805,41 @@ public class DepGraphToSemanticGraph implements Serializable {
 		//ImageIO.write(graph.saveDepsAsImage(),"png", new File("/Users/kkalouli/Desktop/deps.png"));
 		System.out.println(graph.displayAsString());
 		for (SemanticNode<?> node : graph.getDependencyGraph().getNodes()){
-				System.out.println(node.getLabel()+((SkolemNodeContent) node.getContent()).getContext());
+			System.out.println(node.getLabel()+((SkolemNodeContent) node.getContent()).getContext());
 		}
 		return graph;
 	}
-	
-	
+
+
 	@SuppressWarnings("unchecked")
 	public ArrayList<sem.graph.SemanticGraph> deserializeFileWithComputedPairs(String file){
 		ArrayList<sem.graph.SemanticGraph> semanticGraphs = null;
-			try {
-				FileInputStream fileIn = new FileInputStream("serialized_SemanticGraphs.ser");
-				ObjectInputStream in = new ObjectInputStream(fileIn);
-				semanticGraphs = (ArrayList<sem.graph.SemanticGraph>) in.readObject();
-				in.close();
-			} catch (FileNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} 
-			return semanticGraphs;
+		try {
+			FileInputStream fileIn = new FileInputStream("serialized_SemanticGraphs.ser");
+			ObjectInputStream in = new ObjectInputStream(fileIn);
+			semanticGraphs = (ArrayList<sem.graph.SemanticGraph>) in.readObject();
+			in.close();
+		} catch (FileNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		return semanticGraphs;
 	}
-	
+
 
 
 	public static void main(String args[]) throws IOException {
-		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
+		Bert bert = Bert.load("com/robrua/nlp/easy-bert/bert-uncased-L-12-H-768-A-12");
+		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph(bert);
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
 		//emConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/expriment_InferSent/SICK_unique_sent_test_InferSent_onlySkolems.txt");
-		String sentence = "The boy faked the illness.";//"A family is watching a little boy who is hitting a baseball.";
+		String sentence = "The boy and the girl ate and drank.";//"A family is watching a little boy who is hitting a baseball.";
 		String context = "The kid faked the illness.";
 		semConverter.processSentence(sentence, sentence+" "+context);
 	}

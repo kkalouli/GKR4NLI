@@ -45,6 +45,8 @@ z-index: 10000;
 		in end-to-end deep learning approaches. The
 		representation is especially targeted towards Natural Language
 		Inference (NLI) but is also suitable for other semantic processing tasks, e.g. semantic similarity tasks. <br>
+		The current version of GKR makes uses of the Stanford CoreNLP 3.8.0 software to build the dependency graph. It also uses the Princeton WordNet 3.0
+		version to extract the senses of the lexical graph. For more details on how this software is used, please refer to our publications. 
 		This demo seeks to give interested researchers a taste of GKR. Currently, GKR can deal with various contextual phenomena, such as negation, 
 		modals, clausal contexts of propositional attitudes (e.g. belief, knowledge, obligation),  implicatives, interrogative and imperative clauses, 
 		disjunction and conjunction. The treatment of conditionals, distributivity and ellipsis is not implemented yet, but planned for the future.     
@@ -133,20 +135,10 @@ z-index: 10000;
 <!-- Latest compiled and minified JavaScript  -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 <script>
-var spinner = $('-webkit-#loader');
+var spinner = $('#loader');
 $(function() {
   $('form').submit(function(e) {
-   <!-- e.preventDefault(); -->
     spinner.show();
-    $.ajax({
-      url: '/GKRServlet',
-      <!--data: "Mary love John.", -->
-      method: 'post'
-      <!-- dataType: 'JSON' -->
-    }).done(function(resp) {
-      spinner.hide();
-      <!-- alert(resp.status); -->
-    });
   });
 });
 </script>

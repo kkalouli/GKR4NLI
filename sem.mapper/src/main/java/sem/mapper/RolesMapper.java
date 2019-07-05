@@ -1,21 +1,15 @@
 package sem.mapper;
 
-import java.awt.List;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
 import sem.graph.SemGraph;
-import sem.graph.SemJGraphT;
 import sem.graph.SemanticEdge;
-import sem.graph.SemanticGraph;
 import sem.graph.SemanticNode;
-import sem.graph.vetypes.ContextNode;
-import sem.graph.vetypes.ContextNodeContent;
 import sem.graph.vetypes.GraphLabels;
 import sem.graph.vetypes.RoleEdge;
 import sem.graph.vetypes.RoleEdgeContent;
@@ -350,10 +344,11 @@ public class RolesMapper implements Serializable {
 			if (!listOfSubNodes.contains(graph.getFinishNode(subEdge)))
 				listOfSubNodes.add(graph.getFinishNode(subEdge));
 			if (!traversedEdges.contains(subEdge)){
+				traversedEdges.add(subEdge);
 				// do the same for the finish node of the current edge (recursively so that children of children are also added)
 				createSubgraph(graph.getFinishNode(subEdge), nodeToExclude, listOfSubEdges, listOfSubNodes);
 			}
-			traversedEdges.add(subEdge);
+			//traversedEdges.add(subEdge);
 		}
 		// create the subgraph
 		return graph.getSubGraph(listOfSubNodes, listOfSubEdges);
@@ -462,7 +457,7 @@ public class RolesMapper implements Serializable {
 		String role = "";
 	
 		// only go here if there is coordination in the current edge 
-		if (edgeLabel.contains("conj:") ){
+		if (edgeLabel.contains("cc:") || edgeLabel.contains("conj:") ){
 			// create the combined node of the coordinated terms and the edge of one of its children
 			if (graph.getRoleGraph().getEdges(start, finish).isEmpty() ){//!graph.getRoleGraph().containsNode(start) && !graph.getRoleGraph().containsNode(finish)  ){
 				TermNode combNode = new TermNode(start+"_"+edgeLabel.substring(5)+"_"+finish, new TermNodeContent());
@@ -593,15 +588,7 @@ public class RolesMapper implements Serializable {
 		case "nsubj:xsubj": role = GraphLabels.SUBJ;
 		foundSubj = true;
 		break;
-		case "amod": boolean found = false;
-		// if the word is already included in the property graph as a specifier (e.g. many, few, etc) dont add it here again
-			for (SemanticEdge out : graph.getPropertyGraph().getOutEdges(start)){
-				if (out.getLabel().equals("specifier") && finish.getLabel().contains(out.getDestVertexId())){
-					found = true;						
-				}
-			}
-			if (found == false)
-				role = GraphLabels.AMOD;
+		case "amod": role = GraphLabels.AMOD;
 		break;
 		case "advmod": role = GraphLabels.AMOD;
 		break;
