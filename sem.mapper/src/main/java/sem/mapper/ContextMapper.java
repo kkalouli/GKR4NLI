@@ -68,10 +68,12 @@ public class ContextMapper implements Serializable {
 		
 		// read the file with the implicative/factive signatures
 		BufferedReader br = null;
+		InputStreamReader inputReader = null;
 		try {
 			InputStream implFile = getClass().getClassLoader().getResourceAsStream("implicatives3.txt");
+			inputReader = new InputStreamReader(implFile, "UTF-8");
 			//File implFile = new File(classLoader.getResource("implicatives3.txt").getFile());
-			br = new BufferedReader(new InputStreamReader(implFile, "UTF-8"));
+			br = new BufferedReader(inputReader);
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -91,10 +93,13 @@ public class ContextMapper implements Serializable {
 					mapOfImpl.put(word+comple,sign);
 				}		
 			}
+			br.close();
+			inputReader.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 	
 	}
 

@@ -192,6 +192,7 @@ public class GKRServlet extends HttpServlet {
 					toAdd += strLine;
 				}
 	    	}
+	    	br.close();
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

@@ -1,14 +1,8 @@
 package gnli;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import sem.graph.SemanticEdge;
@@ -27,17 +21,15 @@ public class PathScorer implements Serializable {
 	private static final long serialVersionUID = 7142446450358190985L;
 	private GNLIGraph gnliGraph;
 	private float maxCost;
-	private HashMap<String, ArrayList<HeadModifierPathPair>> entailRolePaths;
-	private HashMap<String, ArrayList<HeadModifierPathPair>> neutralRolePaths;
 	private boolean learning;
+	private InferenceComputer infComputer;
 	
 	
-	public PathScorer(GNLIGraph gnliGraph, float maxCost, boolean learning) {
+	public PathScorer(GNLIGraph gnliGraph, float maxCost, boolean learning, InferenceComputer infComputer) {
 		super();
 		this.gnliGraph = gnliGraph;
 		this.maxCost = maxCost;
-		entailRolePaths = deserialize("entail");
-		neutralRolePaths = deserialize("neutral");
+		this.infComputer = infComputer;
 		this.learning = learning;
 	}
 	
@@ -67,102 +59,26 @@ public class PathScorer implements Serializable {
 		this.gnliGraph = gnliGraph;
 	}
 	
-	
-	public void serialize(HashMap<String,ArrayList<HeadModifierPathPair>> rolePaths, String type){	
-		FileOutputStream fileOut;
-		ObjectOutputStream out;
-		if (type.equals("entail")){
-			try {
-				fileOut = new FileOutputStream("serialized_RolePaths_entail.ser");
-				out = new ObjectOutputStream(fileOut); 
-				out.writeObject(rolePaths);
-				out.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} else {
-			try {
-				fileOut = new FileOutputStream("serialized_RolePaths_neutral.ser");
-				out = new ObjectOutputStream(fileOut); 
-				out.writeObject(rolePaths);
-				out.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
-	
-	@SuppressWarnings("unchecked")
-	public HashMap<String,ArrayList<HeadModifierPathPair>> deserialize(String type){
-		HashMap<String,ArrayList<HeadModifierPathPair>> rolePaths = new HashMap<String,ArrayList<HeadModifierPathPair>>();
-		FileInputStream fileIn;
-		ObjectInputStream in;
-		if (type.equals("entail")){
-			try {
-				fileIn = new FileInputStream("serialized_RolePaths_entail.ser");
-				in = new ObjectInputStream(fileIn);
-				rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
-				in.close();
-			} catch (FileNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		} else {
-			try {
-				fileIn = new FileInputStream("serialized_RolePaths_neutral.ser");
-				in = new ObjectInputStream(fileIn);
-		        rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
-				in.close();
-			} catch (FileNotFoundException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
 
-		return rolePaths;
-	}
-	
-	public void setEntailRolePaths(HashMap<String, ArrayList<HeadModifierPathPair>> entailRolePaths){
-		this.entailRolePaths = entailRolePaths ;
-	}
-	
-	public HashMap<String,ArrayList<HeadModifierPathPair>> getEntailRolePaths(){
-		return this.entailRolePaths;
-	}
-	
 	public void addEntailRolePath(HeadModifierPathPair pathToAdd){
 		if (pathsAreIdentical(pathToAdd) == true)
 			return;
 		if (pathToAdd.getConclusionPath() != null && pathToAdd.getPremisePath() != null){
 			String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();		
-			if (!entailRolePaths.containsKey(key)){
-				this.entailRolePaths.put(key, new ArrayList<HeadModifierPathPair>());
+			if (!infComputer.getEntailRolePaths().containsKey(key)){
+				infComputer.getEntailRolePaths().put(key, new ArrayList<HeadModifierPathPair>());
 			}
-			this.entailRolePaths.get(key).add(pathToAdd);
+			this.infComputer.getEntailRolePaths().get(key).add(pathToAdd);
 			// if a path is added to the entailPaths, it should be removed from the neutralPaths in case it is there. 
-			if (neutralRolePaths.keySet().contains(key))
+			if (infComputer.getNeutralRolePaths().keySet().contains(key))
 				removeNeutralRolePath(key); 
 		}
 	}
 	
 	
 	public void removeEntailRolePath(String key){
-		if (entailRolePaths.keySet().contains(key)){
-			this.entailRolePaths.remove(key);
+		if (infComputer.getEntailRolePaths().keySet().contains(key)){
+			infComputer.getEntailRolePaths().remove(key);
 		}
 	}
 	
@@ -177,13 +93,6 @@ public class PathScorer implements Serializable {
 		return false;
 	}
 	
-	public void setNeutralRolePaths(HashMap<String,ArrayList<HeadModifierPathPair>> neutralRolePaths){
-		this.neutralRolePaths = neutralRolePaths;
-	}
-	
-	public HashMap<String,ArrayList<HeadModifierPathPair>> getNeutralRolePaths(){
-		return this.neutralRolePaths;
-	}
 	
 	public void addNeutralRolePath(HeadModifierPathPair pathToAdd){
 		if (pathsAreIdentical(pathToAdd) == true)
@@ -191,18 +100,18 @@ public class PathScorer implements Serializable {
 		if (pathToAdd.getConclusionPath() != null && pathToAdd.getPremisePath() != null){
 			String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();
 			// only add it to the neutral paths if it is not already contained in the entailPaths (entailPaths are more dominant) 
-			if (entailRolePaths.containsKey(key))
+			if (infComputer.getEntailRolePaths().containsKey(key))
 				return;
-			if (!neutralRolePaths.containsKey(key)){
-				this.neutralRolePaths.put(key, new ArrayList<HeadModifierPathPair>());
+			if (!infComputer.getNeutralRolePaths().containsKey(key)){
+				infComputer.getNeutralRolePaths().put(key, new ArrayList<HeadModifierPathPair>());
 			}
-			this.neutralRolePaths.get(key).add(pathToAdd);
+			infComputer.getNeutralRolePaths().get(key).add(pathToAdd);
 		}
 	}
 	
 	public void removeNeutralRolePath(String key){
-		if (neutralRolePaths.keySet().contains(key)){
-			this.neutralRolePaths.remove(key);
+		if (infComputer.getNeutralRolePaths().keySet().contains(key)){
+			infComputer.getNeutralRolePaths().remove(key);
 		}
 	}
 	
@@ -246,9 +155,9 @@ public class PathScorer implements Serializable {
 		float cost = 0;	
 		if (pathsAreIdentical(hMPath) == false && learning == false){
 			String key = hPath.toString()+"/"+tPath.toString();
-			if (neutralRolePaths.containsKey(key))
+			if (infComputer.getNeutralRolePaths().containsKey(key))
 				cost += maxCost;
-			else if (entailRolePaths.containsKey(key))
+			else if (infComputer.getEntailRolePaths().containsKey(key))
 				cost -= 10;
 		}
 		if (tPath.size() == hPath.size() && hPath.size() == 1){

@@ -24,7 +24,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.robrua.nlp.bert.Bert;
+import com.robrua.nlp.bert.FullTokenizer;
 
+import edu.mit.jwi.IRAMDictionary;
 import edu.stanford.nlp.coref.data.CorefChain;
 import edu.stanford.nlp.ling.IndexedWord;
 import edu.stanford.nlp.semgraph.SemanticGraph;
@@ -67,12 +69,19 @@ public class DepGraphToSemanticGraph implements Serializable {
 	private StanfordParser parser;
 	private SenseMappingsRetriever retriever;
 	private InputStream configFile;
-	private Bert bert;
-	//private BufferedWriter	plainSkolemsWriter;
-	//public Logger logger;
 
 
-	public DepGraphToSemanticGraph(Bert bert) {
+	/**
+	 * Constructor to be used when DepGraphToSemanticGraph is called from the InferenceComputer.
+	 * In this case, bert, bertTokenizer, the PWN Dict and the SUMo content are passed as parameters
+	 * so that they are not called every time a new sentence is parsed
+	 * @param bert
+	 * @param tokenizer
+	 * @param wnDict
+	 * @param sumoContent
+	 */
+	public DepGraphToSemanticGraph(Bert bert, FullTokenizer tokenizer, IRAMDictionary wnDict, 
+			String sumoContent) {
 		verbalForms.add("MD");
 		verbalForms.add("VB");
 		verbalForms.add("VBD");
@@ -106,7 +115,6 @@ public class DepGraphToSemanticGraph implements Serializable {
 		this.graph = null;
 		this.stanGraph = null;
 		this.traversed = new ArrayList<SemanticGraphEdge>();
-		this.bert = bert;
 		try {
 			this.parser = new StanfordParser();
 		} catch (FileNotFoundException e) {
@@ -117,17 +125,14 @@ public class DepGraphToSemanticGraph implements Serializable {
 			e.printStackTrace();
 		}
 		this.configFile = getClass().getClassLoader().getResourceAsStream("gkr.properties");
-		this.retriever = new SenseMappingsRetriever(configFile, bert);
+		this.retriever = new SenseMappingsRetriever(configFile, bert, tokenizer, wnDict, sumoContent);
 		this.interrogative = false;
-		/*try {
-			this.plainSkolemsWriter = new BufferedWriter(new FileWriter("SICK_only_SkolemNodes.csv", true));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-
 	}
 	
+	/**
+	 * Constructor to be used when DepGraphToSemanticGraph is called from a main, only to
+	 * parse specific sentences (without inference). Then, all libs are initialized here.
+	 */
 	public DepGraphToSemanticGraph() {
 		verbalForms.add("MD");
 		verbalForms.add("VB");
@@ -174,13 +179,6 @@ public class DepGraphToSemanticGraph implements Serializable {
 		this.configFile = getClass().getClassLoader().getResourceAsStream("gkr.properties");
 		this.retriever = new SenseMappingsRetriever(configFile);
 		this.interrogative = false;
-		/*try {
-			this.plainSkolemsWriter = new BufferedWriter(new FileWriter("SICK_only_SkolemNodes.csv", true));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-
 	}
 
 
@@ -543,7 +541,11 @@ public class DepGraphToSemanticGraph implements Serializable {
 	private void integrateLexicalFeatures(String wholeCtx){
 		HashMap <String, Map<String,Float>> senses = null;
 		//long startTime = System.currentTimeMillis();	
-		// computer embeds in a different thread
+		/* within this method, two main, long processes take place
+		1. the computation of the embedding of each word
+		2 the WSD of each word
+		==> put 1. in a separate thread to speed up process 
+		*/ 
 		 ExecutorService executorService = Executors.newSingleThreadExecutor();
 		 Future future = executorService.submit(new LexicalGraphConcurrentTask(wholeCtx));
 		 executorService.shutdown();
@@ -722,7 +724,9 @@ public class DepGraphToSemanticGraph implements Serializable {
 	 */
 
 	public void processTestsuite(String file) throws IOException{
-		BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
+		FileInputStream fileInput = new FileInputStream(file);
+		InputStreamReader inputReader = new InputStreamReader(fileInput, "UTF-8");
+		BufferedReader br = new BufferedReader(inputReader);
 		// true stands for append = true (dont overwrite)
 		//BufferedWriter writer = new BufferedWriter( new FileWriter(file.substring(0,file.indexOf(".txt"))+"_processed.csv", true));
 		FileOutputStream fileSer = null;
@@ -759,7 +763,10 @@ public class DepGraphToSemanticGraph implements Serializable {
 		} 
 		//writer.close();
 		br.close();
+		fileSer.close();
 		writerSer.close();
+		fileInput.close();
+		inputReader.close();
 		//plainSkolemsWriter.close();
 	}
 
@@ -818,6 +825,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 			FileInputStream fileIn = new FileInputStream("serialized_SemanticGraphs.ser");
 			ObjectInputStream in = new ObjectInputStream(fileIn);
 			semanticGraphs = (ArrayList<sem.graph.SemanticGraph>) in.readObject();
+			fileIn.close();
 			in.close();
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
@@ -835,8 +843,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 
 
 	public static void main(String args[]) throws IOException {
-		Bert bert = Bert.load("com/robrua/nlp/easy-bert/bert-uncased-L-12-H-768-A-12");
-		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph(bert);
+		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
 		//emConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/expriment_InferSent/SICK_unique_sent_test_InferSent_onlySkolems.txt");
 		String sentence = "The boy and the girl ate and drank.";//"A family is watching a little boy who is hitting a baseball.";
