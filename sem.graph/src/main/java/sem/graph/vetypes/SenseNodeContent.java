@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 import sem.graph.NodeContent;
 
 
@@ -16,7 +15,7 @@ import sem.graph.NodeContent;
  * (sense id, taxonomic concepts, RACs).
  *
  */
-public class SenseNodeContent extends NodeContent implements Serializable {
+public class SenseNodeContent extends NodeContent implements Serializable, Comparable {
 
 
 	/**
@@ -33,6 +32,7 @@ public class SenseNodeContent extends NodeContent implements Serializable {
 	private boolean hierarchyPrecomputed = false;
 	private Map<String, Integer> subConcepts;
 	private Map<String, Integer> superConcepts;
+	private float senseScore;
 	
 	/**
 	 * Create (empty) SenseNodeContent
@@ -48,6 +48,7 @@ public class SenseNodeContent extends NodeContent implements Serializable {
 		// Use null to indicate that they have not been added
 		subConcepts = null;
 		superConcepts = null;
+		senseScore = 0;
 	}
 	
 	/**
@@ -61,6 +62,7 @@ public class SenseNodeContent extends NodeContent implements Serializable {
 		hypernyms = new ArrayList<String>();
 		hyponyms = new ArrayList<String>();
 		antonyms = new ArrayList<String>();
+		senseScore = 0;
 
 	}
 
@@ -138,6 +140,18 @@ public class SenseNodeContent extends NodeContent implements Serializable {
 
 	public void setAntonyms(List<String> antonyms) {
 		this.antonyms = antonyms;
+	}
+	
+	/**
+	 * Get the score associated with the sense (from the WSD algorithm)
+	 * @return
+	 */
+	public float getSenseScore() {
+		return senseScore;
+	}
+
+	public void setSenseScore(float senseScore) {
+		this.senseScore = senseScore;
 	}
 	
 	
@@ -264,6 +278,12 @@ public class SenseNodeContent extends NodeContent implements Serializable {
 		sb.append("],[ ");
 		return sb.toString();
 	}
+	
+	@Override
+    public int compareTo(Object o) {
+        SenseNodeContent other = (SenseNodeContent) o;
+        return (int) (this.getSenseScore() - other.getSenseScore());
+    }
 
 
 }

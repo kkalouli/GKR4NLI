@@ -1141,12 +1141,9 @@ public class SemanticGraph implements Serializable  {
 	 * @return
 	 */
 	public boolean isLexCoRef(TermNode node) {
-		if (this.lexGraph.containsNode(node) && this.linkGraph.containsNode(node)) {
-			for (SemanticEdge edge : getInEdges(node)) {
-				if (edge.getLabel().equals("lexCoRef")) {
-					return true;
-				}
-			}
+		if (this.linkGraph.containsNode(node)) {
+			if (!this.linkGraph.getInEdges(node).isEmpty())
+				return true;
 		}
 		return false;
 	}
@@ -1166,6 +1163,7 @@ public class SemanticGraph implements Serializable  {
 		}
 		return false;
 	}
+	
 	
 	/**
 	 * Is the a node that only occurs in the lexical graph

@@ -147,7 +147,6 @@ public class PathScorer implements Serializable {
 	/**
 	* 3 penalties:
 	* kind of path (roles)
-	* type of match: embed is not as good
 	* score of match (embed is already penalized in the match score)
 	* not the same sense across matches
 	 */
@@ -177,7 +176,7 @@ public class PathScorer implements Serializable {
 			if (tPath.get(0).getLabel().equals("amod") && hPath.get(0).getLabel().equals("nmod") && hPath.get(1).getLabel().equals("amod"))
 				cost -= 2;
 		}
-		//cost += ((MatchContent) hMPath.getModifiersPair().getContent()).getScore();
+		cost += ((MatchContent) hMPath.getModifiersPair().getContent()).getScore();
 		
 		// if the match is based on different senses of the same word, the match should be neglected
 		if ( gnliGraph.getStartNode(hMPath.getModifiersPair()) instanceof SkolemNode && !hMPath.getModifiersPair().getLabel().equals("sense")

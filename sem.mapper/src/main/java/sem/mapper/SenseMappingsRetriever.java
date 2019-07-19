@@ -83,6 +83,7 @@ public class SenseMappingsRetriever implements Serializable {
 	private FullTokenizer tokenizer;
 	private IRAMDictionary wnDict;
 	private String sumoContent;
+	private String bertVocab;
 	
 	/**
 	 * Constructor to be used when SenseMappingsRetriever is called from the InferenceComputer
@@ -197,10 +198,11 @@ public class SenseMappingsRetriever implements Serializable {
         this.wnInstall = props.getProperty("wn_location");
         this.sumoInstall = props.getProperty("sumo_location");
         this.jigsawProps = props.getProperty("jigsaw_props");
+        this.bertVocab = props.getProperty("bert_vocab");
         this.bert = Bert.load("com/robrua/nlp/easy-bert/bert-uncased-L-12-H-768-A-12");
         Logger.getLogger(JIGSAW.class.getName()).setLevel(Level.OFF);
 		this.jigsaw = new JIGSAW(new File(jigsawProps));	
-		this.tokenizer = new FullTokenizer(new File("/home/kkalouli/Documents/project/semantic_processing/sem.mapper/src/main/resources/vocab.txt"), true);
+		this.tokenizer = new FullTokenizer(new File(bertVocab), true);
 		this.wnDict = new RAMDictionary(new File(wnInstall), ILoadPolicy.NO_LOAD);
 		try {
 			this.wnDict.open();
@@ -554,25 +556,27 @@ public class SenseMappingsRetriever implements Serializable {
 	 * @param retriever
 	 * @return
 	 */
-	public HashMap<String, String> mapNodeToSenseAndConcept(SkolemNode node, SemanticGraph graph,HashMap <String, Map<String,Float>> senses){
-		HashMap<String,String> lexSem = new HashMap<String,String>();
+	public HashMap<String, Map<String, Float>> mapNodeToSenseAndConcept(SkolemNode node, SemanticGraph graph,HashMap <String, Map<String,Float>> senses){
+		HashMap<String,Map<String,Float>> lexSem = new HashMap<String,Map<String,Float>>();
 		int positionOfNode = node.getPosition();
 		String keyToGet = Integer.toString(positionOfNode-1) + "_" + node.getSurface();
 		Map<String,Float> senseProp = senses.get(keyToGet);
 		//String sense = "";
 		String concept = "";
-			
+				
 		if (senseProp != null && !senseProp.isEmpty()){
 			int length = senseProp.keySet().toArray().length;
 			if (senseProp.keySet().toArray().length >5)
 				length = 5;
+			// only take the first 5 best senses
 			for (int i= 0; i< length; i++){
 				String sense = (String) senseProp.keySet().toArray()[i];
-				concept = extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());
-				lexSem.put(sense,concept);
-			}
-			//sense = (String) senseProp.keySet().toArray()[0];
-			
+				concept = extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());	
+				// map to hold the concept and the score associated with that sense
+				Map<String,Float> conceptAndScore = new HashMap<String,Float>();
+				conceptAndScore.put(concept, senseProp.get(sense));
+				lexSem.put(sense,conceptAndScore);
+			}			
 		}				
 
 		
@@ -587,8 +591,11 @@ public class SenseMappingsRetriever implements Serializable {
 					ArrayList<String> compSenses = accessPWNDBAndExtractSenses(compound,pos);
 					if (compSenses != null && !compSenses.isEmpty()){
 						String sense = compSenses.get(0).substring(4, compSenses.get(0).lastIndexOf("-"));		
-						concept = extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());				
-						lexSem.put("cmp_"+sense,concept);
+						concept = extractSUMOMappingFromSUMO(sense, ((SkolemNode) node).getPartOfSpeech());	
+						// map to hold the concept and the score associated with that sense
+						Map<String,Float> conceptAndScore = new HashMap<String,Float>();
+						conceptAndScore.put(concept, (float) 1);		
+						lexSem.put("cmp_"+sense,conceptAndScore);
 					}
 				} catch (IOException e) {
 					// TODO Auto-generated catch block

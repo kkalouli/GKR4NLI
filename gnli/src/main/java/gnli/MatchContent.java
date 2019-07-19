@@ -147,7 +147,7 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 	public double getScore() {
 		double retval = 0.0;
 		for (Double score : this.scores.values()) {
-			retval =+ score;
+			retval += score;
 		}
 		return retval;
 	}

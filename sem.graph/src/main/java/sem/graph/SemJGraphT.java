@@ -310,9 +310,16 @@ public class SemJGraphT implements  SemGraph, Serializable{
 
 	@Override
 	public List<SemanticEdge> getShortestUndirectedPath(SemanticNode<?> start, SemanticNode<?> end) {
+		if (!graph.containsVertex(start) || !graph.containsVertex(end)) {
+			return new ArrayList<SemanticEdge>(0);
+		}
 		AsUndirectedGraph<SemanticNode<?>, SemanticEdge> ugraph = new AsUndirectedGraph<SemanticNode<?>, SemanticEdge>(this.graph);
 		DijkstraShortestPath<SemanticNode<?>, SemanticEdge> dsp = new DijkstraShortestPath<SemanticNode<?>, SemanticEdge>(ugraph);
-		return dsp.getPath(start,end).getEdgeList();
+		GraphPath<SemanticNode<?>, SemanticEdge> path = dsp.getPath(start, end);
+		if (path != null)
+			return dsp.getPath(start,end).getEdgeList(); 
+		else
+			return new ArrayList<SemanticEdge>(0);
 	}
 	
 	public String getMxGraph(){	

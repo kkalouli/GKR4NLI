@@ -87,8 +87,8 @@ public class DeterminerEntailments {
 		eMap.put("a_sg_some_pl_SUBCLASS",Specificity.NONE); 				// an old man =/=> some men
 		eMap.put("a_sg_some_pl_EQUALS",Specificity.NONE); 					// a man =/=> some men
 		eMap.put("some_pl_a_sg_SUPERCLASS",Specificity.NONE); 				// some men =/=> an old man 
-		eMap.put("some_pl_a_sg_SUBCLASS",Specificity.NONE); 				// some old men =/=> a man
-		eMap.put("some_pl_a_sg_EQUALS",Specificity.NONE); 					// some men =/=> a man	
+		eMap.put("some_pl_a_sg_SUBCLASS",Specificity.SUBCLASS); 			// some old men =/=> a man
+		eMap.put("some_pl_a_sg_EQUALS",Specificity.EQUALS); 				// some men =/=> a man	
 		// a-several & several-a
 		eMap.put("a_sg_several_pl_SUPERCLASS",Specificity.NONE); 				// a man =/=> several old men 
 		eMap.put("a_sg_several_pl_SUBCLASS",Specificity.NONE); 					// an old man =/=> several men
@@ -204,41 +204,41 @@ public class DeterminerEntailments {
 		// the-some & some-the
 		eMap.put("the_pl_some_pl_SUPERCLASS",Specificity.NONE); 			// the men =/=> some old men 
 		eMap.put("the_pl_some_pl_SUBCLASS",Specificity.SUBCLASS); 			// the old men ===> some men
-		eMap.put("the_pl_some_pl_EQUALS",Specificity.SUBCLASS); 			// the men ===> some men	
+		eMap.put("the_pl_some_pl_EQUALS",Specificity.EQUALS); 				// the men ===> some men	
 		eMap.put("some_pl_the_pl_SUPERCLASS",Specificity.SUPERCLASS); 		// some men =/=> the old men 
 		eMap.put("some_pl_the_pl_SUBCLASS",Specificity.NONE); 				// some old men =/=> the men
-		eMap.put("some_pl_the_pl_EQUALS",Specificity.SUPERCLASS); 			// some men =/=> the men
+		eMap.put("some_pl_the_pl_EQUALS",Specificity.EQUALS); 				// some men ===> the men
 		eMap.put("the_sg_some_sg_SUPERCLASS",Specificity.NONE); 		// the water =/=> some dirty water 
 		eMap.put("the_sg_some_sg_SUBCLASS",Specificity.SUBCLASS); 			// the dirty water ==> some water
-		eMap.put("the_sg_some_sg_EQUALS",Specificity.SUBCLASS); 			// the water ===> some water	
+		eMap.put("the_sg_some_sg_EQUALS",Specificity.EQUALS); 			// the water ===> some water	
 		eMap.put("some_sg_the_sg_SUPERCLASS",Specificity.SUPERCLASS); 		// some water =/=> the dirty water 
 		eMap.put("some_sg_the_sg_SUBCLASS",Specificity.NONE); 				// some dirty water =/=> the water
-		eMap.put("some_sg_the_sg_EQUALS",Specificity.SUPERCLASS); 			// some water =/=> the water	
+		eMap.put("some_sg_the_sg_EQUALS",Specificity.EQUALS); 			// some water =/=> the water	
 		eMap.put("the_pl_some_sg_SUPERCLASS",Specificity.NONE); 			// the waterdrops =/=> some dirty water 
 		eMap.put("the_pl_some_sg_SUBCLASS",Specificity.SUBCLASS); 			// the dirty waterdrops ===> some water
-		eMap.put("the_pl_some_sg_EQUALS",Specificity.SUBCLASS); 			// the waterdrops ==> some water	
+		eMap.put("the_pl_some_sg_EQUALS",Specificity.EQUALS); 			// the waterdrops ==> some water	
 		eMap.put("some_sg_the_pl_SUPERCLASS",Specificity.SUPERCLASS); 		// some water =/=> the dirty waterdrops 
 		eMap.put("some_sg_the_pl_SUBCLASS",Specificity.NONE); 				// some dirty water =/=> the waterdrops
-		eMap.put("some_sg_the_pl_EQUALS",Specificity.SUPERCLASS); 			// some water =/=> the waterdrops	
+		eMap.put("some_sg_the_pl_EQUALS",Specificity.EQUALS); 			// some water =/=> the waterdrops	
 		eMap.put("the_sg_some_pl_SUPERCLASS",Specificity.NONE); 			// the water =/=> some dirty waterdrops 
 		eMap.put("the_sg_some_pl_SUBCLASS",Specificity.SUBCLASS); 			// the dirty water ===> some waterdrops
-		eMap.put("the_sg_some_pl_EQUALS",Specificity.SUBCLASS); 			// the water==> some waterdrops	
+		eMap.put("the_sg_some_pl_EQUALS",Specificity.EQUALS); 			// the water==> some waterdrops	
 		eMap.put("some_pl_the_sg_SUPERCLASS",Specificity.SUPERCLASS); 		// some waterdrops =/=> the dirty water 
 		eMap.put("some_pl_the_sg_SUBCLASS",Specificity.NONE); 				// some dirty waterdrops =/=> the water
-		eMap.put("some_pl_the_sg_EQUALS",Specificity.SUPERCLASS); 			// some waterdrops =/=> the water
+		eMap.put("some_pl_the_sg_EQUALS",Specificity.EQUALS); 			// some waterdrops =/=> the water
 		// the-several & several-the
 		eMap.put("the_pl_several_pl_SUPERCLASS",Specificity.NONE); 				// the men =/=> several old men 
 		eMap.put("the_pl_several_pl_SUBCLASS",Specificity.SUBCLASS); 			// the old men ===> several men
-		eMap.put("the_pl_several_pl_EQUALS",Specificity.SUBCLASS); 				// the men ===> several men	
+		eMap.put("the_pl_several_pl_EQUALS",Specificity.EQUALS); 				// the men ===> several men	
 		eMap.put("several_pl_the_pl_SUPERCLASS",Specificity.SUPERCLASS); 		// several men =/=> the old men 
 		eMap.put("several_pl_the_pl_SUBCLASS",Specificity.NONE); 				// several old men =/=> the men
-		eMap.put("several_pl_the_pl_EQUALS",Specificity.SUPERCLASS); 			// several men =/=> the men			
+		eMap.put("several_pl_the_pl_EQUALS",Specificity.EQUALS); 			// several men =/=> the men			
 		eMap.put("the_sg_several_pl_SUPERCLASS",Specificity.NONE); 				// the water =/=> several dirty waterdrops 
 		eMap.put("the_sg_several_pl_SUBCLASS",Specificity.SUBCLASS); 			// the dirty water ===> several waterdrops
-		eMap.put("the_sg_several_pl_EQUALS",Specificity.SUBCLASS); 				// the water ==> several waterdrops	
+		eMap.put("the_sg_several_pl_EQUALS",Specificity.EQUALS); 				// the water ==> several waterdrops	
 		eMap.put("several_pl_the_sg_SUPERCLASS",Specificity.SUPERCLASS); 		// several waterdrops =/=> the dirty water 
 		eMap.put("several_pl_the_sg_SUBCLASS",Specificity.NONE); 				// several dirty waterdrops =/=> the water
-		eMap.put("several_pl_the_sg_EQUALS",Specificity.SUPERCLASS); 			// several waterdrops =/=> the water
+		eMap.put("several_pl_the_sg_EQUALS",Specificity.EQUALS); 			// several waterdrops =/=> the water
 		// the-every & every-the
 		eMap.put("the_pl_every_sg_SUPERCLASS",Specificity.NONE);  			// the men =/=> every old man 
 		eMap.put("the_pl_every_sg_SUBCLASS",Specificity.SUPERCLASS);  		// the old men =/=> every man
@@ -860,9 +860,119 @@ public class DeterminerEntailments {
 		eMap.put("N_pl_little_sg_EQUALS",Specificity.NONE); 				// N waterdrops =/=> litte water
 		eMap.put("little_sg_N_pl_SUPERCLASS",Specificity.NONE); 			// little water =/=> N dirty waterdrops
 		eMap.put("little_sg_N_pl_SUBCLASS",Specificity.NONE); 				// little dirty water =/=> N waterdrops
-		eMap.put("little_sg_N_pl_EQUALS",Specificity.NONE); 				// little water =/=> N waterdrops								
-
-
+		eMap.put("little_sg_N_pl_EQUALS",Specificity.NONE); 				// little water =/=> N waterdrops				
+		
+		
+		//************** bare noun *****************
+		// bare-bare
+		eMap.put("_sg__sg_SUPERCLASS",Specificity.SUPERCLASS);  	//  man =/=> old man 
+		eMap.put("_sg__sg_SUBCLASS",Specificity.SUBCLASS);  		// old man ==> man
+		eMap.put("_sg__sg_EQUALS",Specificity.EQUALS);  			// man ==>  man	
+		eMap.put("_sg__pl_SUPERCLASS",Specificity.SUPERCLASS);  		//  man =/=> old men 
+		eMap.put("_sg__pl_SUBCLASS",Specificity.NONE);  			// old man =/=> men
+		eMap.put("_sg__pl_EQUALS",Specificity.SUPERCLASS);  		// man =/=> men		
+		eMap.put("_pl__pl_SUPERCLASS",Specificity.SUPERCLASS);  	//  men =/=> old men 
+		eMap.put("_pl__pl_SUBCLASS",Specificity.SUBCLASS);  		//  old men ==>  men
+		eMap.put("_pl__pl_EQUALS",Specificity.EQUALS);  			//  men ==>  men		
+		eMap.put("_pl__sg_SUPERCLASS",Specificity.NONE);  			//  men =/=>  old man 
+		eMap.put("_pl__sg_SUBCLASS",Specificity.SUBCLASS);  		//  old men ==>  man
+		eMap.put("_pl__sg_EQUALS",Specificity.SUBCLASS);  			//  men ==>  man	
+		// bare-many & many-bare
+		eMap.put("_sg_many_pl_SUPERCLASS",Specificity.SUPERCLASS); 		//  man =/=> many old men
+		eMap.put("_sg_many_pl_SUBCLASS",Specificity.NONE); 				//  old man =/=> many men
+		eMap.put("_sg_many_pl_EQUALS",Specificity.SUPERCLASS); 			//  man =/=> many men
+		eMap.put("_pl_many_pl_SUPERCLASS",Specificity.SUPERCLASS); 		//  men =/=> many old men
+		eMap.put("_pl_many_pl_SUBCLASS",Specificity.NONE); 				//  old men =/=> many men
+		eMap.put("_pl_many_pl_EQUALS",Specificity.SUPERCLASS); 			//  men =/=> many men
+		eMap.put("many_pl__sg_SUPERCLASS",Specificity.NONE); 			// many men =/=>  old man 
+		eMap.put("many_pl__sg_SUBCLASS",Specificity.SUBCLASS); 			// many old men ===>  man
+		eMap.put("many_pl__sg_EQUALS",Specificity.SUBCLASS); 			// many men ===>  man
+		eMap.put("many_pl__pl_SUPERCLASS",Specificity.NONE); 			// many men =/=>  old men 
+		eMap.put("many_pl__pl_SUBCLASS",Specificity.SUBCLASS); 			// many old men ===>  men
+		eMap.put("many_pl__pl_EQUALS",Specificity.SUBCLASS); 			// many men ===>  men	
+		// bare-few & few-bare
+		eMap.put("_sg_few_pl_SUPERCLASS",Specificity.SUPERCLASS); 		//  man =/=> few old men
+		eMap.put("_sg_few_pl_SUBCLASS",Specificity.NONE); 				//  old man =/=> few men
+		eMap.put("_sg_few_pl_EQUALS",Specificity.SUPERCLASS); 			//  man =/=> few men
+		eMap.put("_pl_few_pl_SUPERCLASS",Specificity.SUPERCLASS); 		//  men =/=> few old men
+		eMap.put("_pl_few_pl_SUBCLASS",Specificity.NONE); 				//  old men =/=> few men
+		eMap.put("_pl_few_pl_EQUALS",Specificity.SUPERCLASS); 			//  men =/=> few men
+		eMap.put("few_pl__sg_SUPERCLASS",Specificity.NONE); 			// few men =/=>  old man 
+		eMap.put("few_pl__sg_SUBCLASS",Specificity.SUBCLASS); 			// few old men ===>  man
+		eMap.put("few_pl__sg_EQUALS",Specificity.SUBCLASS); 			// few men ===>  man
+		eMap.put("few_pl__pl_SUPERCLASS",Specificity.NONE); 			// few men =/=>  old men 
+		eMap.put("few_pl__pl_SUBCLASS",Specificity.SUBCLASS); 			// few old men ===>  men
+		eMap.put("few_pl__pl_EQUALS",Specificity.SUBCLASS); 			// few men ===>  men			
+		// bare-much & much-bare
+		eMap.put("_sg_much_sg_SUPERCLASS",Specificity.SUPERCLASS); 		// water =/=> much dirty water
+		eMap.put("_sg_much_sg_SUBCLASS",Specificity.NONE); 				// dirty water =/=> much water
+		eMap.put("_sg_much_sg_EQUALS",Specificity.SUPERCLASS); 			// water =/=> much water
+		eMap.put("_pl_much_sg_SUPERCLASS",Specificity.SUPERCLASS); 		//  waterdrops =/=> much dirty water
+		eMap.put("_pl_much_sg_SUBCLASS",Specificity.NONE); 				//  dirty waterdrops =/=> much water
+		eMap.put("_pl_much_sg_EQUALS",Specificity.SUPERCLASS); 			//  waterdrops =/=> much water
+		eMap.put("much_sg__sg_SUPERCLASS",Specificity.NONE); 			// much water =/=>  dirty water 
+		eMap.put("much_sg__sg_SUBCLASS",Specificity.SUBCLASS); 			// much dirty water ===>  water
+		eMap.put("much_sg__sg_EQUALS",Specificity.SUBCLASS); 			// much water ===>  water
+		eMap.put("much_sg__pl_SUPERCLASS",Specificity.NONE); 			// much water =/=>  dirty waterdrops 
+		eMap.put("much_sg__pl_SUBCLASS",Specificity.SUBCLASS); 			// much dirty water ===>  waterdrops
+		eMap.put("much_sg__pl_EQUALS",Specificity.SUBCLASS); 			// much water ===>  waterdrops		
+		// bare-little & little-bare
+		eMap.put("_sg_little_sg_SUPERCLASS",Specificity.SUPERCLASS); 	//  water =/=> little dirty water
+		eMap.put("_sg_little_sg_SUBCLASS",Specificity.NONE); 			//  dirty water =/=> little water
+		eMap.put("_sg_little_sg_EQUALS",Specificity.SUPERCLASS); 		//  water =/=> little water
+		eMap.put("_pl_little_sg_SUPERCLASS",Specificity.SUPERCLASS); 	//  waterdrops =/=> little dirty water
+		eMap.put("_pl_little_sg_SUBCLASS",Specificity.NONE); 			//  dirty waterdrops =/=> little water
+		eMap.put("_pl_little_sg_EQUALS",Specificity.SUPERCLASS); 		//  waterdrops =/=> little water
+		eMap.put("little_sg__sg_SUPERCLASS",Specificity.NONE); 			// little water =/=>  dirty water 
+		eMap.put("little_sg__sg_SUBCLASS",Specificity.SUBCLASS); 		// little dirty water ===>  water
+		eMap.put("little_sg__sg_EQUALS",Specificity.SUBCLASS); 			// little water ===>  water
+		eMap.put("little_sg__pl_SUPERCLASS",Specificity.NONE); 			// little water =/=>  dirty waterdrops 
+		eMap.put("little_sg__pl_SUBCLASS",Specificity.SUBCLASS); 		// little dirty water ===>  waterdrops
+		eMap.put("little_sg__pl_EQUALS",Specificity.SUBCLASS); 			// little water ===>  waterdrops		
+		// bare-most & most-bare
+		eMap.put("_sg_most_sg_SUPERCLASS",Specificity.SUPERCLASS); 		//  water =/=> most dirty water
+		eMap.put("_sg_most_sg_SUBCLASS",Specificity.NONE); 				//  dirty water =/=> most water
+		eMap.put("_sg_most_sg_EQUALS",Specificity.SUPERCLASS); 			//  water =/=> most water
+		eMap.put("most_sg__sg_SUPERCLASS",Specificity.NONE); 			//  water =/=> some dirty water
+		eMap.put("most_sg__sg_SUBCLASS",Specificity.SUBCLASS); 			// most dirty water ===>  water
+		eMap.put("most_sg__sg_EQUALS",Specificity.SUBCLASS);			// most water ===>  water		
+		eMap.put("_sg_most_pl_SUPERCLASS",Specificity.SUPERCLASS); 		//  man =/=> most old men
+		eMap.put("_sg_most_pl_SUBCLASS",Specificity.NONE); 				//  old man =/=> most men
+		eMap.put("_sg_most_pl_EQUALS",Specificity.SUPERCLASS); 			//  man =/=> most men
+		eMap.put("most_pl__sg_SUPERCLASS",Specificity.NONE); 			// most men =/=>  old man
+		eMap.put("most_pl__sg_SUBCLASS",Specificity.SUBCLASS); 			// most old men ===>  man
+		eMap.put("most_pl__sg_EQUALS",Specificity.SUBCLASS);			// most men ===>  man		
+		eMap.put("_pl_most_pl_SUPERCLASS",Specificity.SUPERCLASS); 		// men =/=> most old men  
+		eMap.put("_pl_most_pl_SUBCLASS",Specificity.NONE); 				//  old men =/=> most men
+		eMap.put("_pl_most_pl_EQUALS",Specificity.SUPERCLASS); 			//  men =/=> most men
+		eMap.put("most_pl__pl_SUPERCLASS",Specificity.NONE); 			// most men =/=>  old men
+		eMap.put("most_pl__pl_SUBCLASS",Specificity.SUBCLASS); 			// most old men ===>  men
+		eMap.put("most_pl__pl_EQUALS",Specificity.SUBCLASS); 			// most men ===>  men				
+		// bare-N & N-bare		
+		eMap.put("_sg_N_pl_SUPERCLASS",Specificity.SUPERCLASS); 		//  man =/=> N old men  
+		eMap.put("_sg_N_pl_SUBCLASS",Specificity.NONE); 				//  old man =/=> N men
+		eMap.put("s_sg_N_pl_EQUALS",Specificity.SUPERCLASS); 			//  man =/=> N men
+		eMap.put("N_pl__sg_SUPERCLASS",Specificity.NONE); 				// N men =/=>  old man
+		eMap.put("N_pl__sg_SUBCLASS",Specificity.SUBCLASS); 			// N old men ===>  man
+		eMap.put("N_pl__sg_EQUALS",Specificity.SUBCLASS); 				// N men ===> ome man	
+		eMap.put("_sg_N_sg_SUPERCLASS",Specificity.SUPERCLASS); 		//  man =/=> 1 old man  
+		eMap.put("_sg_N_sg_SUBCLASS",Specificity.SUPERCLASS); 			// old man ===> 1 man
+		eMap.put("_sg_N_sg_EQUALS",Specificity.EQUALS); 				// man ===> 1 man
+		eMap.put("N_sg__sg_SUPERCLASS",Specificity.SUBCLASS); 			// 1 man =/=>  old man
+		eMap.put("N_sg__sg_SUBCLASS",Specificity.SUBCLASS); 			// 1 old man ===>  man
+		eMap.put("N_sg__sg_EQUALS",Specificity.EQUALS); 				// 1 man ===>  man	
+		eMap.put("_pl_N_pl_SUPERCLASS",Specificity.SUPERCLASS); 		//  men =/=> N old men  
+		eMap.put("_pl_N_pl_SUBCLASS",Specificity.NONE); 				//  old men =/=> N men
+		eMap.put("_pl_N_pl_EQUALS",Specificity.SUPERCLASS); 			//  men =/=> N men
+		eMap.put("N_pl__pl_SUPERCLASS",Specificity.NONE); 				// N men =/=>  old men
+		eMap.put("N_pl__pl_SUBCLASS",Specificity.SUBCLASS); 			// N old men ===>  men
+		eMap.put("N_pl__pl_EQUALS",Specificity.SUBCLASS); 				// N men ===>  men			
+		eMap.put("_pl_N_sg_SUPERCLASS",Specificity.NONE); 				//  men =/=> 1 old man  
+		eMap.put("_pl_N_sg_SUBCLASS",Specificity.NONE); 				//  old men =/=> 1 man
+		eMap.put("_pl_N_sg_EQUALS",Specificity.NONE); 					//  men =/=> 1 man
+		eMap.put("N_sg__pl_SUPERCLASS",Specificity.NONE); 				// 1 man =/=>  old men
+		eMap.put("N_sg__pl_SUBCLASS",Specificity.NONE); 				// 1 old man =/=>  men
+		eMap.put("N_sg__pl_EQUALS",Specificity.NONE); 					// 1 man =/=>  men
 
 	}
 

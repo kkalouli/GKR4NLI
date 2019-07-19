@@ -565,8 +565,33 @@ public class DepGraphToSemanticGraph implements Serializable {
 		for (SemanticNode<?> node: roleNodes){
 			if (node instanceof SkolemNode){
 				retriever.extractNodeEmbedFromSequenceEmbed((SkolemNode) node);
-				HashMap<String, String> lexSem;
+				// for this node, get each sense it is associated with, as a map of sense:concept:senseScore. 
+				// the inner map of String,Float only contains one element each time 
+				HashMap<String, Map<String, Float>> lexSem;
 				lexSem = retriever.mapNodeToSenseAndConcept((SkolemNode) node, graph, senses);
+				// if no senses are found for this node, then add only the embed as lexical node
+				if (lexSem.isEmpty()){
+					String sense = "00000000";
+					SenseNodeContent senseContent = new SenseNodeContent(sense);
+					senseContent.addConcept("");
+					senseContent.setHierarchyPrecomputed(true);
+					senseContent.setSubConcepts(new HashMap<String, Integer>());
+					senseContent.setSuperConcepts(new HashMap<String, Integer>());
+					senseContent.setSynonyms(new ArrayList<String>());
+					senseContent.setHypernyms(new ArrayList<String>());
+					senseContent.setHyponyms(new ArrayList<String>());
+					senseContent.setAntonyms(new ArrayList<String>());
+					senseContent.setEmbed(retriever.getEmbed());
+					senseContent.setSenseScore(0);
+
+					senseContent.setEmbed(retriever.getEmbed());			
+					// create new Sense Node
+					SenseNode senseNode = new SenseNode(sense, senseContent);
+					// create new LexEdge
+					LexEdge edge = new LexEdge(GraphLabels.LEX, new LexEdgeContent());
+					graph.addLexEdge(edge, node, senseNode);		
+					
+				}				
 				for (String key : lexSem.keySet()){
 					String sense = key;
 					try {
@@ -576,7 +601,8 @@ public class DepGraphToSemanticGraph implements Serializable {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-					String concept = lexSem.get(key);
+					// get the first element of the inner map as the concept (only one element anyway)
+					String concept = lexSem.get(key).keySet().iterator().next();
 					// create new sense Content
 					SenseNodeContent senseContent = new SenseNodeContent(sense);
 					senseContent.addConcept(concept);
@@ -588,6 +614,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 					senseContent.setHyponyms(retriever.getHyponyms());
 					senseContent.setAntonyms(retriever.getAntonyms());
 					senseContent.setEmbed(retriever.getEmbed());
+					senseContent.setSenseScore(lexSem.get(key).get(concept));
 
 					// create new Sense Node
 					SenseNode senseNode = new SenseNode(sense, senseContent);

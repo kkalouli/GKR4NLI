@@ -1,35 +1,23 @@
 package gnli;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.articulate.sigma.KB;
-import com.articulate.sigma.KBmanager;
-import com.articulate.sigma.KButilities;
-import com.articulate.sigma.EProver;
 import com.articulate.sigma.Formula;
-import com.articulate.sigma.KBcache;
-
-
-
 import gnli.GNLIGraph;
 import gnli.MatchContent;
 import gnli.MatchEdge;
 import gnli.MatchOrigin;
 import gnli.Specificity;
 import sem.graph.SemanticEdge;
-import sem.graph.SemanticGraph;
 import sem.graph.SemanticNode;
 import sem.graph.vetypes.SenseNode;
 import sem.graph.vetypes.SenseNodeContent;
@@ -154,7 +142,7 @@ public class InitialTermMatcher {
 			}
 
 			if (!senseContents.isEmpty()){
-				List<MatchContent> keys = new ArrayList(senseContents.keySet());
+				List<MatchContent> keys = new ArrayList<MatchContent>(senseContents.keySet());
 				Collections.sort(keys);
 				double minCost = keys.get(0).getScore();
 				for (MatchContent key : keys){
@@ -176,12 +164,14 @@ public class InitialTermMatcher {
 			}
 
 			if (!conceptContents.isEmpty()){
-				List<MatchContent> keys = new ArrayList(conceptContents.keySet());
+				List<MatchContent> keys = new ArrayList<MatchContent>(conceptContents.keySet());
 				Collections.sort(keys);
+				// after sorting, the key with the lowest penalty is first
 				double minCost = keys.get(0).getScore();
+				/// go through all keys and add ALL with the same low penalty
 				for (MatchContent key : keys){
 					if (key.getScore() == minCost){
-						final MatchEdge senseMatch = new MatchEdge("concept",keys.get(0));
+						final MatchEdge senseMatch = new MatchEdge("concept",key);
 						gnliGraph.addMatchEdge(senseMatch, hTerm.node, conceptContents.get(key));
 						hTerm.pendMatch();
 					}
@@ -293,13 +283,10 @@ public class InitialTermMatcher {
 	 * @return
 	 * 		A list of {@link MatchEdge}s (typically one or none)
 	 */
-	@SuppressWarnings("unchecked")
 	protected HashMap<MatchContent,TermNode> checkSenseMatch(CheckedTermNode cHTerm,TermNode tTerm, HashMap<MatchContent, TermNode> contents) {
 		if (cHTerm.isMatched()) {
 			return new HashMap<MatchContent,TermNode>();
 		}
-		int indexTSense = 0;
-		int indexHSense = 0;
 		MatchContent linkContent = null;
 		TermNode hTerm = cHTerm.node;
 		for (final SenseNode tSenseNode : gnliGraph.getTextGraph().getSenses(tTerm)) {
@@ -326,7 +313,8 @@ public class InitialTermMatcher {
 				if (tSenseId != null && hSenseId != null && !tSenseId.equals("U") && !hSenseId.equals("U") && !((SkolemNodeContent) tTerm.getContent()).getStem().equals("be")
 						&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be") && !POSToExclude.contains(((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech()) 
 						&& !POSToExclude.contains(((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech())){
-					int penalty = 2*(indexTSense + indexHSense); 
+					// maximum best score of a sense is 1. If hTerm and tTerm have both best scores, then max total score is 2, so penalty is 2 - actualScore 
+					float penalty = 2 - (tSenseNode.getContent().getSenseScore() + hSenseNode.getContent().getSenseScore());
 					if (tSenseId.equals(hSenseId)) {
 						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.EQUALS, penalty, 0);
 					} else if (tSynonyms.contains(hTerm.getLabel().substring(0,hTerm.getLabel().indexOf("_"))) || hSynonyms.contains(tTerm.getLabel().substring(0,tTerm.getLabel().indexOf("_")))){
@@ -346,9 +334,8 @@ public class InitialTermMatcher {
 					if (linkContent != null)
 						contents.put(linkContent,tTerm);
 				}
-				indexHSense++;
+
 			}
-			indexTSense++;
 		}
 		return contents;
 	}
@@ -366,74 +353,82 @@ public class InitialTermMatcher {
 		return result;
 	}
 
-	@SuppressWarnings("unchecked")
 	protected HashMap<MatchContent, TermNode> checkConceptMatch(CheckedTermNode cHTerm,TermNode tTerm, HashMap<MatchContent, TermNode> contents) {
 		if (cHTerm.isMatched()) {
 			return new HashMap<MatchContent,TermNode>();
 		}
 		TermNode hTerm = cHTerm.node;
-		int indexTSense = 0;
-		int indexHSense = 0;
 		MatchContent linkContent = null;
-		for (final SenseNode tSenseNode : gnliGraph.getTextGraph().getSenses(tTerm)) {
-			String tConcept = ((SenseNodeContent) tSenseNode.getContent()).getConcepts().get(0);
-			for (final SenseNode hSenseNode : gnliGraph.getHypothesisGraph().getSenses(hTerm)) {
-				String hConcept = ((SenseNodeContent) hSenseNode.getContent()).getConcepts().get(0);
-				if (tConcept != null && hConcept != null && tConcept != "" && hConcept != "" && !((SkolemNodeContent) tTerm.getContent()).getStem().equals("be")
-						&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be") && !POSToExclude.contains(((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech()) 
-						&& !POSToExclude.contains(((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech())){
-					int penalty = indexHSense + indexTSense;
-					if (tConcept.equals(hConcept)) {
-						linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, Specificity.EQUALS, penalty, 0);
-					} else {
-						ArrayList<Formula> listOfRelations = kb.askWithRestriction(2, tConcept.substring(0,tConcept.length()-1), 1, hConcept.substring(0,hConcept.length()-1));
-						listOfRelations.addAll(kb.askWithRestriction(2, hConcept.substring(0,hConcept.length()-1), 1, tConcept.substring(0,tConcept.length()-1)));
-						//ArrayList<Formula> result3 = KButilities.termIntersection(kb,"Pilot","FlyingAircraft");
-						//ArrayList<String> result14 = kb.getNearestRelations("Human"); // gives me the nearest neighbors, e.g. HumanChild
-						allTermsInFormulas(kb, "Pilot");
-						allTermsInFormulas(kb, "Kid");
-						Specificity spec = null;	
-						for (Formula f :  listOfRelations){
-							String firstArg = f.getArgument(1);
-							String secondArg = f.getArgument(2);						
-							for (String rel : f.gatherRelationConstants()){
-								if (rel.equals("subclass")){
-									if (hConcept.contains(firstArg) && tConcept.contains(secondArg))
-										spec = Specificity.SUPERCLASS;
-									else if (tConcept.contains(firstArg) && hConcept.contains(secondArg))
-										spec = Specificity.SUBCLASS;
-								} else if (rel.equals("partition") && spec == null){
-									if (hConcept.contains(firstArg) && tConcept.contains(secondArg))
-										spec = Specificity.SUBCLASS;
-									else if (tConcept.contains(firstArg) && hConcept.contains(firstArg))
-										spec = Specificity.SUPERCLASS;
-								} else if (rel.equals("instance") && spec == null){
-									if (hConcept.contains(firstArg) && tConcept.contains(secondArg))
-										spec = Specificity.SUBCLASS;
-									else if (tConcept.contains(firstArg) && hConcept.contains(firstArg))
-										spec = Specificity.SUPERCLASS;
-								}
-							}
-						}
-						// if there is no listOfRelations, check if there is some kind of sub/super class relation.
-						if (listOfRelations.isEmpty()){
-							boolean isSubclassTH = kb.isSubclass(tConcept.substring(0,tConcept.length()-1), hConcept.substring(0,hConcept.length()-1));
-							boolean isSubclassHT = kb.isSubclass(hConcept.substring(0,hConcept.length()-1), tConcept.substring(0,tConcept.length()-1));
-							if (isSubclassTH == true)
+		// sort the senses of the tTerm based on their score, get the first one and then its concept
+		// we do not go through all concepts for now, because there is too much over-matching happening
+		List<SenseNode> tSensesSorted = gnliGraph.getTextGraph().getSenses(tTerm);
+		if (tSensesSorted.isEmpty())
+			return contents;
+		Collections.sort(tSensesSorted);
+		SenseNode tSenseNode =  tSensesSorted.get(0);
+		String tConcept = ((SenseNodeContent) tSenseNode.getContent()).getConcepts().get(0);
+		// sort the senses of the hTerm based on their score, get the first one and then its concept
+		// we do not go through all concepts for now, because there is too much over-matching happening
+		List<SenseNode> hSensesSorted = gnliGraph.getHypothesisGraph().getSenses(hTerm);
+		if (hSensesSorted.isEmpty())
+			return contents;
+		Collections.sort(hSensesSorted);
+		SenseNode hSenseNode =  hSensesSorted.get(0);
+		String hConcept = ((SenseNodeContent) hSenseNode.getContent()).getConcepts().get(0);
+
+		if (tConcept != null && hConcept != null && tConcept != "" && hConcept != "" && !((SkolemNodeContent) tTerm.getContent()).getStem().equals("be")
+				&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be") && !POSToExclude.contains(((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech()) 
+				&& !POSToExclude.contains(((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech())
+				&& !tConcept.equals("SubjectiveAssessmentAttribute+") && !hConcept.equals("SubjectiveAssessmentAttribute+")){
+			// maximum best score of a sense is 1. If hTerm and tTerm have both best scores, then max total score is 2, so penalty is 2 - actualScore 
+			//float penalty = 2 - (tSenseNode.getContent().getSenseScore() + hSenseNode.getContent().getSenseScore());
+			if (tConcept.equals(hConcept)) {
+				linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, Specificity.EQUALS, 0, 0);
+			} else {
+				ArrayList<Formula> listOfRelations = kb.askWithRestriction(2, tConcept.substring(0,tConcept.length()-1), 1, hConcept.substring(0,hConcept.length()-1));
+				listOfRelations.addAll(kb.askWithRestriction(2, hConcept.substring(0,hConcept.length()-1), 1, tConcept.substring(0,tConcept.length()-1)));
+				//ArrayList<Formula> result3 = KButilities.termIntersection(kb,"Pilot","FlyingAircraft");
+				//ArrayList<String> result14 = kb.getNearestRelations("Human"); // gives me the nearest neighbors, e.g. HumanChild
+				//allTermsInFormulas(kb, "Pilot");
+				//allTermsInFormulas(kb, "Kid");
+				Specificity spec = null;	
+				for (Formula f :  listOfRelations){
+					String firstArg = f.getArgument(1);
+					String secondArg = f.getArgument(2);						
+					for (String rel : f.gatherRelationConstants()){
+						if (rel.equals("subclass")){
+							if (hConcept.contains(firstArg) && tConcept.contains(secondArg))
+								spec = Specificity.SUPERCLASS;
+							else if (tConcept.contains(firstArg) && hConcept.contains(secondArg))
 								spec = Specificity.SUBCLASS;
-							else if (isSubclassHT == true)
+						} else if (rel.equals("partition") && spec == null){
+							if (hConcept.contains(firstArg) && tConcept.contains(secondArg))
+								spec = Specificity.SUBCLASS;
+							else if (tConcept.contains(firstArg) && hConcept.contains(firstArg))
+								spec = Specificity.SUPERCLASS;
+						} else if (rel.equals("instance") && spec == null){
+							if (hConcept.contains(firstArg) && tConcept.contains(secondArg))
+								spec = Specificity.SUBCLASS;
+							else if (tConcept.contains(firstArg) && hConcept.contains(firstArg))
 								spec = Specificity.SUPERCLASS;
 						}
-						if (spec != null){
-							linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, spec, penalty, 0);
-						}
 					}
-					if (linkContent != null)
-						contents.put(linkContent,tTerm);
 				}
-				indexHSense++;
+				// if there is no listOfRelations, check if there is some kind of sub/super class relation.
+				if (listOfRelations.isEmpty()){
+					boolean isSubclassTH = kb.isSubclass(tConcept.substring(0,tConcept.length()-1), hConcept.substring(0,hConcept.length()-1));
+					boolean isSubclassHT = kb.isSubclass(hConcept.substring(0,hConcept.length()-1), tConcept.substring(0,tConcept.length()-1));
+					if (isSubclassTH == true)
+						spec = Specificity.SUBCLASS;
+					else if (isSubclassHT == true)
+						spec = Specificity.SUPERCLASS;
+				}
+				if (spec != null){
+					linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, spec, 0, 0);
+				}
 			}
-			indexTSense++;
+			if (linkContent != null)
+				contents.put(linkContent,tTerm);
 		}	
 		return contents;
 	}
@@ -460,7 +455,9 @@ public class InitialTermMatcher {
 						bestSimilTTerm = tTerm;
 					}
 				}
-			} 
+				break;
+			}
+			break;
 		}
 		bestMatches.add(bestSimilHTerm);
 		bestMatches.add(bestSimilTTerm);
@@ -470,10 +467,10 @@ public class InitialTermMatcher {
 	protected  List<MatchEdge> checkEmbedMatch(CheckedTermNode cHTerm, TermNode similHTerm,TermNode similTTerm ) {
 		List<MatchEdge> retval = new ArrayList<MatchEdge>();
 		// avoid matching if the tTerm is already matched to another hTerm, to avoid overmatching
-		if (similHTerm != null && similTTerm != null && gnliGraph.getInMatches(similTTerm).isEmpty()){ //&& highestCosSimil > 0.5
-			// subtract the similarity from 0 in order to have the result as the penalty(depth). This means
+		if (similHTerm != null && similTTerm != null && gnliGraph.getInMatches(similTTerm).isEmpty() && highestCosSimil > 0.60){
+			// subtract the similarity from 1 in order to have the result as the penalty(depth). This means
 			// highest cosine similarity will give lower penalty than lower similarity.
-			double depth = 0 - highestCosSimil;
+			double depth = 1 - highestCosSimil;
 			final MatchContent linkContent = new MatchContent(MatchOrigin.MatchType.EMBED, Specificity.EQUALS, 0, depth);
 			final MatchEdge conceptMatch = new MatchEdge("embed",linkContent);
 			gnliGraph.addMatchEdge(conceptMatch, similHTerm, similTTerm);

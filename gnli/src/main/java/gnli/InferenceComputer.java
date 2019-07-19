@@ -56,6 +56,7 @@ public class InferenceComputer {
 	private HashMap<String, ArrayList<HeadModifierPathPair>> entailRolePaths;
 	private HashMap<String, ArrayList<HeadModifierPathPair>> neutralRolePaths;
 	private String sumoContent;
+	private String bertVocab;
 
 
 	public InferenceComputer() throws FileNotFoundException, UnsupportedEncodingException {
@@ -79,10 +80,11 @@ public class InferenceComputer {
 		//serializeKb();
 		String wnInstall = props.getProperty("wn_location");
 		String sumoInstall = props.getProperty("sumo_location");
-		this.learning = true;
+		this.learning = false;
 		// initialize bert and bertTokenizer so that there is only one instance
+        this.bertVocab = props.getProperty("bert_vocab");
 		this.bert = Bert.load("com/robrua/nlp/easy-bert/bert-uncased-L-12-H-768-A-12");
-		this.tokenizer = new FullTokenizer(new File("/home/kkalouli/Documents/project/semantic_processing/sem.mapper/src/main/resources/vocab.txt"), true);
+		this.tokenizer = new FullTokenizer(new File(bertVocab), true);
 		// initialize only one instance of the PWN Dictionary
 		this.wnDict = new RAMDictionary(new File(wnInstall), ILoadPolicy.NO_LOAD);
 		try {
@@ -96,10 +98,12 @@ public class InferenceComputer {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		this.entailRolePaths = new HashMap<String, ArrayList<HeadModifierPathPair>>();
 		this.neutralRolePaths = new HashMap<String, ArrayList<HeadModifierPathPair>>();
 		// comment out due to multithreading; comment in if you do not want multithreading
 		this.semGraph = new DepGraphToSemanticGraph(bert, tokenizer, wnDict, sumoContent);
+		//this.semGraph = new DepGraphToSemanticGraph();
 
 	}
 	
@@ -230,13 +234,17 @@ public class InferenceComputer {
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli, kb);
 		initialTermMatcher.process();
 		//gnli.display();
-		//gnli.matchGraph.display();
+		gnli.matchGraph.display();
 		//graphT.displayLex();
 		//graphH.displayLex();
-		/*gnli.getHypothesisGraph().displayContexts();
-		gnli.getHypothesisGraph().displayDependencies();
-		gnli.getHypothesisGraph().displayRoles();
-		gnli.getTextGraph().displayContexts();
+		//gnli.getHypothesisGraph().displayContexts();
+		//gnli.getHypothesisGraph().displayDependencies();
+		//gnli.getHypothesisGraph().displayRoles();
+		gnli.getHypothesisGraph().displayRolesAndCtxs();
+		gnli.getTextGraph().displayRolesAndCtxs();
+		//gnli.getHypothesisGraph().displayDependencies();
+		//gnli.getTextGraph().displayRoles();
+		/*gnli.getTextGraph().displayContexts();
 		gnli.getTextGraph().displayDependencies();
 		gnli.getTextGraph().displayRoles();*/
 		
@@ -388,11 +396,11 @@ public class InferenceComputer {
 		//long startTime = System.currentTimeMillis();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "Two dogs are playing by a tree.";
-		String hypothesis = "Two dogs are playing by a plant.";
+		String premise = "A woman is planting some flowers.";	
+		String hypothesis = "A woman is cutting broccoli.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_entail_and_neutral_active.txt";
-		String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_entail_and_neutral.txt";
+		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/to_check.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);

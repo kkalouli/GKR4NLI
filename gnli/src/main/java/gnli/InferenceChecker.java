@@ -35,7 +35,7 @@ public class InferenceChecker {
 		this.entailmentRelation = EntailmentRelation.UNKNOWN; 
 		looseContra = false;
 		looseEntail = false;
-		matchStrength = 2;
+		matchStrength = 0;
 		justifications = new ArrayList<MatchEdge>();
 	}
 	
@@ -53,7 +53,7 @@ public class InferenceChecker {
 	
 	private void computeInferenceRelation() {
 		HashMap<SemanticNode<?>,MatchEdge> rootNodeMatches = new HashMap<SemanticNode<?>,MatchEdge>();
-		//gnliGraph.getMatchGraph().display();
+		gnliGraph.getMatchGraph().display();
 		// find the root node of the role graph; there might be more than one root nodes or a double root node
 		for (MatchEdge matchEdge : gnliGraph.getMatches()){
 			SemanticNode<?> hTerm = gnliGraph.getStartNode(matchEdge);
@@ -67,7 +67,8 @@ public class InferenceChecker {
 				for (SemanticNode<?> node : gnliGraph.getHypothesisGraph().getRoleGraph().getNodes()){
 					if (gnliGraph.getHypothesisGraph().getRoleGraph().getInEdges(node).isEmpty()){
 						if (!gnliGraph.getHypothesisGraph().getRoleGraph().getEdges(node, hTerm).isEmpty()){
-							if (gnliGraph.getHypothesisGraph().getRoleGraph().getEdges(node, hTerm).iterator().next().getLabel().equals("is_element")){
+							if (gnliGraph.getHypothesisGraph().getRoleGraph().getEdges(node, hTerm).iterator().next().getLabel().equals("is_element") ||
+									( node.getLabel().contains("be_") && gnliGraph.getHypothesisGraph().getRoleGraph().getEdges(node, hTerm).iterator().next().getLabel().equals("sem_subj"))  ){
 								//gnliGraph.getHypothesisGraph().displayRoles();
 								//gnliGraph.getHypothesisGraph().displayContexts();
 								rootNodeMatches.put(hTerm,matchEdge);
@@ -134,7 +135,12 @@ public class InferenceChecker {
 		for (SemanticNode<?> inReach : graph.getRoleGraph().getInReach(term)){
 			if (ctxs.keySet().contains(inReach)){
 				termCtxs.put(inReach, Polarity.VERIDICAL);
-				termCtxs.put(root, ctxs.get(inReach).get(root));
+				// if the node is in top due to its original mapping, then keep it veridical in top
+				if (ctx.equals("top"))
+					termCtxs.put(root, Polarity.VERIDICAL);
+				else
+				// if the original mapping has set a different context to the node, then get the veridicality of this context and put it in top
+					termCtxs.put(root, ctxs.get(inReach).get(root));
 				break;
 			}
 		}
@@ -232,7 +238,7 @@ public class InferenceChecker {
 	
 	
 	private void penalizeLooseMatching(EntailmentRelation relation, boolean strict, MatchEdge matchEdge){
-		this.matchStrength = 2;
+		this.matchStrength = 0;
 		if (this.entailmentRelation == relation){
 			if (strict == false)
 				matchStrength = 1;
@@ -250,8 +256,14 @@ public class InferenceChecker {
 	
 	private HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>> getContextHeads(SemanticGraph semGraph){
 		HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>> ctxHeadsWithVerid = new HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>>();
+		ArrayList<SemanticNode<?>> nodesVerInTop = new ArrayList<SemanticNode<?>>();
+		SemanticNode<?> motherNode = null;
 		for (SemanticNode<?> ctxNode : semGraph.getContextGraph().getNodes()){
 			if (!ctxNode.getLabel().startsWith("ctx") && !ctxNode.getLabel().startsWith("top") ){
+				/*if (ctxNode instanceof SkolemNode && ((SkolemNode) ctxNode).getContext().equals("top")){
+					nodesVerInTop.add(ctxNode);
+					continue;
+				}*/
 				HashMap<SemanticNode<?>, Polarity> hashOfCtxsAndVerid = new HashMap<SemanticNode<?>,Polarity>();
 				SemanticNode<?> motherCtx = semGraph.getContextGraph().getInNeighbors(ctxNode).iterator().next();
 				// if the ctxNode is not within a ctx(node) context
@@ -262,9 +274,11 @@ public class InferenceChecker {
 				if (inNeighbors == null || inNeighbors.isEmpty()){
 					if (semGraph.equals(gnliGraph.getHypothesisGraph())){
 						this.hypRootCtx = motherCtx;
+						motherNode = motherCtx;
 					}
 					else if (semGraph.equals(gnliGraph.getTextGraph())){
 						this.textRootCtx = motherCtx;
+						motherNode = motherCtx;
 					}
 					hashOfCtxsAndVerid.put(motherCtx, Polarity.VERIDICAL);
 				} 
@@ -281,6 +295,11 @@ public class InferenceChecker {
 				ctxHeadsWithVerid.put(ctxNode, hashOfCtxsAndVerid);
 			}
 		}
+		/*for (SemanticNode<?> verInTop : nodesVerInTop){
+			HashMap<SemanticNode<?>, Polarity> hashOfCtxsAndVerid = new HashMap<SemanticNode<?>,Polarity>();
+			hashOfCtxsAndVerid.put(motherNode, Polarity.VERIDICAL);
+			ctxHeadsWithVerid.put(verInTop, hashOfCtxsAndVerid);
+		}*/
 		return ctxHeadsWithVerid;
 	}
 	

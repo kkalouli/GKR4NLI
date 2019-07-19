@@ -25,7 +25,6 @@ import java.io.Serializable;
 import static java.util.Map.Entry.*;
 
 
-
 public class SpecificityUpdater {
 	// matchAgenda orders matches: we want to update specificities starting from 
 		// lower nodes in the graphs (fewest modifiers) and working up
@@ -115,6 +114,7 @@ public class SpecificityUpdater {
 			boolean updateComplete = false;
 			HypoTextMatch hypoTextMatch = new HypoTextMatch(match);
 			if (doesNotNeedUpdating(hypoTextMatch)){
+				finalizeMatch(match);
 				match.setComplete(true);
 				updateComplete = true;
 			} else if (hypOrTextHasMods(hypoTextMatch)){
@@ -147,7 +147,7 @@ public class SpecificityUpdater {
 				 * if not found, make it more specific.  
 				*/
 				for (SemanticNode<?> mod: hypoTextMatch.hypothesisModifiers){
-					if (gnliGraph.getOutMatches(mod) != null && gnliGraph.getOutMatches(mod).isEmpty()){
+					if (gnliGraph.getOutMatches(mod) != null && gnliGraph.getOutMatches(mod).isEmpty() && !specifiers.contains(mod.getLabel().substring(0,mod.getLabel().indexOf("_")))){
 						// H more specific
 						m.setSpecificity(switchSpecificity(m.getSpecificity(),Specificity.SUPERCLASS));
 						m.addJustification(justificationOfSpecificityUpdateNoText(hypoTextMatch.hypothesisTerm, mod, hypoTextMatch.match));
@@ -161,7 +161,7 @@ public class SpecificityUpdater {
 				 * if not found, make it more specific.  
 				*/
 				for (SemanticNode<?> mod: hypoTextMatch.textModifiers){			
-					if (gnliGraph.getInMatches(mod) != null && gnliGraph.getInMatches(mod).isEmpty()){
+					if (gnliGraph.getInMatches(mod) != null && gnliGraph.getInMatches(mod).isEmpty() && !specifiers.contains(mod.getLabel().substring(0,mod.getLabel().indexOf("_")))){
 						// T more specific
 						m.setSpecificity(switchSpecificity(m.getSpecificity(),Specificity.SUBCLASS));
 						m.addJustification(justificationOfSpecificityUpdateNoHypothesis(hypoTextMatch.textTerm, mod, hypoTextMatch.match));
@@ -209,6 +209,9 @@ public class SpecificityUpdater {
 				modifiers = hypoTextMatch.textModifiers;
 			boolean complete = true;
 			for (SkolemNode restr : modifiers){
+				// make sure no specifiers are considered as modifiers
+				if (specifiers.contains(restr.getStem()))
+						continue;
 				 List<MatchEdge> tOutMatches = gnliGraph.getMatches(restr, mode);
 				if (modAlreadyProcessed(restr,hypoTextMatch.match)) {
 					continue;
@@ -393,7 +396,7 @@ public class SpecificityUpdater {
 				for (MatchEdge outM : gnliGraph.getOutMatches(hRstr)){
 					SemanticNode<?> tRstr = gnliGraph.getMatchGraph().getFinishNode(outM);
 					// if there is a matching restriction Tr, either as a regular concept restriction on T or as a relative clause restriction
-					if (textTermRestr.contains(tRstr) || !gnliGraph.getHypothesisGraph().getDependencyGraph().getShortestUndirectedPath(textTerm,tRstr).isEmpty()){
+					if (textTermRestr.contains(tRstr) || !gnliGraph.getTextGraph().getDependencyGraph().getShortestUndirectedPath(textTerm,tRstr).isEmpty()){
 						match.setSpecificity(switchSpecificity(match.getSpecificity(), outM.getSpecificity()));
 						match.addJustification(justificationOfSpecificityUpdate(hypTerm,hRstr,textTerm,tRstr,match,outM));
 						unmatchedTextRestrs.remove(tRstr);
@@ -622,10 +625,10 @@ public class SpecificityUpdater {
 					updated = Specificity.NONE;
 					break;
 				case SUBCLASS:
-					updated = Specificity.DISJOINT;
+					updated = Specificity.NONE;
 					break;
 				case SUPERCLASS:
-					updated = Specificity.DISJOINT;
+					updated = Specificity.NONE;
 					break;
 				case DISJOINT:
 					updated = Specificity.DISJOINT;
