@@ -57,11 +57,18 @@ public class InferenceChecker {
 		// find the root node of the role graph; there might be more than one root nodes or a double root node
 		for (MatchEdge matchEdge : gnliGraph.getMatches()){
 			SemanticNode<?> hTerm = gnliGraph.getStartNode(matchEdge);
+			SemanticNode<?> tTerm = gnliGraph.getFinishNode(matchEdge);
+			boolean expletive = false;
 			// get all separate root nodes
 			if (gnliGraph.getHypothesisGraph().getRoleGraph().getInEdges(hTerm).isEmpty()){
+				for (SemanticNode<?> inReach : gnliGraph.getTextGraph().getRoleGraph().getInReach(tTerm)){
+					if (inReach.getLabel().contains("be"))
+						expletive = true;
+				}
 				//gnliGraph.getHypothesisGraph().displayRoles();
 				//gnliGraph.getHypothesisGraph().displayContexts();
-				rootNodeMatches.put(hTerm,matchEdge);
+				if (expletive == false)
+					rootNodeMatches.put(hTerm,matchEdge);
 			} else {
 				// get all double root nodes
 				for (SemanticNode<?> node : gnliGraph.getHypothesisGraph().getRoleGraph().getNodes()){
@@ -75,12 +82,9 @@ public class InferenceChecker {
 							}
 						}
 					}
-				}
-
-				
+				}		
 			}
-			//gnliGraph.getHypothesisGraph().displayDependencies();
-			SemanticNode<?> tTerm = gnliGraph.getFinishNode(matchEdge);
+			//gnliGraph.getHypothesisGraph().displayDependencies();			
 			HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(hTerm);
 			HashMap<SemanticNode<?>,Polarity> tTermCtxs = textContexts.get(tTerm);
 			// in case one of the nodes is not in the context graph but we still need to find out its context
@@ -102,6 +106,9 @@ public class InferenceChecker {
 			}*/
 			
 		}
+		/*if (!rootNodeMatches.isEmpty() && contradiction(rootNodeMatches, true)) {
+			return;
+		}*/
 		if (!rootNodeMatches.isEmpty() && entailmentOrDisjoint(rootNodeMatches, true)) {
 			return;
 		}
@@ -171,6 +178,49 @@ public class InferenceChecker {
 				}
 			}
 		} 
+		return false;
+	}
+	
+	
+	private boolean contradiction(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches, boolean strict){
+		for (SemanticNode<?> key : rootNodeMatches.keySet()){
+			Specificity matchSpecificity = null;
+			if (strict == true)
+				matchSpecificity = rootNodeMatches.get(key).getSpecificity();
+			else 
+				matchSpecificity = rootNodeMatches.get(key).getOriginalSpecificity();
+			SemanticNode<?> tTerm = gnliGraph.getFinishNode(rootNodeMatches.get(key));
+			HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(key);
+			HashMap<SemanticNode<?>,Polarity> tTermCtxs = textContexts.get(tTerm);
+			// in case one of the nodes is not in the context graph but we still need to find out its context
+			// we get the ctx of that node from its SkolemNodeContent, find this context within the hypothesisContexts
+			// (whatever ctx is in the SkolemContent will necessarily be one of the ctxs of the contetx graph), and put
+			// the ctx found as the key of the hash and the veridical as the value and the root node as another key and
+			// and veridicality of the mother ctx as the value
+			if (hTermCtxs == null){
+				hTermCtxs = fillEmptyContexts((SkolemNode) key, "hyp");
+			}
+			if (tTermCtxs == null){
+				tTermCtxs = fillEmptyContexts((SkolemNode) tTerm, "txt");
+			}	
+			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
+			Polarity tPolarity = tTermCtxs.get(textRootCtx);
+			if (matchSpecificity!= Specificity.NONE && matchSpecificity != Specificity.DISJOINT) {
+				if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.VERIDICAL) {
+					if (matchSpecificity == Specificity.EQUALS || matchSpecificity == Specificity.SUBCLASS) {
+						this.entailmentRelation = EntailmentRelation.CONTRADICTION;
+						penalizeLooseMatching(EntailmentRelation.CONTRADICTION, strict, rootNodeMatches.get(key));
+						return true;
+					}
+				} else if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
+					if (matchSpecificity == Specificity.EQUALS || matchSpecificity == Specificity.SUPERCLASS) {
+						this.entailmentRelation = EntailmentRelation.CONTRADICTION;
+						penalizeLooseMatching(EntailmentRelation.CONTRADICTION, strict, rootNodeMatches.get(key));
+						return true;
+					}
+				}
+			} 
+		}
 		return false;
 	}
 	

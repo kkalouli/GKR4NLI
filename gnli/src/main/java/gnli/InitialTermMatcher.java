@@ -21,6 +21,7 @@ import sem.graph.SemanticEdge;
 import sem.graph.SemanticNode;
 import sem.graph.vetypes.SenseNode;
 import sem.graph.vetypes.SenseNodeContent;
+import sem.graph.vetypes.SkolemNode;
 import sem.graph.vetypes.SkolemNodeContent;
 import sem.graph.vetypes.TermNode;
 
@@ -91,10 +92,18 @@ public class InitialTermMatcher {
 			if (gnliGraph.getHypothesisGraph().isLexCoRef(hTerm) == false) // && gnliGraph.getHypothesisGraph().isRstr(hTerm) == false)
 				this.hypothesisTerms.add(new CheckedTermNode(hTerm));
 		}
+		for (TermNode hTerm : gnliGraph.getHypothesisGraph().getDerivedSkolems()) {
+			if (gnliGraph.getHypothesisGraph().isLexCoRef(hTerm) == false) // && gnliGraph.getHypothesisGraph().isRstr(hTerm) == false)
+				this.hypothesisTerms.add(new CheckedTermNode(hTerm));
+		}
 		for (TermNode tTerm : gnliGraph.getTextGraph().getSkolems()) {
 			if (gnliGraph.getTextGraph().isLexCoRef(tTerm) == false) // && gnliGraph.getTextGraph().isRstr(tTerm) == false)
 				this.textTerms.add(tTerm);
-		}	
+		}
+		for (TermNode tTerm : gnliGraph.getTextGraph().getDerivedSkolems()) {
+			if (gnliGraph.getTextGraph().isLexCoRef(tTerm) == false) // && gnliGraph.getTextGraph().isRstr(tTerm) == false)
+				this.textTerms.add(tTerm);
+		}
 		this.kb = kb;
 		this.highestCosSimil = 0.0;
 		this.POSToExclude = new ArrayList<String>();

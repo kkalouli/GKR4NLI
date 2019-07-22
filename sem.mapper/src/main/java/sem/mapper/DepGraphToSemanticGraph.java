@@ -635,6 +635,53 @@ public class DepGraphToSemanticGraph implements Serializable {
 			// for now, embed is the same for all senses of a given word, so only initialize at the end of each node 
 			retriever.embed = null;
 		}
+		for (SemanticNode<?> ctxNode : graph.getContextGraph().getNodes()){
+			if (ctxNode.getLabel().contains("person") || ctxNode.getLabel().contains("thing")){
+				String sense = "";
+				String concept = "";
+				if (ctxNode.getLabel().contains("person")){
+					sense = "00007846";
+					concept = "Human=";
+				}
+				else {
+					sense = "04424218";
+					concept = "Artifact=";
+				}
+				try {
+					retriever.getLexRelationsOfSynset(((SkolemNode) ctxNode).getStem(), sense, ((SkolemNode) ctxNode).getPartOfSpeech());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				// create new sense Content
+				SenseNodeContent senseContent = new SenseNodeContent(sense);
+				senseContent.addConcept(concept);
+				senseContent.setHierarchyPrecomputed(true);
+				senseContent.setSubConcepts(retriever.getSubConcepts());
+				senseContent.setSuperConcepts(retriever.getSuperConcepts());
+				senseContent.setSynonyms(retriever.getSynonyms());
+				senseContent.setHypernyms(retriever.getHypernyms());
+				senseContent.setHyponyms(retriever.getHyponyms());
+				senseContent.setAntonyms(retriever.getAntonyms());
+				senseContent.setEmbed(retriever.getEmbed());
+				senseContent.setSenseScore(0);
+				
+				// create new Sense Node
+				SenseNode senseNode = new SenseNode(sense, senseContent);
+				// create new LexEdge
+
+				LexEdge edge = new LexEdge(GraphLabels.LEX, new LexEdgeContent());
+				graph.addLexEdge(edge, ctxNode, senseNode);
+
+				retriever.setSubConcepts(new HashMap<String,Integer>());
+				retriever.setSuperConcepts(new HashMap<String,Integer>());
+				retriever.setSynonyms(new ArrayList<String>());
+				retriever.setHypernyms(new ArrayList<String>());
+				retriever.setHyponyms(new ArrayList<String>());
+				retriever.setAntonyms(new ArrayList<String>());				
+
+			}
+		}
 	}
 
 	/** 
@@ -873,7 +920,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
 		//emConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/expriment_InferSent/SICK_unique_sent_test_InferSent_onlySkolems.txt");
-		String sentence = "The boy and the girl ate and drank.";//"A family is watching a little boy who is hitting a baseball.";
+		String sentence = "A few people are singing.";//"A family is watching a little boy who is hitting a baseball.";
 		String context = "The kid faked the illness.";
 		semConverter.processSentence(sentence, sentence+" "+context);
 	}
