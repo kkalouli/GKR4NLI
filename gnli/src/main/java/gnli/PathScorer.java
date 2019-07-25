@@ -155,7 +155,10 @@ public class PathScorer implements Serializable {
 		if (pathsAreIdentical(hMPath) == false && learning == false){
 			String key = hPath.toString()+"/"+tPath.toString();
 			if (infComputer.getNeutralRolePaths().containsKey(key))
-				cost += maxCost;
+				if (infComputer.getNeutralRolePaths().get(key).size() == 1)
+					cost += maxCost/2;
+				else 
+					cost += maxCost;
 			else if (infComputer.getEntailRolePaths().containsKey(key))
 				cost -= 10;
 		}

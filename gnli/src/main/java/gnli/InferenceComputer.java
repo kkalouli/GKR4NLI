@@ -14,6 +14,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
@@ -99,8 +100,8 @@ public class InferenceComputer {
 			e.printStackTrace();
 		}
 		
-		this.entailRolePaths = new HashMap<String, ArrayList<HeadModifierPathPair>>();
-		this.neutralRolePaths = new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		this.entailRolePaths = deserialize("entail"); //new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		this.neutralRolePaths =  deserialize("neutral");//new HashMap<String, ArrayList<HeadModifierPathPair>>();
 		// comment out due to multithreading; comment in if you do not want multithreading
 		this.semGraph = new DepGraphToSemanticGraph(bert, tokenizer, wnDict, sumoContent);
 		//this.semGraph = new DepGraphToSemanticGraph();
@@ -161,6 +162,20 @@ public class InferenceComputer {
 				fileIn = new FileInputStream("serialized_RolePaths_entail.ser");
 				in = new ObjectInputStream(fileIn);
 				rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
+				/*ArrayList<Integer> lengths = new ArrayList<Integer>();
+				for (String key: rolePaths.keySet()){
+					lengths.add(rolePaths.get(key).size());
+				}
+				int sum = 0;
+				for (Integer av : lengths){
+					sum += av;
+				}
+				int average = sum/lengths.size();
+				int max = Collections.max(lengths);
+				int min = Collections.min(lengths);
+				System.out.println("Average entail:"+String.valueOf(average));
+				System.out.println("Max entail:"+String.valueOf(max));
+				System.out.println("Min entail:"+String.valueOf(min));*/
 				in.close();
 			} catch (FileNotFoundException e1) {
 				// TODO Auto-generated catch block
@@ -177,6 +192,21 @@ public class InferenceComputer {
 				fileIn = new FileInputStream("serialized_RolePaths_neutral.ser");
 				in = new ObjectInputStream(fileIn);
 		        rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
+		        /*ArrayList<Integer> lengths = new ArrayList<Integer>();
+				for (String key: rolePaths.keySet()){
+					ArrayList<HeadModifierPathPair> test = rolePaths.get(key);
+					lengths.add(rolePaths.get(key).size());
+				}
+				int sum = 0;
+				for (Integer av : lengths){
+					sum += av;
+				}
+				int average = sum/lengths.size();
+				int max = Collections.max(lengths);
+				int min = Collections.min(lengths);
+				System.out.println("Average neutral:"+String.valueOf(average));
+				System.out.println("Max neutral:"+String.valueOf(max));
+				System.out.println("Min neutral:"+String.valueOf(min));*/
 				in.close();
 			} catch (FileNotFoundException e1) {
 				// TODO Auto-generated catch block
@@ -249,6 +279,7 @@ public class InferenceComputer {
 		gnli.getTextGraph().displayRoles();*/
 		
 
+		
 		
 
 		// Now look at the arc structure of the premise and hypothesis graphs to
@@ -380,6 +411,7 @@ public class InferenceComputer {
 		    //this.semGraph = semGraph;
 	    }
 	 
+	    
 	    public SemanticGraph call() {
 	    	DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph(bert, tokenizer, wnDict, sumoContent);
 	    	SemanticGraph graph = semGraph.sentenceToGraph(sent1, sent1+" "+sent2);
@@ -396,8 +428,8 @@ public class InferenceComputer {
 		//long startTime = System.currentTimeMillis();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "A woman is planting some flowers.";	
-		String hypothesis = "A woman is cutting broccoli.";
+		String premise = "Two white women are embracing while holding to go packages.";	
+		String hypothesis = "Two women are embracing while holding to go white packages.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_entail_and_neutral_active.txt";
 		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
