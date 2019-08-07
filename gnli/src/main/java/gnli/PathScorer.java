@@ -82,6 +82,28 @@ public class PathScorer implements Serializable {
 		}
 	}
 	
+	public void addContraRolePath(HeadModifierPathPair pathToAdd){
+		if (pathsAreIdentical(pathToAdd) == true)
+			return;
+		if (pathToAdd.getConclusionPath() != null && pathToAdd.getPremisePath() != null){
+			String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();		
+			if (!infComputer.getContraRolePaths().containsKey(key)){
+				infComputer.getContraRolePaths().put(key, new ArrayList<HeadModifierPathPair>());
+			}
+			this.infComputer.getContraRolePaths().get(key).add(pathToAdd);
+			// if a path is added to the entailPaths, it should be removed from the neutralPaths in case it is there. 
+			if (infComputer.getNeutralRolePaths().keySet().contains(key))
+				removeNeutralRolePath(key); 
+		}
+	}
+	
+	
+	public void removeContraRolePath(String key){
+		if (infComputer.getContraRolePaths().keySet().contains(key)){
+			infComputer.getContraRolePaths().remove(key);
+		}
+	}
+	
 	private boolean pathsAreIdentical(HeadModifierPathPair path){
 		if (path.getConclusionPath() != null && path.getPremisePath() != null){
 			String hypPath = path.getConclusionPath().toString();
@@ -100,7 +122,7 @@ public class PathScorer implements Serializable {
 		if (pathToAdd.getConclusionPath() != null && pathToAdd.getPremisePath() != null){
 			String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();
 			// only add it to the neutral paths if it is not already contained in the entailPaths (entailPaths are more dominant) 
-			if (infComputer.getEntailRolePaths().containsKey(key))
+			if (infComputer.getEntailRolePaths().containsKey(key) || infComputer.getContraRolePaths().containsKey(key) )
 				return;
 			if (!infComputer.getNeutralRolePaths().containsKey(key)){
 				infComputer.getNeutralRolePaths().put(key, new ArrayList<HeadModifierPathPair>());
@@ -160,6 +182,8 @@ public class PathScorer implements Serializable {
 				else 
 					cost += maxCost;
 			else if (infComputer.getEntailRolePaths().containsKey(key))
+				cost -= 10;
+			else if (infComputer.getContraRolePaths().containsKey(key))
 				cost -= 10;
 		}
 		if (tPath.size() == hPath.size() && hPath.size() == 1){

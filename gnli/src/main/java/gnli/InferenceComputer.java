@@ -56,6 +56,7 @@ public class InferenceComputer {
 	private IRAMDictionary wnDict;
 	private HashMap<String, ArrayList<HeadModifierPathPair>> entailRolePaths;
 	private HashMap<String, ArrayList<HeadModifierPathPair>> neutralRolePaths;
+	private HashMap<String, ArrayList<HeadModifierPathPair>> contraRolePaths;
 	private String sumoContent;
 	private String bertVocab;
 
@@ -99,9 +100,14 @@ public class InferenceComputer {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		this.entailRolePaths = deserialize("entail"); //new HashMap<String, ArrayList<HeadModifierPathPair>>();
-		this.neutralRolePaths =  deserialize("neutral");//new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		// for learning==true
+		//this.entailRolePaths = new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		//this.neutralRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		//this.contraRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		// for learning==false
+		this.entailRolePaths = deserialize("entail");
+		this.neutralRolePaths =  deserialize("neutral");
+		this.contraRolePaths =  deserialize("contra");
 		// comment out due to multithreading; comment in if you do not want multithreading
 		this.semGraph = new DepGraphToSemanticGraph(bert, tokenizer, wnDict, sumoContent);
 		//this.semGraph = new DepGraphToSemanticGraph();
@@ -116,12 +122,20 @@ public class InferenceComputer {
 		return this.entailRolePaths;
 	}
 	
+	public HashMap<String,ArrayList<HeadModifierPathPair>> getContraRolePaths(){
+		return this.contraRolePaths;
+	}
+	
 	public void setNeutralRolePaths(HashMap<String,ArrayList<HeadModifierPathPair>> neutralRolePaths){
 		this.neutralRolePaths = neutralRolePaths;
 	}
 	
 	public void setEntailRolePaths(HashMap<String,ArrayList<HeadModifierPathPair>> entailRolePaths){
 		this.entailRolePaths = entailRolePaths;
+	}
+	
+	public void setContraRolePaths(HashMap<String,ArrayList<HeadModifierPathPair>> contraRolePaths){
+		this.contraRolePaths = contraRolePaths;
 	}
 	
 	private void serialize(HashMap<String,ArrayList<HeadModifierPathPair>> rolePaths, String type){	
@@ -138,7 +152,20 @@ public class InferenceComputer {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		} else {
+		} 
+		else if (type.equals("contra")){
+			try {
+				fileOut = new FileOutputStream("serialized_RolePaths_contra.ser");
+				out = new ObjectOutputStream(fileOut); 
+				out.writeObject(rolePaths);
+				out.close();
+				fileOut.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		else {
 			try {
 				fileOut = new FileOutputStream("serialized_RolePaths_neutral.ser");
 				out = new ObjectOutputStream(fileOut); 
@@ -176,6 +203,37 @@ public class InferenceComputer {
 				System.out.println("Average entail:"+String.valueOf(average));
 				System.out.println("Max entail:"+String.valueOf(max));
 				System.out.println("Min entail:"+String.valueOf(min));*/
+				in.close();
+			} catch (FileNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		} else if (type.equals("contra")) {
+			try {
+				fileIn = new FileInputStream("serialized_RolePaths_contra.ser");
+				in = new ObjectInputStream(fileIn);
+		        rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
+		        /*ArrayList<Integer> lengths = new ArrayList<Integer>();
+				for (String key: rolePaths.keySet()){
+					ArrayList<HeadModifierPathPair> test = rolePaths.get(key);
+					lengths.add(rolePaths.get(key).size());
+				}
+				int sum = 0;
+				for (Integer av : lengths){
+					sum += av;
+				}
+				int average = sum/lengths.size();
+				int max = Collections.max(lengths);
+				int min = Collections.min(lengths);
+				System.out.println("Average neutral:"+String.valueOf(average));
+				System.out.println("Max neutral:"+String.valueOf(max));
+				System.out.println("Min neutral:"+String.valueOf(min));*/
 				in.close();
 			} catch (FileNotFoundException e1) {
 				// TODO Auto-generated catch block
@@ -264,14 +322,14 @@ public class InferenceComputer {
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli, kb);
 		initialTermMatcher.process();
 		//gnli.display();
-		gnli.matchGraph.display();
+		//gnli.matchGraph.display();
 		//graphT.displayLex();
 		//graphH.displayLex();
 		//gnli.getHypothesisGraph().displayContexts();
 		//gnli.getHypothesisGraph().displayDependencies();
 		//gnli.getHypothesisGraph().displayRoles();
-		gnli.getHypothesisGraph().displayRolesAndCtxs();
-		gnli.getTextGraph().displayRolesAndCtxs();
+		//gnli.getHypothesisGraph().displayRolesAndCtxs();
+		//gnli.getTextGraph().displayRolesAndCtxs();
 		//gnli.getHypothesisGraph().displayDependencies();
 		//gnli.getTextGraph().displayRoles();
 		/*gnli.getTextGraph().displayContexts();
@@ -359,6 +417,7 @@ public class InferenceComputer {
         //fileSer.close(); 
 		this.serialize(entailRolePaths, "entail");
 		this.serialize(neutralRolePaths, "neutral");
+		this.serialize(contraRolePaths, "contra");
            
 	}/*
 	
@@ -432,7 +491,7 @@ public class InferenceComputer {
 		String hypothesis = "Two women are embracing while holding to go white packages.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_entail_and_neutral_active.txt";
-		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
+		String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";
 		//String file = "/home/kkalouli/Documents/diss/to_check.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);
