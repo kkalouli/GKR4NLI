@@ -28,7 +28,7 @@ import sem.graph.SemGraph;
 
 
 // uncomment to use through Gretty plugin
-//@WebServlet(name = "GKRServlet", urlPatterns = {"gkr"}, loadOnStartup = 1) 
+@WebServlet(name = "GKRServlet", urlPatterns = {"gkr"}, loadOnStartup = 1) 
 public class GKRServlet extends HttpServlet {
 	
 	/**
@@ -89,20 +89,23 @@ public class GKRServlet extends HttpServlet {
         	    request.setAttribute("propsGraph", xmls.get(3));
         	    request.setAttribute("lexGraph", xmls.get(4));
         	    request.setAttribute("corefGraph", xmls.get(5));
+        	    request.setAttribute("rolesAndCtxGraph", xmls.get(6));
+        	    request.setAttribute("rolesAndCorefGraph", xmls.get(7));
         		request.getRequestDispatcher("response.jsp").forward(request, response); 
         		return;
         	}
         }
-        if(!request.getParameter("sentence").matches("(\\w*(\\s|,|\\.|\\?|!|\"|-)*)*")){
+        String sentence = request.getParameter("sentence");
+        if (sentence.equals("")) {
+        	System.out.println("found nothing");
+        	 request.getRequestDispatcher("index.jsp").forward(request, response); 
+        	 return;
+        }
+        if(!request.getParameter("sentence").matches("(\\w*(\\s|,|\\.|\\?|!|\"|-|')*)*")){
 			request.setAttribute("error", "Please enter only letters, numbers, and spaces.");
 			request.getRequestDispatcher("response.jsp").forward(request,response);
 			return;
 		}
-        String sentence = request.getParameter("sentence");
-        if (sentence.equals("")) {
-        	 request.getRequestDispatcher("index.html").forward(request, response); 
-        	 return;
-        }
         if (!sentence.endsWith(".") && !sentence.endsWith("?") && !sentence.endsWith("!")){
         	sentence = sentence+".";
         }
@@ -124,13 +127,17 @@ public class GKRServlet extends HttpServlet {
         SemGraph corefGraphIn = graph.getLinkGraph();
         SemGraph lexGraphIn = graph.getLexGraph();
         SemGraph propsGraphIn = graph.getPropertyGraph();
-    	ExecutorService es = Executors.newFixedThreadPool(6);
+        SemGraph roleAndCtxGraphIn = graph.getRolesAndCtxGraph();
+        SemGraph roleAndCorefGraphIn = graph.getRolesAndCorefGraph();
+    	ExecutorService es = Executors.newFixedThreadPool(7);
 	    Future<String> roles = es.submit(new getMxGraphConcurrentTask(roleGraphIn));
 	    Future<String> deps = es.submit(new getMxGraphConcurrentTask(depsGraphIn));
 	    Future<String> ctx = es.submit(new getMxGraphConcurrentTask(ctxGraphIn));
 	    Future<String> lex = es.submit(new getMxGraphConcurrentTask(lexGraphIn));
 	    Future<String> props = es.submit(new getMxGraphConcurrentTask(propsGraphIn));
 	    Future<String> coref = es.submit(new getMxGraphConcurrentTask(corefGraphIn));
+	    Future<String> rolesAndCtx = es.submit(new getMxGraphConcurrentTask(roleAndCtxGraphIn));
+	    Future<String> rolesAndCoref = es.submit(new getMxGraphConcurrentTask(roleAndCorefGraphIn));
 
 		String ctxGraph = null;
 		String lexGraph = null;
@@ -138,6 +145,8 @@ public class GKRServlet extends HttpServlet {
 		String propsGraph = null;
 		String depsGraph = null;
 		String roleGraph = null;
+		String rolesAndCtxGraph = null;
+		String rolesAndCorefGraph = null;
 		try {
 			roleGraph = roles.get();
 		    depsGraph = deps.get();
@@ -145,6 +154,8 @@ public class GKRServlet extends HttpServlet {
 	        lexGraph = lex.get();
 	        propsGraph = props.get();
 	        corefGraph = coref.get();
+	        rolesAndCtxGraph = rolesAndCtx.get();
+	        rolesAndCorefGraph = rolesAndCoref.get();
 	 
 		} catch (InterruptedException e1) {
 			// TODO Auto-generated catch block
@@ -169,6 +180,8 @@ public class GKRServlet extends HttpServlet {
         request.setAttribute("lexGraph", lexGraph);
         request.setAttribute("propsGraph", propsGraph);
         request.setAttribute("corefGraph", corefGraph);
+        request.setAttribute("rolesAndCtxGraph", rolesAndCtxGraph);
+        request.setAttribute("rolesAndCorefGraph", rolesAndCorefGraph);
         request.getRequestDispatcher("response.jsp").forward(request, response); 
     }
     
@@ -176,7 +189,7 @@ public class GKRServlet extends HttpServlet {
     protected ArrayList<String> getXmlsAsList(String id) {
     	BufferedReader br;
     	ArrayList<String> xmls = new ArrayList<String>();
-    	String path = "/home/kkalouli/Documents/Programs/apache-tomcat-9.0.20/webapps/sem.mapper/";
+    	String path = "src/main/webapp/"; //"/home/kkalouli/Documents/Programs/apache-tomcat-9.0.20/webapps/sem.mapper/";
 		try {
 			br = new BufferedReader(new InputStreamReader(new FileInputStream(path+"examples/"+id+".txt"), "UTF-8"));	
 	    	String strLine;

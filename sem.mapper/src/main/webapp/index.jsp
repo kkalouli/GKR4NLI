@@ -51,7 +51,7 @@ z-index: 10000;
 		modals, clausal contexts of propositional attitudes (e.g. belief, knowledge, obligation),  implicatives, interrogative and imperative clauses, 
 		disjunction and conjunction. The treatment of conditionals, distributivity and ellipsis is not implemented yet, but planned for the future.     
 		GKR is constantly being improved and we are thankful for any comments or discussions. <br> We are currently
-		also implementing a hybrid, structural/linguistic and distributional, NLI system
+		also implementing a hybrid, symbolic and distributional, NLI system
 		based on GKR. Its preliminary version will be made available soon. 
 	</p>
 

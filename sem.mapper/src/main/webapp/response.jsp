@@ -8,6 +8,8 @@
 
 .tab { margin-left: 30px; }
 
+.block { margin-left: 30px; position: fixed; }
+
 #box { position: relative; margin-left: 30px; }
 
 </style>
@@ -29,6 +31,7 @@
     	  if (!mxClient.isBrowserSupported())
           {
              mxUtils.error('Browser is not supported!', 200, false);
+             return 0;
           }
           else
           {
@@ -68,12 +71,12 @@
 	    	    	graph.getModel().beginUpdate();
 	    	    	// only add vertex if it doesnt exist
 	    	    	if (isEdge == false && addedNodes.includes(cell) == false ){
-	    	    		var value = graph.insertVertex(parent, null, cell.getAttribute("value"), 400, 400, 80, 30, cell.getAttribute("style"));
-	    	    		console.log(value);
+	    	    		console.log(cell);
+	    	    		var value = graph.insertVertex(parent, null, cell.getAttribute("value"), 200, 200, 80, 30, cell.getAttribute("style"), cell.getAttribute("relative"));
 	    	    		graph.updateCellSize(value, true);
 	    	    		var geom = value.getGeometry();
 	    	    		geom.width = geom.width > 80 ? geom.width : 80;
-	    	    		geom.height = geom.height > 30 ? geom.width : 30;
+	    	    		geom.height = geom.height > 30 ? geom.height : 30;
 	    	    		dictNodes[cell.getAttribute("id")] = value;
 	    	    		addedNodes.push(cell);
 	    	    	} else {
@@ -93,28 +96,33 @@
 	    		  var targetNode = dictNodes[target];
 	    		  graph.insertEdge(parent, null, edges[i].getAttribute("value"), sourceNode, targetNode);
 	    	  }
-	    	  
 	    	  // hierarchical layout
 			  var layout = new mxHierarchicalLayout(graph);
 			  layout.execute(parent);
+	    	  graph.maximumGraphBounds = new mxRectangle(graph.getGraphBounds().getX, graph.getGraphBounds().getY, graph.getGraphBounds().width, graph.getGraphBounds().height);
+	    	  //graph.getView().setGraphBounds(test);
+	    	  var bounds =  graph.getMaximumGraphBounds();
+	    	  console.log(bounds);
+  	  		  return graph.getMaximumGraphBounds().height+60;
           }
 			
       }
+   
       
    // load all xmls of all graphs 
       function loadAllXmls(){
-    	  loadXML(document.getElementById('depContainer'), document.getElementById('depsGraph').innerHTML);
-    	  loadXML(document.getElementById('roleContainer'), document.getElementById('roleGraph').innerHTML);
-    	  loadXML(document.getElementById('ctxContainer'), document.getElementById('ctxGraph').innerHTML);
-    	  loadXML(document.getElementById('propsContainer'), document.getElementById('propsGraph').innerHTML);
-    	  loadXML(document.getElementById('lexContainer'), document.getElementById('lexGraph').innerHTML);
-    	  loadXML(document.getElementById('corefContainer'), document.getElementById('corefGraph').innerHTML);
+    	  loadXML(document.getElementById('plainContainer'), document.getElementById('depsGraph').innerHTML);
+    	  loadXML(document.getElementById('plainContainer'), document.getElementById('roleGraph').innerHTML);
+    	  loadXML(document.getElementById('plainContainer'), document.getElementById('ctxGraph').innerHTML);
+    	  loadXML(document.getElementById('plainContainer'), document.getElementById('propsGraph').innerHTML);
+    	  loadXML(document.getElementById('plainContainer'), document.getElementById('lexGraph').innerHTML);
+    	  loadXML(document.getElementById('plainContainer'), document.getElementById('corefGraph').innerHTML);
       }
    </script>
 
 </head>
  
-	<body style="background-color:#ffe4b2" onload="loadAllXmls()" >    
+	<body style="background-color:#ffe4b2"  >  <!--the following is needed if the graphs should be loaded at once: onload="loadAllXmls()"  -->
 
  	<h1 class="tab" id="top"> <font color="#349aff">
 		<big>G</big><small>raphical</small> <big>K</big><small>nowledge</small>
@@ -130,39 +138,99 @@
 	<h3 class="tab" align="left"> <small> Does this GKR graph seem wrong to you? Let us know <a
 			href="mailto:aikaterini-lida.kalouli@uni-konstanz.de"> why!</a> </small> </h3>
 			
-	<h3 class="tab" align="left"> <small> Feel free to scroll up and down the graphs and to move the nodes and the edges to get a better view, if needed. </small> </h3>
+	<h3 class="tab" align="left"> <small> Feel free to move the nodes and the edges to get a better view, if needed. </small> </h3>
 
 	<% if(request.getAttribute("error") != null){ %>
 			<h2 class="tab" style="color:red">${error}</h2>
 		<% } %>	
 	
-	<h2 class="tab">Dependency Graph </h2>
-	   <!-- Creates a container for the graph with a grid wallpaper style="overflow:hidden;width:600;height:400px" -->
-   <div id="depContainer" style="overflow:auto;width:1000;height:200px;padding-left:80px;padding-bottom:50px"> </div>
-   <div id="depsGraph">${depsGraph}</div>
+	<div id="depsGraph">${depsGraph}</div>
+	<div id="roleGraph">${roleGraph}</div>
+	<div id="ctxGraph">${ctxGraph}</div>
+	<div id="propsGraph">${propsGraph}</div>
+	<div id="lexGraph">${lexGraph}</div>
+	<div id="corefGraph">${corefGraph}</div>
+	<div id="rolesAndCtxGraph">${rolesAndCtxGraph}</div>
+	<div id="rolesAndCorefGraph">${rolesAndCorefGraph}</div>
 	
-	<h2 class="tab"> Concept Graph</h2>
-   <div id="roleContainer" style="overflow:auto;width:1000;height:200px;padding-left:80px;padding-bottom:50px"> </div>
-   <div id="roleGraph">${roleGraph}</div>
+	<div id="plainContainer" style="overflow:auto;width:100%;height:70%;padding-left:80px;">   
+	   <!-- Creates a container for the graph with a grid wallpaper style="overflow:auto;width:1000;height:200px"  -->
+   	 
+   	<div id="depsContainer" style="width:auto;"> 
+   		<h2> Dependency Graph  </h2>
+		<script type="text/javascript">
+		var height = loadXML(document.getElementById('depsContainer'), document.getElementById('depsGraph').innerHTML); 
+		document.getElementById('depsContainer').style.height = height + "px";
+		</script>
+	</div>
+	
+	<div id="roleContainer" style="width:auto;"> 
+		<h2> Concept Graph</h2>
+		<script type="text/javascript"> 
+		var height = loadXML(document.getElementById('roleContainer'), document.getElementById('roleGraph').innerHTML);
+		document.getElementById('roleContainer').style.height = height + "px";
+		</script>
+	</div>
+	
+	<div id="ctxContainer" style="width:auto;"> 
+		<h2>Context Graph</h2>
+		<script type="text/javascript"> 
+		var height = loadXML(document.getElementById('ctxContainer'), document.getElementById('ctxGraph').innerHTML); 
+		document.getElementById('ctxContainer').style.height = height + "px";
+		</script>
+	</div>
+	
+	<div id="rolesAndCtxContainer" style="width:auto;"> 
+		<h2>Concept and Context Graph (merged)</h2>
+		<script type="text/javascript"> 
+		var height = loadXML(document.getElementById('rolesAndCtxContainer'), document.getElementById('rolesAndCtxGraph').innerHTML); 
+		document.getElementById('rolesAndCtxContainer').style.height = height + "px";
+		</script>
+	</div>
+	
+	<div id="propsContainer" style="width:auto;"> 
+		<h2 >Properties Graph</h2>
+		<script type="text/javascript"> 
+		var height = loadXML(document.getElementById('propsContainer'), document.getElementById('propsGraph').innerHTML); 
+		document.getElementById('propsContainer').style.height = height + "px";
+		</script>
+	</div>
+	
+	<div id="lexContainer" style="width:auto;"> 
+		<h2 >Lexical Graph</h2>
+		<script type="text/javascript"> 
+		var height = loadXML(document.getElementById('lexContainer'), document.getElementById('lexGraph').innerHTML);
+		document.getElementById('lexContainer').style.height = height + "px";
+		</script>
+	</div>
+	
+	<div id="corefContainer" style="width:auto;">
+		<h2>Coreference Graph</h2>
+		<script type="text/javascript"> 
+		var height = loadXML(document.getElementById('corefContainer'), document.getElementById('corefGraph').innerHTML);
+		document.getElementById('corefContainer').style.height = height + "px";
+		</script>
+	</div>
+	
+	<div id="rolesAndCorefContainer" style="width:auto;">
+		<h2>Concept and Coreference Graph (merged)</h2>
+		<script type="text/javascript"> 
+		var height = loadXML(document.getElementById('rolesAndCorefContainer'), document.getElementById('rolesAndCorefGraph').innerHTML);
+		document.getElementById('rolesAndCorefContainer').style.height = height + "px";
+		</script>
+	</div>
+	
+   </div>
+    
 
-	<h2 class="tab">Context Graph</h2>
-	<div id="ctxContainer" style="overflow:auto;width:1000;height:200px;padding-left:80px;padding-bottom:50px"> </div>
-   <div id="ctxGraph">${ctxGraph}</div>
-	
-	
-	<h2 class="tab" >Properties Graph</h2>
-	<div id="propsContainer" style="overflow:auto;width:1000;height:200px;padding-left:80px;padding-bottom:50px"> </div>
-   <div id="propsGraph">${propsGraph}</div>
-	
-	
-	<h2 class="tab" >Lexical Graph</h2>
-	<div id="lexContainer" style="overflow:auto;width:1000;height:200px;padding-left:80px;padding-bottom:50px"> </div>
-   <div id="lexGraph">${lexGraph}</div>
-	
-	
-	<h2  class="tab" >Coreference Graph</h2>
-	<div id="corefContainer" style="overflow:auto;width:1000;height:200px;padding-left:80px;padding-bottom:50px"> </div>
-   <div id="corefGraph">${corefGraph}</div>
+	 <!-- the following is needed if we want to have separate containers for each graph 
+	<div id="depsContainer" style="width:auto;height:auto;padding-left:80px;padding-bottom:50px"> </div>
+   	<div id="roleContainer"> </div>
+	<div id="ctxContainer" style="width:auto;height:auto;padding-left:80px;padding-bottom:50px"> </div>
+	<div id="propsContainer" style="width:auto;height:auto;padding-left:80px;padding-bottom:50px"> </div>
+	<div id="lexContainer" style="width:auto;height:auto;padding-left:80px;padding-bottom:50px"> </div>
+	<div id="corefContainer" style="width:auto;height:auto;padding-left:80px;padding-bottom:50px"> </div>
+   -->
 	
 
     </body>

@@ -143,6 +143,39 @@ public class SemanticGraph implements Serializable  {
 	public SemGraph getDistrGraph() {
 		return distrGraph;
 	}
+	
+	/**
+	 * Get underlying SemGraph for distributional graph
+	 * @return
+	 */
+	public SemGraph getRolesAndCtxGraph() {
+		Set<SemanticNode<?>> mergedNodes = new HashSet<SemanticNode<?>>();
+		mergedNodes.addAll(this.getRoleGraph().getNodes());
+		mergedNodes.addAll(this.getContextGraph().getNodes());
+		
+		Set<SemanticEdge> mergedEdges = new HashSet<SemanticEdge>();
+		mergedEdges.addAll(this.getRoleGraph().getEdges());
+		mergedEdges.addAll(this.getContextGraph().getEdges());
+		return this.getSubGraph(mergedNodes, mergedEdges);
+	}
+	
+	/**
+	 * Get underlying SemGraph for distributional graph
+	 * @return
+	 */
+	public SemGraph getRolesAndCorefGraph() {
+		if (this.getLinkGraph().getNodes().isEmpty())
+			return new SemJGraphT();
+		Set<SemanticNode<?>> mergedNodes = new HashSet<SemanticNode<?>>();
+		mergedNodes.addAll(this.getRoleGraph().getNodes());
+		mergedNodes.addAll(this.getLinkGraph().getNodes());
+		
+		Set<SemanticEdge> mergedEdges = new HashSet<SemanticEdge>();
+		mergedEdges.addAll(this.getRoleGraph().getEdges());
+		mergedEdges.addAll(this.getLinkGraph().getEdges());
+		return this.getSubGraph(mergedNodes, mergedEdges);
+	}
+	
 
 	public void setRootNode(SemanticNode<?> root) {
 		this.rootNode = root;
@@ -510,16 +543,8 @@ public class SemanticGraph implements Serializable  {
 		 this.graph.display();
 	}
 	
-	public void displayRolesAndCtxs() {
-		Set<SemanticNode<?>> mergedNodes = new HashSet<SemanticNode<?>>();
-		mergedNodes.addAll(this.getRoleGraph().getNodes());
-		mergedNodes.addAll(this.getContextGraph().getNodes());
-		
-		Set<SemanticEdge> mergedEdges = new HashSet<SemanticEdge>();
-		mergedEdges.addAll(this.getRoleGraph().getEdges());
-		mergedEdges.addAll(this.getContextGraph().getEdges());
-		SemGraph subgraph = this.getSubGraph(mergedNodes, mergedEdges);
-		subgraph.display();
+	public void displayRolesAndCtxs() {	
+		this.getRolesAndCtxGraph().display();
 	}
 	
 	public void exportGraphAsJson(){
@@ -850,7 +875,7 @@ public class SemanticGraph implements Serializable  {
 	}
 	
 	/**
-	 * Get only the skolem nodes introduced by naive semantics
+	 * Get only the skolem nodes introduced by naive semantics, e.g. person, thing, etc..
 	 * @return
 	 */
 	public List<SkolemNode> getDerivedSkolems() {
