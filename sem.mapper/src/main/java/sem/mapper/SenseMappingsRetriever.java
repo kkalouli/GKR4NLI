@@ -65,13 +65,13 @@ public class SenseMappingsRetriever implements Serializable {
 	 */
 	private static final long serialVersionUID = -5353876989060718577L;
 	private HashMap<String,String> hashOfPOS;
-	public Map<String, Integer> subConcepts;
-	public Map<String, Integer> superConcepts;
-	public ArrayList<String> synonyms;
-	public ArrayList<String> hypernyms;
-	public ArrayList<String> hyponyms ;
-	public ArrayList<String> antonyms;
-	public float[] embed;
+	private Map<String, Integer> subConcepts;
+	private Map<String, Integer> superConcepts;
+	private ArrayList<String> synonyms;
+	private ArrayList<String> hypernyms;
+	private ArrayList<String> hyponyms ;
+	private ArrayList<String> antonyms;
+	private float[] embed;
 	private Properties props;
 	private String wnInstall;
 	private String sumoInstall;

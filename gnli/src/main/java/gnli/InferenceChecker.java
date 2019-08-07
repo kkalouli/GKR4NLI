@@ -60,6 +60,8 @@ public class InferenceChecker {
 			SemanticNode<?> tTerm = gnliGraph.getFinishNode(matchEdge);
 			boolean expletive = false;
 			// get all separate root nodes
+
+			
 			if (gnliGraph.getHypothesisGraph().getRoleGraph().getInEdges(hTerm).isEmpty()){
 				for (SemanticNode<?> inReach : gnliGraph.getTextGraph().getRoleGraph().getInReach(tTerm)){
 					if (inReach.getLabel().contains("be"))

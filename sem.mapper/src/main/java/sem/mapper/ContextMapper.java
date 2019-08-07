@@ -42,8 +42,9 @@ public class ContextMapper implements Serializable {
 	private ArrayList<String> verbalForms;
 	private ArrayList<SemanticNode<?>> traversedNeighbors;
 	private ArrayList<String> modals;
+	private boolean interrogative;
 	
-	public ContextMapper(sem.graph.SemanticGraph graph, ArrayList<String> verbalForms){
+	public ContextMapper(sem.graph.SemanticGraph graph, ArrayList<String> verbalForms, boolean interrogative){
 		this.verbalForms = verbalForms;
 		this.graph = graph;
 		this.depGraph = this.graph.getDependencyGraph();
@@ -54,6 +55,7 @@ public class ContextMapper implements Serializable {
 		this.disjunction = false;
 		this.implCtxs = new HashMap<SemanticNode<?>,String>();
 		this.traversedNeighbors = new ArrayList<SemanticNode<?>>();
+		this.interrogative = interrogative;
 		this.modals = new ArrayList<String>();
 		modals.add("might");
 		modals.add("should");
@@ -366,7 +368,7 @@ public class ContextMapper implements Serializable {
 		// check this only if the interrogative var is set to false: if it is already true, it means there is a direct question and we dont need this step 
 		for (SemanticNode<?> rNode : rNodes){
 			SemanticNode<?> child = null;
-			if (rNode instanceof SkolemNode && DepGraphToSemanticGraph.interrogative == false && interrVerbs.contains(((SkolemNodeContent) rNode.getContent()).getStem())){
+			if (rNode instanceof SkolemNode && this.interrogative == false && interrVerbs.contains(((SkolemNodeContent) rNode.getContent()).getStem())){
 				Set<SemanticEdge> childrenEdges = roleGraph.getOutEdges(rNode);
 				// get the children of that node: the sem_comp child is the one that is in the interrogative context 
 				for (SemanticEdge e : childrenEdges){
@@ -381,11 +383,11 @@ public class ContextMapper implements Serializable {
 					ctxFinish = conGraph.getInNeighbors(child).iterator().next(); // othwerise, get the existing one
 				// add the self node of the start
 				ctxStart = addSelfContextNodeAndEdgeToGraph(rNode);
-				DepGraphToSemanticGraph.interrogative = true;
+				this.interrogative = true;
 			}
 		}
 		// do the following if the interrogative var is set to true
-		if (DepGraphToSemanticGraph.interrogative == true){
+		if (this.interrogative == true){
 			// if the above hasnt been executed, then we have a direct question and we still need to figure out the interrogative ctx
 			if (ctxFinish == null){
 				for (SemanticNode<?> ctxN : conGraph.getNodes()){
@@ -1148,7 +1150,7 @@ public class ContextMapper implements Serializable {
 					}
 					// there are cases where there is a comp but it is not introduced by that, e.g. Max believes John loves Mary.
 					if (!comple.equals("_that")){
-						comple = "_other";
+						comple = "_that";
 					}
 					break;
 				}

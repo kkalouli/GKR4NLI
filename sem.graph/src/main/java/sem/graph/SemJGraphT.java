@@ -350,8 +350,8 @@ public class SemJGraphT implements  SemGraph, Serializable{
 				} else {
 					v1 = traversedNodes.get(sourceId);
 				}
-				if (!traversedNodes.containsKey(targetId)){
-					v2 = mx.insertVertex(parent, null, targetId, 200, 150, 80, 30, "defaultVertex;fillColor="+targetColor);
+				if (!traversedNodes.containsKey(targetId)){ // 200, 150
+					v2 = mx.insertVertex(parent, null, targetId, 20, 20, 80, 30, "defaultVertex;fillColor="+targetColor);
 					traversedNodes.put(targetId, v2);
 				} else {
 					v2 = traversedNodes.get(targetId);
