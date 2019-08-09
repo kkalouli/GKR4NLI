@@ -101,13 +101,13 @@ public class InferenceComputer {
 			e.printStackTrace();
 		}
 		// for learning==true
-		//this.entailRolePaths = new HashMap<String, ArrayList<HeadModifierPathPair>>();
-		//this.neutralRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
-		//this.contraRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		this.entailRolePaths = new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		this.neutralRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		this.contraRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
 		// for learning==false
-		this.entailRolePaths = deserialize("entail");
-		this.neutralRolePaths =  deserialize("neutral");
-		this.contraRolePaths =  deserialize("contra");
+		//this.entailRolePaths = deserialize("entail");
+		//this.neutralRolePaths =  deserialize("neutral");
+		//this.contraRolePaths =  deserialize("contra");
 		// comment out due to multithreading; comment in if you do not want multithreading
 		this.semGraph = new DepGraphToSemanticGraph(bert, tokenizer, wnDict, sumoContent);
 		//this.semGraph = new DepGraphToSemanticGraph();
@@ -189,6 +189,12 @@ public class InferenceComputer {
 				fileIn = new FileInputStream("serialized_RolePaths_entail.ser");
 				in = new ObjectInputStream(fileIn);
 				rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
+				for (String key: rolePaths.keySet()) {
+					if (key.equals("[sem_subj]/[sem_obj]")) {
+						ArrayList<HeadModifierPathPair> list = rolePaths.get(key);
+						String test = "";
+					}
+				}
 				/*ArrayList<Integer> lengths = new ArrayList<Integer>();
 				for (String key: rolePaths.keySet()){
 					lengths.add(rolePaths.get(key).size());
@@ -487,8 +493,8 @@ public class InferenceComputer {
 		//long startTime = System.currentTimeMillis();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "Two white women are embracing while holding to go packages.";	
-		String hypothesis = "Two women are embracing while holding to go white packages.";
+		String premise = "The man is licking the dog.";	
+		String hypothesis = "The dog is licking the man.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_entail_and_neutral_active.txt";
 		String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";

@@ -28,7 +28,7 @@ import sem.graph.SemGraph;
 
 
 // uncomment to use through Gretty plugin
-@WebServlet(name = "GKRServlet", urlPatterns = {"gkr"}, loadOnStartup = 1) 
+//@WebServlet(name = "GKRServlet", urlPatterns = {"gkr"}, loadOnStartup = 1) 
 public class GKRServlet extends HttpServlet {
 	
 	/**
@@ -189,7 +189,7 @@ public class GKRServlet extends HttpServlet {
     protected ArrayList<String> getXmlsAsList(String id) {
     	BufferedReader br;
     	ArrayList<String> xmls = new ArrayList<String>();
-    	String path = "src/main/webapp/"; //"/home/kkalouli/Documents/Programs/apache-tomcat-9.0.20/webapps/sem.mapper/";
+    	String path = "/home/kkalouli/Documents/Programs/apache-tomcat-9.0.20/webapps/sem.mapper/";
 		try {
 			br = new BufferedReader(new InputStreamReader(new FileInputStream(path+"examples/"+id+".txt"), "UTF-8"));	
 	    	String strLine;
