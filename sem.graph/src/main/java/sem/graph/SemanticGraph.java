@@ -1052,8 +1052,17 @@ public class SemanticGraph implements Serializable  {
 	public List<SkolemNode> getAllModifiers(SkolemNode node) {
 		List<SkolemNode> retval = new ArrayList<SkolemNode>();
 		if (this.roleGraph.containsNode(node)) {
+			// get also all common aarguments depending on any combined termNodes
+			/*SemanticNode <?> incomingNode = this.roleGraph.getInNeighbors(node).iterator().next();
+			if (incomingNode instanceof TermNode && !(incomingNode instanceof SkolemNode) ) {
+				for (SemanticNode<?> semNode : this.roleGraph.getOutReach(incomingNode)) {
+					if (SkolemNode.class.isAssignableFrom(semNode.getClass()) && !semNode.equals(node) && !isRstr((TermNode) semNode)) {
+						retval.add((SkolemNode) semNode);
+					}
+				}
+			}*/
 			for (SemanticNode<?> semNode : this.roleGraph.getOutReach(node)) {
-				if (SkolemNode.class.isAssignableFrom(semNode.getClass()) && !semNode.equals(node) && !isRstr((TermNode) semNode)) {
+				if (SkolemNode.class.isAssignableFrom(semNode.getClass()) && !semNode.equals(node) && !isRstr((TermNode) semNode) && !retval.contains(semNode)) {
 					retval.add((SkolemNode) semNode);
 				}
 			}

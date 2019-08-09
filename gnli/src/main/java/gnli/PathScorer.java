@@ -197,7 +197,19 @@ public class PathScorer implements Serializable {
 				}
 			}
 			if (same == false && !startSenses.isEmpty() && !finishSenses.isEmpty()){
-				cost += maxCost;
+				boolean hasSense = true;
+				for (SenseNode sense : startSenses){
+					if (sense.getLabel().equals("00000000"))
+						hasSense = false;
+					break;
+				}
+				for (SenseNode sense : finishSenses){
+					if (sense.getLabel().equals("00000000"))
+						hasSense = false;
+					break;
+				}
+				if (hasSense == true)
+					cost += maxCost;
 			}
 			
 		}		

@@ -492,10 +492,10 @@ public class DepGraphToSemanticGraph implements Serializable {
 						//graph.getFinishNode(edge).setLabel(((SkolemNodeContent) graph.getFinishNode(edge).getContent()).getSkolem());					
 					} else if (determiner.equals("few")){
 						specifier = "many";	
-						//((SkolemNodeContent) graph.getFinishNode(edge).getContent()).setSurface("many");
-						//((SkolemNodeContent) graph.getFinishNode(edge).getContent()).setStem("many");
-						//((SkolemNodeContent) graph.getFinishNode(edge).getContent()).setSkolem("many_"+Integer.toString(((SkolemNodeContent) graph.getFinishNode(edge).getContent()).getPosition()));
-						//graph.getFinishNode(edge).setLabel(((SkolemNodeContent) graph.getFinishNode(edge).getContent()).getSkolem());					
+						((SkolemNodeContent) graph.getFinishNode(edge).getContent()).setSurface("many");
+						((SkolemNodeContent) graph.getFinishNode(edge).getContent()).setStem("many");
+						((SkolemNodeContent) graph.getFinishNode(edge).getContent()).setSkolem("many_"+Integer.toString(((SkolemNodeContent) graph.getFinishNode(edge).getContent()).getPosition()));
+						graph.getFinishNode(edge).setLabel(((SkolemNodeContent) graph.getFinishNode(edge).getContent()).getSkolem());					
 					}
 				}
 				// check if there is a "none" involved: "none" is not recognized as a det:qmod so we have to look for it separately
