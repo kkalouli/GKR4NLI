@@ -65,6 +65,9 @@ public class PathScorer implements Serializable {
 			return;
 		if (pathToAdd.getConclusionPath() != null && pathToAdd.getPremisePath() != null){
 			String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();		
+			// only add it to the entail paths if it is not already contained in the contraPaths (entailPaths are more dominant) 
+			if (infComputer.getContraRolePaths().containsKey(key) )
+				return;
 			if (!infComputer.getEntailRolePaths().containsKey(key)){
 				infComputer.getEntailRolePaths().put(key, new ArrayList<HeadModifierPathPair>());
 			}
@@ -94,6 +97,8 @@ public class PathScorer implements Serializable {
 			// if a path is added to the entailPaths, it should be removed from the neutralPaths in case it is there. 
 			if (infComputer.getNeutralRolePaths().keySet().contains(key))
 				removeNeutralRolePath(key); 
+			if (infComputer.getEntailRolePaths().keySet().contains(key))
+				removeEntailRolePath(key); 
 		}
 	}
 	
@@ -190,18 +195,18 @@ public class PathScorer implements Serializable {
 			// if the match is based on opposing roles, it should be neglected
 			if ( (tPath.get(0).getLabel().equals("sem_subj") && hPath.get(0).getLabel().equals("sem_obj")) ||
 				 (tPath.get(0).getLabel().equals("sem_obj") && hPath.get(0).getLabel().equals("sem_subj")) )
-				cost += maxCost;
+				cost += maxCost+10;
 			else if ( (tPath.get(0).getLabel().equals("amod") && hPath.get(0).getLabel().equals("rstr")) ||
 					  (tPath.get(0).getLabel().equals("rstr") && hPath.get(0).getLabel().equals("amod"))   )
-				cost -= 2;
+				cost -= 10;
 			else if (tPath.equals(hPath))
-				cost -= 2; 
+				cost -= 10; 
 		} else if (tPath.size() == 2 && hPath.size() == 1){				
 			if (hPath.get(0).getLabel().equals("amod") && tPath.get(0).getLabel().equals("nmod") && tPath.get(1).getLabel().equals("amod"))
-				cost -= 2;
+				cost -= 10;
 		} else if (hPath.size() == 2 && tPath.size() == 1){	
 			if (tPath.get(0).getLabel().equals("amod") && hPath.get(0).getLabel().equals("nmod") && hPath.get(1).getLabel().equals("amod"))
-				cost -= 2;
+				cost -= 10;
 		}
 		cost += ((MatchContent) hMPath.getModifiersPair().getContent()).getScore();
 		

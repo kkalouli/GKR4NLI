@@ -569,13 +569,13 @@ public class DepGraphToSemanticGraph implements Serializable {
 		2 the WSD of each word
 		==> put 1. in a separate thread to speed up process 
 		*/ 
-		 //ExecutorService executorService = Executors.newSingleThreadExecutor();
-		 //Future future = executorService.submit(new LexicalGraphConcurrentTask(wholeCtx));
-		 //executorService.shutdown();
+		 ExecutorService executorService = Executors.newSingleThreadExecutor();
+		 Future future = executorService.submit(new LexicalGraphConcurrentTask(wholeCtx));
+		 executorService.shutdown();
 		try {		
 			senses = retriever.disambiguateSensesWithJIGSAW(wholeCtx); // stanGraph.toRecoveredSentenceString());
 			// next line needed for non-multithreading
-			//retriever.getEmbedForWholeCtx(wholeCtx);
+			retriever.getEmbedForWholeCtx(wholeCtx);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -592,6 +592,42 @@ public class DepGraphToSemanticGraph implements Serializable {
 				// the inner map of String,Float only contains one element each time 
 				HashMap<String, Map<String, Float>> lexSem;
 				lexSem = retriever.mapNodeToSenseAndConcept((SkolemNode) node, graph, senses);
+				// someone is not included in the PWD3.0
+				if (lexSem.isEmpty() && node.getLabel().contains("someone")){
+					String sense = "00007846";
+					SenseNodeContent senseContent = new SenseNodeContent(sense);
+					senseContent.addConcept("Human=");
+					try {
+						retriever.getLexRelationsOfSynset(((SkolemNode) node).getStem(), sense, ((SkolemNode) node).getPartOfSpeech());
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					senseContent.setHierarchyPrecomputed(true);
+					senseContent.setSubConcepts(retriever.getSubConcepts());
+					senseContent.setSuperConcepts(retriever.getSuperConcepts());
+					senseContent.setSynonyms(retriever.getSynonyms());
+					senseContent.setHypernyms(retriever.getHypernyms());
+					senseContent.setHyponyms(retriever.getHyponyms());
+					senseContent.setAntonyms(retriever.getAntonyms());
+					senseContent.setEmbed(retriever.getEmbed());
+					senseContent.setSenseScore(0);
+					
+					// create new Sense Node
+					SenseNode senseNode = new SenseNode(sense, senseContent);
+					// create new LexEdge
+
+					LexEdge edge = new LexEdge(GraphLabels.LEX, new LexEdgeContent());
+					graph.addLexEdge(edge, node, senseNode);
+
+					retriever.setSubConcepts(new HashMap<String,Integer>());
+					retriever.setSuperConcepts(new HashMap<String,Integer>());
+					retriever.setSynonyms(new ArrayList<String>());
+					retriever.setHypernyms(new ArrayList<String>());
+					retriever.setHyponyms(new ArrayList<String>());
+					retriever.setAntonyms(new ArrayList<String>());		
+
+				}
 				// if no senses are found for this node, then add only the embed as lexical node
 				if (lexSem.isEmpty()){
 					String sense = "00000000";
@@ -656,6 +692,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 			// for now, embed is the same for all senses of a given word, so only initialize at the end of each node 
 			retriever.setEmbed(null);
 		}
+		// make sure you get indirect semantics for things added later to the context graph
 		for (SemanticNode<?> ctxNode : graph.getContextGraph().getNodes()){
 			if (ctxNode.getLabel().contains("person") || ctxNode.getLabel().contains("thing")){
 				String sense = "";
@@ -700,7 +737,6 @@ public class DepGraphToSemanticGraph implements Serializable {
 				retriever.setHypernyms(new ArrayList<String>());
 				retriever.setHyponyms(new ArrayList<String>());
 				retriever.setAntonyms(new ArrayList<String>());				
-
 			}
 		}
 	}

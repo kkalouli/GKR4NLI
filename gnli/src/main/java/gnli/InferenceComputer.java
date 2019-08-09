@@ -101,13 +101,13 @@ public class InferenceComputer {
 			e.printStackTrace();
 		}
 		// for learning==true
-		this.entailRolePaths = new HashMap<String, ArrayList<HeadModifierPathPair>>();
-		this.neutralRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
-		this.contraRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		//this.entailRolePaths = new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		//this.neutralRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		//this.contraRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
 		// for learning==false
-		//this.entailRolePaths = deserialize("entail");
-		//this.neutralRolePaths =  deserialize("neutral");
-		//this.contraRolePaths =  deserialize("contra");
+		this.entailRolePaths = deserialize("entail");
+		this.neutralRolePaths =  deserialize("neutral");
+		this.contraRolePaths =  deserialize("contra");
 		// comment out due to multithreading; comment in if you do not want multithreading
 		this.semGraph = new DepGraphToSemanticGraph(bert, tokenizer, wnDict, sumoContent);
 		//this.semGraph = new DepGraphToSemanticGraph();
@@ -189,7 +189,7 @@ public class InferenceComputer {
 				fileIn = new FileInputStream("serialized_RolePaths_entail.ser");
 				in = new ObjectInputStream(fileIn);
 				rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
-				for (String key: rolePaths.keySet()) {
+				/*for (String key: rolePaths.keySet()) {
 					if (key.equals("[sem_subj]/[sem_obj]")) {
 						ArrayList<HeadModifierPathPair> list = rolePaths.get(key);
 						String test = "";
@@ -225,6 +225,10 @@ public class InferenceComputer {
 				fileIn = new FileInputStream("serialized_RolePaths_contra.ser");
 				in = new ObjectInputStream(fileIn);
 		        rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
+		        /*for (String key: rolePaths.keySet()) {
+					ArrayList<HeadModifierPathPair> list = rolePaths.get(key);
+					String test = "";
+				}
 		        /*ArrayList<Integer> lengths = new ArrayList<Integer>();
 				for (String key: rolePaths.keySet()){
 					ArrayList<HeadModifierPathPair> test = rolePaths.get(key);
@@ -321,6 +325,12 @@ public class InferenceComputer {
 		hypotheses.add(graphH);
 		GNLIGraph gnli = new GNLIGraph(texts, hypotheses);
 		
+		gnli.getHypothesisGraph().displayRolesAndCtxs();
+		gnli.getTextGraph().displayRolesAndCtxs();
+		gnli.getTextGraph().displayDependencies();
+		gnli.getTextGraph().displayLex();
+		gnli.getTextGraph().displayProperties();
+		
 		// Go through premise and hypothesis graphs making initial term matches.
 		// This only compares nodes in the graphs, and takes no account of the edges
 		// in the graphs.
@@ -351,7 +361,7 @@ public class InferenceComputer {
 		String labelToLearn = "";
 		if (learning == true)
 			labelToLearn = correctLabel;
-		PathScorer scorer = new PathScorer(gnli,50f, learning, this);
+		PathScorer scorer = new PathScorer(gnli,100f, learning, this);
 		final SpecificityUpdater su = new SpecificityUpdater(gnli,scorer, labelToLearn);
 		su.updateSpecifity();	
 		// Now look at the updated matches and context veridicalities to
@@ -493,11 +503,11 @@ public class InferenceComputer {
 		//long startTime = System.currentTimeMillis();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "The man is licking the dog.";	
-		String hypothesis = "The dog is licking the man.";
+		String premise = "2 men are walking.";	
+		String hypothesis = "2 people are walking.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_entail_and_neutral_active.txt";
-		String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";
+		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/to_check.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);
@@ -505,7 +515,7 @@ public class InferenceComputer {
 		//System.out.println("The whole thing took " + (endTime - startTime) + " milliseconds");
 		//comp.deserializeFileWithComputedPairs(file);
 		//comp.deserialize("entail");
-		//comp.deserialize("neutral");
+		//comp.deserialize("contra");
 	}
 	
 	
