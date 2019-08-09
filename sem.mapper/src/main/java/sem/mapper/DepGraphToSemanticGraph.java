@@ -569,9 +569,9 @@ public class DepGraphToSemanticGraph implements Serializable {
 		2 the WSD of each word
 		==> put 1. in a separate thread to speed up process 
 		*/ 
-		 ExecutorService executorService = Executors.newSingleThreadExecutor();
-		 Future future = executorService.submit(new LexicalGraphConcurrentTask(wholeCtx));
-		 executorService.shutdown();
+		 //ExecutorService executorService = Executors.newSingleThreadExecutor();
+		 //Future future = executorService.submit(new LexicalGraphConcurrentTask(wholeCtx));
+		 //executorService.shutdown();
 		try {		
 			senses = retriever.disambiguateSensesWithJIGSAW(wholeCtx); // stanGraph.toRecoveredSentenceString());
 			// next line needed for non-multithreading
@@ -605,9 +605,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 					senseContent.setHyponyms(new ArrayList<String>());
 					senseContent.setAntonyms(new ArrayList<String>());
 					senseContent.setEmbed(retriever.getEmbed());
-					senseContent.setSenseScore(0);
-
-					senseContent.setEmbed(retriever.getEmbed());			
+					senseContent.setSenseScore(0);			
 					// create new Sense Node
 					SenseNode senseNode = new SenseNode(sense, senseContent);
 					// create new LexEdge

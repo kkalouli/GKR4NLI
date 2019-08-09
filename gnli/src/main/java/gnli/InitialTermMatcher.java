@@ -476,7 +476,7 @@ public class InitialTermMatcher {
 	protected  List<MatchEdge> checkEmbedMatch(CheckedTermNode cHTerm, TermNode similHTerm,TermNode similTTerm ) {
 		List<MatchEdge> retval = new ArrayList<MatchEdge>();
 		// avoid matching if the tTerm is already matched to another hTerm, to avoid overmatching
-		if (similHTerm != null && similTTerm != null && gnliGraph.getInMatches(similTTerm).isEmpty() && highestCosSimil > 0.60){
+		if (similHTerm != null && similTTerm != null && gnliGraph.getInMatches(similTTerm).isEmpty() && highestCosSimil > 0.65){
 			// subtract the similarity from 1 in order to have the result as the penalty(depth). This means
 			// highest cosine similarity will give lower penalty than lower similarity.
 			double depth = 1 - highestCosSimil;

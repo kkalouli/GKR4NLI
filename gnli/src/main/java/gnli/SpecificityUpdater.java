@@ -520,7 +520,8 @@ public class SpecificityUpdater {
 				this.pathScorer.addEntailRolePath(mcp);
 			else if (!correctLabel.equals("") && correctLabel.equals("N"))
 				this.pathScorer.addNeutralRolePath(mcp);
-			
+			else if (!correctLabel.equals("") && correctLabel.equals("C"))
+				this.pathScorer.addContraRolePath(mcp);
 			if (this.pathScorer.pathBelowThreshold(mcp.getCost())) {
 				return mcp;
 			} else {

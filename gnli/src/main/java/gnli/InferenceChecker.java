@@ -53,7 +53,7 @@ public class InferenceChecker {
 	
 	private void computeInferenceRelation() {
 		HashMap<SemanticNode<?>,MatchEdge> rootNodeMatches = new HashMap<SemanticNode<?>,MatchEdge>();
-		gnliGraph.getMatchGraph().display();
+		//gnliGraph.getMatchGraph().display();
 		// find the root node of the role graph; there might be more than one root nodes or a double root node
 		for (MatchEdge matchEdge : gnliGraph.getMatches()){
 			SemanticNode<?> hTerm = gnliGraph.getStartNode(matchEdge);
