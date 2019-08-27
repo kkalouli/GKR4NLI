@@ -276,8 +276,8 @@ public class SpecificityUpdater {
 			if (justification != null){
 				hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),spec));
 				hypoTextMatch.match.addJustification(justification);
-				HashMap<String, Double> scoreComponents = ((MatchEdge) justification.getModifiersPair()).getScoreComponents();
-				hypoTextMatch.match.incrementScore(scoreComponents);
+				float cost = justification.getCost();
+				hypoTextMatch.match.incrementScore("distance", cost);
 				String test = "";
 			} else{
 				gnliGraph.removeMatchEdge(hypoTextMatch.match);

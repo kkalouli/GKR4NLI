@@ -116,6 +116,7 @@ public class ContextMapper implements Serializable {
 		//graph.displayContexts();
 		integrateNegativeContexts();
 		integrateModalContexts();
+		//integrateHypotheticalContexts();
 		//graph.displayContexts();
 		if (coord == false)
 			checkForPostIntegrationMistakes();
@@ -1232,6 +1233,39 @@ public class ContextMapper implements Serializable {
 						}
 					}
 				}	
+			}
+		}
+	}
+	
+	private void integrateHypotheticalContexts(){
+		for (SemanticEdge edge : depGraph.getEdges()){
+			if (edge.getLabel().equals("advcl:if")){
+				SemanticNode<?> startNode = graph.getStartNode(edge);
+				SemanticNode<?> finishNode = graph.getFinishNode(edge);
+				String stringCtxOfStartNode =  ((SkolemNodeContent) startNode.getContent()).getContext();
+				String stringCtxOfFinishNode =  ((SkolemNodeContent) finishNode.getContent()).getContext();
+				SemanticNode<?> ctxOfStartNode = null;
+				SemanticNode<?> ctxOfFinishNode = null;
+				for (SemanticNode<?> ctxNode : graph.getContextGraph().getNodes()){
+					if (ctxNode.getLabel().equals(stringCtxOfStartNode)){
+						ctxOfStartNode = ctxNode;
+					}
+					else if (ctxNode.getLabel().equals(stringCtxOfFinishNode)){
+						ctxOfFinishNode = ctxNode;
+					}
+				}
+				if (ctxOfStartNode == null){
+					ctxOfStartNode = addSelfContextNodeAndEdgeToGraph(startNode);
+					
+				}
+				if (ctxOfFinishNode == null){
+					ctxOfFinishNode = addSelfContextNodeAndEdgeToGraph(finishNode);
+					
+				}
+				ContextHeadEdge verEdge = new ContextHeadEdge(GraphLabels.VER, new  RoleEdgeContent());
+				graph.addContextEdge(verEdge,ctxOfFinishNode, ctxOfStartNode);	
+			
+				
 			}
 		}
 	}

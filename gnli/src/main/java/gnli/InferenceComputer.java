@@ -328,8 +328,8 @@ public class InferenceComputer {
 		gnli.getHypothesisGraph().displayRolesAndCtxs();
 		gnli.getTextGraph().displayRolesAndCtxs();
 		gnli.getTextGraph().displayDependencies();
-		gnli.getTextGraph().displayLex();
-		gnli.getTextGraph().displayProperties();
+		//gnli.getTextGraph().displayLex();
+		//gnli.getTextGraph().displayProperties();
 		
 		// Go through premise and hypothesis graphs making initial term matches.
 		// This only compares nodes in the graphs, and takes no account of the edges
@@ -338,7 +338,7 @@ public class InferenceComputer {
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli, kb);
 		initialTermMatcher.process();
 		//gnli.display();
-		//gnli.matchGraph.display();
+		gnli.matchGraph.display();
 		//graphT.displayLex();
 		//graphH.displayLex();
 		//gnli.getHypothesisGraph().displayContexts();
@@ -364,6 +364,7 @@ public class InferenceComputer {
 		PathScorer scorer = new PathScorer(gnli,100f, learning, this);
 		final SpecificityUpdater su = new SpecificityUpdater(gnli,scorer, labelToLearn);
 		su.updateSpecifity();	
+		gnli.matchGraph.display();
 		// Now look at the updated matches and context veridicalities to
 		// determine entailment relations
 		final InferenceChecker infCh = new InferenceChecker(gnli);

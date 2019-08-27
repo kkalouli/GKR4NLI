@@ -629,7 +629,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 
 				}
 				// if no senses are found for this node, then add only the embed as lexical node
-				if (lexSem.isEmpty()){
+				else if (lexSem.isEmpty()){
 					String sense = "00000000";
 					SenseNodeContent senseContent = new SenseNodeContent(sense);
 					senseContent.addConcept("");
@@ -798,7 +798,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 					if (n instanceof SkolemNode){
 						if (((SkolemNodeContent) n.getContent()).getPosition() == k.getTarget()){
 							// in the first pass of this chain, set the startNode, in all other ones set the finishNode (the start Node remains the same)
-							if (startNode == null){
+							if (startNode == null && !((SkolemNodeContent) n.getContent()).getPartOfSpeech().contains("PRP")){
 								startNode = n;
 							} else {
 								finishNode = n;
@@ -806,6 +806,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 						}
 					}
 				}
+				
 				// if all passes are over and there is coreference, add the links
 				if (startNode != null && finishNode != null){
 					LinkEdge linkEdge = new LinkEdge(GraphLabels.PRONOUN_RESOLUTION, new DefaultEdgeContent());
@@ -920,7 +921,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		graph.displayLex();	
 		graph.displayRolesAndCtxs();
 		graph.displayCoref();
-		String ctxs = graph.getContextGraph().getMxGraph();
+		/*String ctxs = graph.getContextGraph().getMxGraph();
 		String roles = graph.getRoleGraph().getMxGraph();
 		String deps = graph.getDependencyGraph().getMxGraph();
 		String props = graph.getPropertyGraph().getMxGraph();
@@ -946,7 +947,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		writer.write(rolesAndCoref);
 		writer.write("\n\n");
 		writer.flush();
-		writer.close();
+		writer.close();*/
 		//ImageIO.write(graph.saveDepsAsImage(),"png", new File("/Users/kkalouli/Desktop/deps.png"));
 		System.out.println(graph.displayAsString());
 		for (SemanticNode<?> node : graph.getDependencyGraph().getNodes()){
@@ -984,7 +985,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
 		//emConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/expriment_InferSent/SICK_unique_sent_test_InferSent_onlySkolems.txt");
-		String sentence = "No woman is walking.";//"A family is watching a little boy who is hitting a baseball.";
+		String sentence = "The banker near the judge saw the actor.";//"A family is watching a little boy who is hitting a baseball.";
 		String context = "The kid faked the illness.";
 		semConverter.processSentence(sentence, sentence+" "+context);
 	}

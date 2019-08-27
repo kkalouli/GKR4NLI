@@ -1052,15 +1052,17 @@ public class SemanticGraph implements Serializable  {
 	public List<SkolemNode> getAllModifiers(SkolemNode node) {
 		List<SkolemNode> retval = new ArrayList<SkolemNode>();
 		if (this.roleGraph.containsNode(node)) {
-			// get also all common aarguments depending on any combined termNodes
-			/*SemanticNode <?> incomingNode = this.roleGraph.getInNeighbors(node).iterator().next();
-			if (incomingNode instanceof TermNode && !(incomingNode instanceof SkolemNode) ) {
-				for (SemanticNode<?> semNode : this.roleGraph.getOutReach(incomingNode)) {
-					if (SkolemNode.class.isAssignableFrom(semNode.getClass()) && !semNode.equals(node) && !isRstr((TermNode) semNode)) {
-						retval.add((SkolemNode) semNode);
+			// get also all common arguments depending on any combined termNodes, e.g. the common subject of: The woman is applying eye-liner and using eye-pencil. 
+			if (!this.roleGraph.getInNeighbors(node).isEmpty()){
+				SemanticNode <?> incomingNode = this.roleGraph.getInNeighbors(node).iterator().next();
+				if (incomingNode instanceof TermNode && !(incomingNode instanceof SkolemNode) ) {
+					for (SemanticNode<?> semNode : this.roleGraph.getOutReach(incomingNode)) {
+						if (SkolemNode.class.isAssignableFrom(semNode.getClass()) && !semNode.equals(node) && !isRstr((TermNode) semNode) && this.roleGraph.getEdges(incomingNode, semNode).size() == 1 && !this.roleGraph.getEdges(incomingNode, semNode).iterator().next().getLabel().equals("is_element") ) {
+							retval.add((SkolemNode) semNode);
+						}
 					}
 				}
-			}*/
+			}
 			for (SemanticNode<?> semNode : this.roleGraph.getOutReach(node)) {
 				if (SkolemNode.class.isAssignableFrom(semNode.getClass()) && !semNode.equals(node) && !isRstr((TermNode) semNode) && !retval.contains(semNode)) {
 					retval.add((SkolemNode) semNode);

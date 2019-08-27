@@ -252,21 +252,46 @@ public class InferenceChecker {
 			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
 			Polarity tPolarity = tTermCtxs.get(textRootCtx);
 			if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.VERIDICAL) {
-				if (matchSpecificity != Specificity.DISJOINT){
+				// it is not a contradiction if there is no disjoint relation and the score is below maxCost*2
+				if (matchSpecificity != Specificity.DISJOINT && rootNodeMatches.get(key).getScore() < 200){
 					disjoint = false;
 				} 
+				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
+				if (matchSpecificity == Specificity.EQUALS && rootNodeMatches.get(key).getScore() >= 200){
+					entail = false;
+				}
+				// if there is subclass relation but the score is higher than maxCost*2, then there is no entail but contradiction
+				if (matchSpecificity == Specificity.SUBCLASS && rootNodeMatches.get(key).getScore() >= 200){
+					entail = false;
+				}
+				// if there is neither equals nor subclass, there is no entail
 				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUBCLASS) {
 					entail = false;		
+				} 
+				if (matchSpecificity == Specificity.NONE){
+					disjoint = false;
 				} 
 				
 			}
 			else if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
-				if (matchSpecificity != Specificity.DISJOINT ){
+				if (matchSpecificity != Specificity.DISJOINT && rootNodeMatches.get(key).getScore() < 200 ){
 					disjoint = false;
 				}
+				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
+				if (matchSpecificity == Specificity.EQUALS && rootNodeMatches.get(key).getScore() >= 200){
+					entail = false;
+				}
+				// if there is superclass relation but the score is higher than maxCost*2, then there is no entail but contradiction
+				if (matchSpecificity == Specificity.SUPERCLASS && rootNodeMatches.get(key).getScore() >= 200){
+					entail = false;
+				}
+				// if there is neither equals nor superclass, there is no entail
 				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUPERCLASS) {
 					entail = false;		
 				}
+				if (matchSpecificity == Specificity.NONE){
+					disjoint = false;
+				} 
 			} else{
 				entail = false;
 				disjoint = false;

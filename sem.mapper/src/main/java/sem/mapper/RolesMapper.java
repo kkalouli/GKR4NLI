@@ -592,6 +592,8 @@ public class RolesMapper implements Serializable {
 		break;
 		case "advmod": role = GraphLabels.AMOD;
 		break;
+		//case "advcl:if": role = GraphLabels.RESTRICTION;
+		//break;
 		case "acl:relcl": role = GraphLabels.RESTRICTION;
 		break;
 		case "compound":role = GraphLabels.COMPOUND;

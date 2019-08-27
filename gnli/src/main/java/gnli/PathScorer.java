@@ -65,16 +65,17 @@ public class PathScorer implements Serializable {
 			return;
 		if (pathToAdd.getConclusionPath() != null && pathToAdd.getPremisePath() != null){
 			String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();		
-			// only add it to the entail paths if it is not already contained in the contraPaths (entailPaths are more dominant) 
-			if (infComputer.getContraRolePaths().containsKey(key) )
-				return;
+			// 1st learning: only add it to the entail paths if it is not already contained in the contraPaths (contraPaths are more dominant) 
+			/*if (infComputer.getContraRolePaths().containsKey(key) )
+				return;*/
+			// 2nd learning: add it anyway
 			if (!infComputer.getEntailRolePaths().containsKey(key)){
 				infComputer.getEntailRolePaths().put(key, new ArrayList<HeadModifierPathPair>());
 			}
 			this.infComputer.getEntailRolePaths().get(key).add(pathToAdd);
-			// if a path is added to the entailPaths, it should be removed from the neutralPaths in case it is there. 
-			if (infComputer.getNeutralRolePaths().keySet().contains(key))
-				removeNeutralRolePath(key); 
+			// 1st learning: if a path is added to the entailPaths, it should be removed from the neutralPaths in case it is there. 
+			/*if (infComputer.getNeutralRolePaths().keySet().contains(key))
+				removeNeutralRolePath(key);*/ 
 		}
 	}
 	
@@ -94,11 +95,11 @@ public class PathScorer implements Serializable {
 				infComputer.getContraRolePaths().put(key, new ArrayList<HeadModifierPathPair>());
 			}
 			this.infComputer.getContraRolePaths().get(key).add(pathToAdd);
-			// if a path is added to the entailPaths, it should be removed from the neutralPaths in case it is there. 
-			if (infComputer.getNeutralRolePaths().keySet().contains(key))
+			// 1st learning: if a path is added to the contraPaths, it should be removed from the neutralPaths and the entailPaths in case it is there. 
+			/*if (infComputer.getNeutralRolePaths().keySet().contains(key))
 				removeNeutralRolePath(key); 
 			if (infComputer.getEntailRolePaths().keySet().contains(key))
-				removeEntailRolePath(key); 
+				removeEntailRolePath(key); */
 		}
 	}
 	
@@ -126,9 +127,10 @@ public class PathScorer implements Serializable {
 			return;
 		if (pathToAdd.getConclusionPath() != null && pathToAdd.getPremisePath() != null){
 			String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();
-			// only add it to the neutral paths if it is not already contained in the entailPaths (entailPaths are more dominant) 
-			if (infComputer.getEntailRolePaths().containsKey(key) || infComputer.getContraRolePaths().containsKey(key) )
-				return;
+			// 1st learning: only add it to the neutral paths if it is not already contained in the entailPaths (entailPaths are more dominant) 
+			//if (infComputer.getEntailRolePaths().containsKey(key) || infComputer.getContraRolePaths().containsKey(key) )
+			//	return;
+			// 2nd learning: add it anyway
 			if (!infComputer.getNeutralRolePaths().containsKey(key)){
 				infComputer.getNeutralRolePaths().put(key, new ArrayList<HeadModifierPathPair>());
 			}
@@ -186,16 +188,16 @@ public class PathScorer implements Serializable {
 					cost += maxCost/2;
 				else 
 					cost += maxCost;
-			else if (infComputer.getEntailRolePaths().containsKey(key))
-				cost -= 10;
 			else if (infComputer.getContraRolePaths().containsKey(key))
-				cost -= 10;
+				cost += maxCost*2 ;
+			else if (infComputer.getEntailRolePaths().containsKey(key))
+				cost -= 10;		
 		}
 		if (tPath.size() == hPath.size() && hPath.size() == 1){
 			// if the match is based on opposing roles, it should be neglected
 			if ( (tPath.get(0).getLabel().equals("sem_subj") && hPath.get(0).getLabel().equals("sem_obj")) ||
 				 (tPath.get(0).getLabel().equals("sem_obj") && hPath.get(0).getLabel().equals("sem_subj")) )
-				cost += maxCost+10;
+				cost += maxCost*2;
 			else if ( (tPath.get(0).getLabel().equals("amod") && hPath.get(0).getLabel().equals("rstr")) ||
 					  (tPath.get(0).getLabel().equals("rstr") && hPath.get(0).getLabel().equals("amod"))   )
 				cost -= 10;
@@ -247,8 +249,9 @@ public class PathScorer implements Serializable {
 	
 
 	public boolean pathBelowThreshold(float cost) {
-		return cost < maxCost;
+		return cost < maxCost || cost >= maxCost*2;
 	}
+
 
 
 }

@@ -33,7 +33,7 @@ public class StanfordParser implements Serializable{
 	public StanfordParser() throws FileNotFoundException, UnsupportedEncodingException{
 		this.pipeline = new StanfordCoreNLP(
 				PropertiesUtils.asProperties(
-						"annotators", "tokenize,ssplit,pos,lemma,ner,depparse,parse,mention, coref",
+						"annotators", "tokenize,ssplit,pos,lemma,ner,depparse,parse,coref",
 						"depparse.extradependencies", "MAXIMAL",
 						"tokenize.language", "en"));
 	}	

@@ -393,7 +393,12 @@ public class InitialTermMatcher {
 			//float penalty = 2 - (tSenseNode.getContent().getSenseScore() + hSenseNode.getContent().getSenseScore());
 			if (tConcept.equals(hConcept)) {
 				linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, Specificity.EQUALS, 0, 0);
-			} else {
+			} else if (tConcept.substring(0,tConcept.length()-1).equals(hConcept.substring(0,hConcept.length()-1)) && tConcept.substring(tConcept.length()-1).equals("+") && hConcept.substring(hConcept.length()-1).equals("=")) {
+				linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, Specificity.SUBCLASS, 0, 0);
+			} else if (tConcept.substring(0,tConcept.length()-1).equals(hConcept.substring(0,hConcept.length()-1)) && tConcept.substring(tConcept.length()-1).equals("=") && hConcept.substring(hConcept.length()-1).equals("+")) {
+				linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, Specificity.SUPERCLASS, 0, 0);
+			} 
+			else {
 				ArrayList<Formula> listOfRelations = kb.askWithRestriction(2, tConcept.substring(0,tConcept.length()-1), 1, hConcept.substring(0,hConcept.length()-1));
 				listOfRelations.addAll(kb.askWithRestriction(2, hConcept.substring(0,hConcept.length()-1), 1, tConcept.substring(0,tConcept.length()-1)));
 				//ArrayList<Formula> result3 = KButilities.termIntersection(kb,"Pilot","FlyingAircraft");
