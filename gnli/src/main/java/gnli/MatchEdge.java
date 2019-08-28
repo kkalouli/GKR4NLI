@@ -1,6 +1,7 @@
 package gnli;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +98,15 @@ public class MatchEdge extends LinkEdge implements Serializable {
 	public void incrementScore(String feature, float cost) {
 		((MatchContent) this.content).addScore(feature, cost);
 		
+	}
+	
+	public void addCost(float cost) {
+		((MatchContent) this.content).getCostList().add(cost);
+		
+	}
+	
+	public ArrayList<Float> getCostList() {
+		return	((MatchContent) this.content).getCostList();		
 	}
 	
 	public void incrementScore(HashMap<String, Double> map) {

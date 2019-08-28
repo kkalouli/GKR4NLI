@@ -108,6 +108,108 @@ public class InferenceComputer {
 		this.entailRolePaths = deserialize("entail");
 		this.neutralRolePaths =  deserialize("neutral");
 		this.contraRolePaths =  deserialize("contra");
+		
+		// get stats out of the serialized rolePaths
+		/*ArrayList<String> all3 = new ArrayList<String>();
+		ArrayList<String> entailAndNeutral = new ArrayList<String>();
+		ArrayList<String> entailAndContra = new ArrayList<String>();
+		ArrayList<String> neutralAndContra = new ArrayList<String>();
+		ArrayList<String> neutral = new ArrayList<String>();
+		ArrayList<String> contra = new ArrayList<String>();
+		ArrayList<String> entail = new ArrayList<String>();
+		
+		for (String key: entailRolePaths.keySet()) {
+			if (neutralRolePaths.keySet().contains(key) && contraRolePaths.keySet().contains(key)){
+				int occurEntail = entailRolePaths.get(key).size();
+				int occurContra = contraRolePaths.get(key).size();
+				int occurNeutral = neutralRolePaths.get(key).size();
+				all3.add(key+"\t"+Integer.toString(occurEntail)+"\t"+Integer.toString(occurContra)+"\t"+Integer.toString(occurNeutral));
+			}
+			else if (neutralRolePaths.keySet().contains(key) && !contraRolePaths.keySet().contains(key)){
+				int occurEntail = entailRolePaths.get(key).size();
+				int occurNeutral = neutralRolePaths.get(key).size();
+				entailAndNeutral.add(key+"\t"+Integer.toString(occurEntail)+"\t"+Integer.toString(occurNeutral));
+			}
+			else if (!neutralRolePaths.keySet().contains(key) && contraRolePaths.keySet().contains(key)){
+				int occurEntail = entailRolePaths.get(key).size();
+				int occurContra = contraRolePaths.get(key).size();
+				entailAndContra.add(key+"\t"+Integer.toString(occurEntail)+"\t"+Integer.toString(occurContra));
+			}
+			else {
+				entail.add(key);
+			}
+		}
+		
+		for (String key: contraRolePaths.keySet()) {
+			if (neutralRolePaths.keySet().contains(key) && entailRolePaths.keySet().contains(key)){
+				int occurEntail = entailRolePaths.get(key).size();
+				int occurContra = contraRolePaths.get(key).size();
+				int occurNeutral = neutralRolePaths.get(key).size();
+				if (!all3.contains(key+"\t"+Integer.toString(occurEntail)+"\t"+Integer.toString(occurContra)+"\t"+Integer.toString(occurNeutral))){				
+					all3.add(key+"\t"+Integer.toString(occurEntail)+"\t"+Integer.toString(occurContra)+"\t"+Integer.toString(occurNeutral));
+				}
+			}
+			else if (neutralRolePaths.keySet().contains(key) && !entailRolePaths.keySet().contains(key)){
+				int occurContra = contraRolePaths.get(key).size();
+				int occurNeutral = neutralRolePaths.get(key).size();
+				neutralAndContra.add(key+"\t"+Integer.toString(occurContra)+"\t"+Integer.toString(occurNeutral));
+
+			}
+			else if (!neutralRolePaths.keySet().contains(key) && entailRolePaths.keySet().contains(key)){
+				int occurEntail = entailRolePaths.get(key).size();
+				int occurContra = contraRolePaths.get(key).size();
+				if (!entailAndContra.contains(key+"\t"+Integer.toString(occurEntail)+"\t"+Integer.toString(occurContra))){
+					entailAndContra.add(key+"\t"+Integer.toString(occurEntail)+"\t"+Integer.toString(occurContra));
+				}
+			}
+			else {
+				contra.add(key);
+			}
+		}
+		
+		for (String key: neutralRolePaths.keySet()) {
+			if (entailRolePaths.keySet().contains(key) && contraRolePaths.keySet().contains(key)){
+				int occurEntail = entailRolePaths.get(key).size();
+				int occurContra = contraRolePaths.get(key).size();
+				int occurNeutral = neutralRolePaths.get(key).size();
+				if (!all3.contains(key+"\t"+Integer.toString(occurEntail)+"\t"+Integer.toString(occurContra)+"\t"+Integer.toString(occurNeutral))){
+					all3.add(key+"\t"+Integer.toString(occurEntail)+"\t"+Integer.toString(occurContra)+"\t"+Integer.toString(occurNeutral));
+				}
+			}
+			else if (contraRolePaths.keySet().contains(key) && !entailRolePaths.keySet().contains(key)){
+				int occurContra = contraRolePaths.get(key).size();
+				int occurNeutral = neutralRolePaths.get(key).size();
+				if (!neutralAndContra.contains(key+"\t"+Integer.toString(occurContra)+"\t"+Integer.toString(occurNeutral))){
+					neutralAndContra.add(key+"\t"+Integer.toString(occurContra)+"\t"+Integer.toString(occurNeutral));
+				}
+			}
+			else if (!contraRolePaths.keySet().contains(key) && entailRolePaths.keySet().contains(key)){
+				int occurEntail = entailRolePaths.get(key).size();
+				int occurNeutral = neutralRolePaths.get(key).size();
+				if (!entailAndNeutral.contains(key+"\t"+Integer.toString(occurEntail)+"\t"+Integer.toString(occurNeutral))){
+					entailAndNeutral.add(key+"\t"+Integer.toString(occurEntail)+"\t"+Integer.toString(occurNeutral));
+				}
+			}
+			else {
+				neutral.add(key);
+			}
+		}
+		
+		System.out.println("all3");
+		System.out.println(all3);
+		System.out.println("entailAndNeutral");
+		System.out.println(entailAndNeutral);
+		System.out.println("entailAndContra");
+		System.out.println(entailAndContra);
+		System.out.println(neutralAndContra );
+		System.out.println("neutralAndContra");
+		System.out.println("neutral");
+		System.out.println(neutral);
+		System.out.println("contra");
+		System.out.println(contra);
+		System.out.println("entail");
+		System.out.println(entail);*/
+		
 		// comment out due to multithreading; comment in if you do not want multithreading
 		this.semGraph = new DepGraphToSemanticGraph(bert, tokenizer, wnDict, sumoContent);
 		//this.semGraph = new DepGraphToSemanticGraph();
@@ -186,16 +288,18 @@ public class InferenceComputer {
 		ObjectInputStream in;
 		if (type.equals("entail")){
 			try {
-				fileIn = new FileInputStream("serialized_RolePaths_entail.ser");
+				fileIn = new FileInputStream("serialized_RolePaths_entail_2nd_learning.ser");
 				in = new ObjectInputStream(fileIn);
 				rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
 				/*for (String key: rolePaths.keySet()) {
+					//System.out.println("+++++++entail+++++");
+		        	//System.out.println(key);
 					if (key.equals("[sem_subj]/[sem_obj]")) {
 						ArrayList<HeadModifierPathPair> list = rolePaths.get(key);
 						String test = "";
 					}
 				}
-				/*ArrayList<Integer> lengths = new ArrayList<Integer>();
+				ArrayList<Integer> lengths = new ArrayList<Integer>();
 				for (String key: rolePaths.keySet()){
 					lengths.add(rolePaths.get(key).size());
 				}
@@ -206,9 +310,9 @@ public class InferenceComputer {
 				int average = sum/lengths.size();
 				int max = Collections.max(lengths);
 				int min = Collections.min(lengths);
-				System.out.println("Average entail:"+String.valueOf(average));
-				System.out.println("Max entail:"+String.valueOf(max));
-				System.out.println("Min entail:"+String.valueOf(min));*/
+				//System.out.println("Average entail:"+String.valueOf(average));
+				//System.out.println("Max entail:"+String.valueOf(max));
+				//System.out.println("Min entail:"+String.valueOf(min));*/
 				in.close();
 			} catch (FileNotFoundException e1) {
 				// TODO Auto-generated catch block
@@ -222,14 +326,18 @@ public class InferenceComputer {
 			}
 		} else if (type.equals("contra")) {
 			try {
-				fileIn = new FileInputStream("serialized_RolePaths_contra.ser");
+				fileIn = new FileInputStream("serialized_RolePaths_contra_2nd_learning.ser");
 				in = new ObjectInputStream(fileIn);
 		        rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
 		        /*for (String key: rolePaths.keySet()) {
-					ArrayList<HeadModifierPathPair> list = rolePaths.get(key);
-					String test = "";
+		        	//System.out.println("+++++++contra+++++");
+		        	//System.out.println(key);
+					if (key.equals("[sem_subj]/[sem_obj]")) {
+						ArrayList<HeadModifierPathPair> list = rolePaths.get(key);
+						String test = "";
+					}
 				}
-		        /*ArrayList<Integer> lengths = new ArrayList<Integer>();
+		        ArrayList<Integer> lengths = new ArrayList<Integer>();
 				for (String key: rolePaths.keySet()){
 					ArrayList<HeadModifierPathPair> test = rolePaths.get(key);
 					lengths.add(rolePaths.get(key).size());
@@ -241,9 +349,9 @@ public class InferenceComputer {
 				int average = sum/lengths.size();
 				int max = Collections.max(lengths);
 				int min = Collections.min(lengths);
-				System.out.println("Average neutral:"+String.valueOf(average));
-				System.out.println("Max neutral:"+String.valueOf(max));
-				System.out.println("Min neutral:"+String.valueOf(min));*/
+				//System.out.println("Average neutral:"+String.valueOf(average));
+				//System.out.println("Max neutral:"+String.valueOf(max));
+				//System.out.println("Min neutral:"+String.valueOf(min));*/
 				in.close();
 			} catch (FileNotFoundException e1) {
 				// TODO Auto-generated catch block
@@ -257,10 +365,18 @@ public class InferenceComputer {
 			}
 		} else {
 			try {
-				fileIn = new FileInputStream("serialized_RolePaths_neutral.ser");
+				fileIn = new FileInputStream("serialized_RolePaths_neutral_2nd_learning.ser");
 				in = new ObjectInputStream(fileIn);
 		        rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
-		        /*ArrayList<Integer> lengths = new ArrayList<Integer>();
+		        /*for (String key: rolePaths.keySet()) {
+		        	//System.out.println("+++++++neutral+++++");
+		        	//System.out.println(key);
+					if (key.equals("[sem_subj]/[sem_obj]")) {
+						ArrayList<HeadModifierPathPair> list = rolePaths.get(key);
+						String test = "";
+					}
+				}
+		        ArrayList<Integer> lengths = new ArrayList<Integer>();
 				for (String key: rolePaths.keySet()){
 					ArrayList<HeadModifierPathPair> test = rolePaths.get(key);
 					lengths.add(rolePaths.get(key).size());
@@ -272,9 +388,9 @@ public class InferenceComputer {
 				int average = sum/lengths.size();
 				int max = Collections.max(lengths);
 				int min = Collections.min(lengths);
-				System.out.println("Average neutral:"+String.valueOf(average));
-				System.out.println("Max neutral:"+String.valueOf(max));
-				System.out.println("Min neutral:"+String.valueOf(min));*/
+				//System.out.println("Average neutral:"+String.valueOf(average));
+				//System.out.println("Max neutral:"+String.valueOf(max));
+				//System.out.println("Min neutral:"+String.valueOf(min));*/
 				in.close();
 			} catch (FileNotFoundException e1) {
 				// TODO Auto-generated catch block
@@ -361,7 +477,7 @@ public class InferenceComputer {
 		String labelToLearn = "";
 		if (learning == true)
 			labelToLearn = correctLabel;
-		PathScorer scorer = new PathScorer(gnli,100f, learning, this);
+		PathScorer scorer = new PathScorer(gnli,100f, 200f, learning, this);
 		final SpecificityUpdater su = new SpecificityUpdater(gnli,scorer, labelToLearn);
 		su.updateSpecifity();	
 		gnli.matchGraph.display();
@@ -409,13 +525,13 @@ public class InferenceComputer {
 					String spec = "";
 					if (decision.getJustifications() != null && !decision.getJustifications().isEmpty())
 						spec = decision.getJustifications().toString();	
-					writer.write(pair+"\t"+decision.getEntailmentRelation()+"\t"+decision.getMatchStrength()+"\t"+decision.isLooseContr()+
+					writer.write(pair+"\t"+decision.getEntailmentRelation()+"\t"+decision.getMatchStrength()+"\t"+decision.getMatchConfidence()+"\t"+decision.isLooseContr()+
 							"\t"+decision.isLooseEntail()+"\t"+spec+"\n");
 					writer.flush();
 					System.out.println("Processed pair "+ id);
 				}
 				else
-					decisionGraphs.add(new InferenceDecision(EntailmentRelation.UNKNOWN, 0.0, null, false, false, null));
+					decisionGraphs.add(new InferenceDecision(EntailmentRelation.UNKNOWN, 0.0, 0.0, null, false, false, null));
 				
 			} catch (Exception e){
 				writer.write(pair+"\t"+"Exception found:"+e.getMessage()+"\n");
@@ -515,8 +631,8 @@ public class InferenceComputer {
 		//long endTime = System.currentTimeMillis();
 		//System.out.println("The whole thing took " + (endTime - startTime) + " milliseconds");
 		//comp.deserializeFileWithComputedPairs(file);
-		//comp.deserialize("entail");
-		//comp.deserialize("contra");
+		
+		
 	}
 	
 	

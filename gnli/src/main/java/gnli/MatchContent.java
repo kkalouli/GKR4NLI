@@ -22,6 +22,7 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 	private boolean finalized = false;
 	private List<MatchOrigin> matchOrigin;
 	private List<HeadModifierPathPair> justification;
+	private ArrayList<Float> costList;
 
 	
 	public MatchContent() {
@@ -32,6 +33,7 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 		this.finalized = false;
 		this.matchOrigin = new ArrayList<MatchOrigin>();
 		this.justification = new ArrayList<HeadModifierPathPair>();
+		this.costList = new ArrayList<Float>();
 	}
 	
 	/**
@@ -106,6 +108,14 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 		this.finalized = other.finalized;
 		this.matchOrigin = other.matchOrigin;
 		this.justification = new ArrayList<HeadModifierPathPair>(other.justification);
+	}
+	
+	public ArrayList<Float> getCostList(){
+		return costList;
+	}
+	
+	public void setCostList(ArrayList<Float> costList){
+		this.costList = costList;
 	}
 	
 	/**

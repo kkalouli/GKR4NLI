@@ -23,6 +23,7 @@ public class InferenceChecker {
 	private SemanticNode<?> hypRootCtx;
 	private SemanticNode<?> textRootCtx;
 	private double matchStrength;
+	private double matchConfidence;
 	private ArrayList<MatchEdge> justifications;
 	private boolean looseContra;
 	private boolean looseEntail;
@@ -36,6 +37,7 @@ public class InferenceChecker {
 		looseContra = false;
 		looseEntail = false;
 		matchStrength = 0;
+		matchConfidence = 0;
 		justifications = new ArrayList<MatchEdge>();
 	}
 	
@@ -47,7 +49,7 @@ public class InferenceChecker {
 		if (this.entailmentRelation == EntailmentRelation.UNKNOWN) {
 			computeInferenceRelation();
 		}
-		return new InferenceDecision(entailmentRelation,matchStrength, justifications, looseContra, looseEntail, gnliGraph);
+		return new InferenceDecision(entailmentRelation,matchStrength, matchConfidence, justifications, looseContra, looseEntail, gnliGraph);
 	}
 	
 	
@@ -251,17 +253,20 @@ public class InferenceChecker {
 			}	
 			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
 			Polarity tPolarity = tTermCtxs.get(textRootCtx);
+			double cost = rootNodeMatches.get(key).getFeatureScore("cost");
 			if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.VERIDICAL) {
 				// it is not a contradiction if there is no disjoint relation and the score is below maxCost*2
-				if (matchSpecificity != Specificity.DISJOINT && rootNodeMatches.get(key).getScore() < 200){
+				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)){
 					disjoint = false;
 				} 
 				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
-				if (matchSpecificity == Specificity.EQUALS && rootNodeMatches.get(key).getScore() >= 200){
+				if ( (matchSpecificity == Specificity.EQUALS && costInContraBounds(cost) )
+						|| ( matchSpecificity == Specificity.EQUALS && costInNeutralBounds(cost) )){
 					entail = false;
 				}
 				// if there is subclass relation but the score is higher than maxCost*2, then there is no entail but contradiction
-				if (matchSpecificity == Specificity.SUBCLASS && rootNodeMatches.get(key).getScore() >= 200){
+				if ( (matchSpecificity == Specificity.SUBCLASS && costInContraBounds(cost) )
+						|| ( matchSpecificity == Specificity.SUBCLASS && costInNeutralBounds(cost) ) ){
 					entail = false;
 				}
 				// if there is neither equals nor subclass, there is no entail
@@ -274,15 +279,17 @@ public class InferenceChecker {
 				
 			}
 			else if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
-				if (matchSpecificity != Specificity.DISJOINT && rootNodeMatches.get(key).getScore() < 200 ){
+				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)){
 					disjoint = false;
 				}
 				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
-				if (matchSpecificity == Specificity.EQUALS && rootNodeMatches.get(key).getScore() >= 200){
+				if ( (matchSpecificity == Specificity.EQUALS && costInContraBounds(cost) )
+						|| ( matchSpecificity == Specificity.EQUALS && costInNeutralBounds(cost) )){
 					entail = false;
 				}
 				// if there is superclass relation but the score is higher than maxCost*2, then there is no entail but contradiction
-				if (matchSpecificity == Specificity.SUPERCLASS && rootNodeMatches.get(key).getScore() >= 200){
+				if ( (matchSpecificity == Specificity.SUPERCLASS && costInContraBounds(cost) )
+						|| ( matchSpecificity == Specificity.SUPERCLASS && costInNeutralBounds(cost) ) ){
 					entail = false;
 				}
 				// if there is neither equals nor superclass, there is no entail
@@ -313,13 +320,29 @@ public class InferenceChecker {
 		return false;
 	}
 	
+	private boolean costInContraBounds(double cost){
+		if (cost <= 225.0 && cost >= 175.0)
+			return true;
+		else
+			return false;
+	}
+	
+	private boolean costInNeutralBounds(double cost){
+		if (cost <= 125.0 && cost >= 75.0)
+			return true;
+		else
+			return false;
+	}
+	
 	
 	private void penalizeLooseMatching(EntailmentRelation relation, boolean strict, MatchEdge matchEdge){
 		this.matchStrength = 0;
+		this.matchConfidence = 0;
 		if (this.entailmentRelation == relation){
 			if (strict == false)
 				matchStrength = 1;
-			matchStrength -= matchEdge.getScore();
+			matchStrength -= matchEdge.getFeatureScore("depth")-matchEdge.getFeatureScore("distance");
+			matchConfidence = matchEdge.getFeatureScore("cost");
 			justifications.add(matchEdge);
 		}
 	}

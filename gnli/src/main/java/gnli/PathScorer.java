@@ -20,34 +20,46 @@ import sem.graph.vetypes.SkolemNode;
 public class PathScorer implements Serializable {
 	private static final long serialVersionUID = 7142446450358190985L;
 	private GNLIGraph gnliGraph;
-	private float maxCost;
+	private float neuCost;
+	private float contraCost;
 	private boolean learning;
 	private InferenceComputer infComputer;
 	
 	
-	public PathScorer(GNLIGraph gnliGraph, float maxCost, boolean learning, InferenceComputer infComputer) {
+	public PathScorer(GNLIGraph gnliGraph, float neuCost, float contraCost, boolean learning, InferenceComputer infComputer) {
 		super();
 		this.gnliGraph = gnliGraph;
-		this.maxCost = maxCost;
+		this.neuCost = neuCost;
+		this.contraCost = contraCost;
 		this.infComputer = infComputer;
 		this.learning = learning;
 	}
 	
 	
 	
-	public PathScorer(float maxCost) {
+	public PathScorer(float neuCost, float contraCost) {
 		this.gnliGraph = null;
-		this.maxCost = maxCost;
+		this.neuCost = neuCost;
+		this.contraCost = contraCost;
 	}
 	
 
-	public float getMaxCost() {
-		return maxCost;
+	public float getNeuCost() {
+		return neuCost;
 	}
 
 
-	public void setMaxCost(float maxCost) {
-		this.maxCost = maxCost;
+	public void setNeuCost(float neuCost) {
+		this.neuCost = neuCost;
+	}
+	
+	public float getContraCost() {
+		return contraCost;
+	}
+
+
+	public void setContraCost(float contraCost) {
+		this.contraCost = contraCost;
 	}
 
 
@@ -156,17 +168,18 @@ public class PathScorer implements Serializable {
 		List<SemanticEdge> hPath = hMPath.getConclusionPath();
 		int tLen = 0;
 		int hLen = 0;
-		if (tPath != null && !tPath.isEmpty())
+		float cost = 0 ;
+		/*if (tPath != null && !tPath.isEmpty())
 			tLen = tPath.size();
 		if (hPath != null && !hPath.isEmpty())
 			hLen = hPath.size();
 		
-		float cost = 0 ;
+		
 		if (tLen > hLen)
 			cost = tLen - hLen;
 		else 
 			cost = hLen-tLen;
-		
+		*/
 		if (tPath != null && hPath != null) {
 			cost += pathPenalty(hMPath, tPath, hPath);
 		}
@@ -183,21 +196,149 @@ public class PathScorer implements Serializable {
 		float cost = 0;	
 		if (pathsAreIdentical(hMPath) == false && learning == false){
 			String key = hPath.toString()+"/"+tPath.toString();
-			if (infComputer.getNeutralRolePaths().containsKey(key))
+			// following costs after 1st learning
+			/*if (infComputer.getNeutralRolePaths().containsKey(key))
 				if (infComputer.getNeutralRolePaths().get(key).size() == 1)
 					cost += maxCost/2;
 				else 
 					cost += maxCost;
 			else if (infComputer.getContraRolePaths().containsKey(key))
-				cost += maxCost*2 ;
+				cost -= 10;	
 			else if (infComputer.getEntailRolePaths().containsKey(key))
 				cost -= 10;		
+				*/
+			// following costs after 2nd learning
+			// path exists in only one of the lists
+			if (infComputer.getNeutralRolePaths().containsKey(key) && 
+					!infComputer.getEntailRolePaths().containsKey(key) &&
+					!infComputer.getContraRolePaths().containsKey(key)){
+				if (infComputer.getNeutralRolePaths().get(key).size() > 1)
+					cost += neuCost;
+				else
+					cost += neuCost*0.75;
+			}
+			else if (!infComputer.getNeutralRolePaths().containsKey(key) && 
+					!infComputer.getEntailRolePaths().containsKey(key) &&
+					infComputer.getContraRolePaths().containsKey(key)){
+				if (infComputer.getContraRolePaths().get(key).size() > 1)
+					cost += contraCost;
+				else
+					cost += contraCost;
+			}
+			else if (!infComputer.getNeutralRolePaths().containsKey(key) && 
+					infComputer.getEntailRolePaths().containsKey(key) &&
+					!infComputer.getContraRolePaths().containsKey(key)){
+				if (infComputer.getEntailRolePaths().get(key).size() > 1)
+					cost += 0;
+				else
+					cost += neuCost*0.25;
+			}
+			// path exists in two of the lists
+			if (infComputer.getNeutralRolePaths().containsKey(key) && 
+					infComputer.getEntailRolePaths().containsKey(key) &&
+					!infComputer.getContraRolePaths().containsKey(key)){
+				if (infComputer.getNeutralRolePaths().get(key).size() == infComputer.getEntailRolePaths().get(key).size())
+					cost += neuCost*0.5;
+				else if (infComputer.getNeutralRolePaths().get(key).size() > infComputer.getEntailRolePaths().get(key).size()){
+					float prob = (float) infComputer.getNeutralRolePaths().get(key).size()/(infComputer.getNeutralRolePaths().get(key).size() + infComputer.getEntailRolePaths().get(key).size()); 
+					cost += neuCost*prob;
+				}
+				else if (infComputer.getNeutralRolePaths().get(key).size() < infComputer.getEntailRolePaths().get(key).size()){
+					float prob = (float) infComputer.getNeutralRolePaths().get(key).size() / (infComputer.getNeutralRolePaths().get(key).size() + infComputer.getEntailRolePaths().get(key).size()); 
+					cost += neuCost*prob;
+				}
+			} 
+			else if (!infComputer.getNeutralRolePaths().containsKey(key) && 
+					infComputer.getEntailRolePaths().containsKey(key) &&
+					infComputer.getContraRolePaths().containsKey(key)){
+				if (infComputer.getContraRolePaths().get(key).size() == infComputer.getEntailRolePaths().get(key).size())
+					cost += contraCost+contraCost*0.25;
+				else if (infComputer.getContraRolePaths().get(key).size() > infComputer.getEntailRolePaths().get(key).size()){
+					float prob = (float) infComputer.getEntailRolePaths().get(key).size() / (infComputer.getContraRolePaths().get(key).size() + infComputer.getEntailRolePaths().get(key).size()); 
+					cost += contraCost+prob*100;
+					//cost += contraCost+contraCost/8;
+				}			
+				else if (infComputer.getContraRolePaths().get(key).size() < infComputer.getEntailRolePaths().get(key).size()){
+					float prob = (float) infComputer.getContraRolePaths().get(key).size() / (infComputer.getContraRolePaths().get(key).size() + infComputer.getEntailRolePaths().get(key).size()); 
+					cost += contraCost+prob*100;
+					//cost += contraCost+contraCost*0.25+contraCost/8;
+				}					
+			} 
+			else if (infComputer.getNeutralRolePaths().containsKey(key) && 
+					!infComputer.getEntailRolePaths().containsKey(key) &&
+					infComputer.getContraRolePaths().containsKey(key)){
+				if (infComputer.getContraRolePaths().get(key).size() == infComputer.getNeutralRolePaths().get(key).size())
+					cost += contraCost- contraCost*0.25;
+				else if (infComputer.getContraRolePaths().get(key).size() > infComputer.getNeutralRolePaths().get(key).size()){
+					float prob = (float) infComputer.getNeutralRolePaths().get(key).size() / (infComputer.getContraRolePaths().get(key).size() + infComputer.getNeutralRolePaths().get(key).size()); 
+					cost += contraCost-prob*100;
+					//cost += contraCost*0.75;
+				}		
+				else if (infComputer.getContraRolePaths().get(key).size() < infComputer.getNeutralRolePaths().get(key).size()){
+					float prob = (float) infComputer.getContraRolePaths().get(key).size() / (infComputer.getContraRolePaths().get(key).size() + infComputer.getNeutralRolePaths().get(key).size()); 
+					cost += contraCost-prob*100;
+					//cost += contraCost*0.25;
+				}
+					
+			} 
+			//path exists in all 3 lists
+			if (infComputer.getNeutralRolePaths().containsKey(key) && 
+					infComputer.getEntailRolePaths().containsKey(key) &&
+					infComputer.getContraRolePaths().containsKey(key)){
+				if (infComputer.getNeutralRolePaths().get(key).size() == infComputer.getEntailRolePaths().get(key).size() && infComputer.getEntailRolePaths().get(key).size()  == infComputer.getContraRolePaths().get(key).size() )
+					cost += 0;
+				float probEntail = (float) infComputer.getEntailRolePaths().get(key).size() / (infComputer.getEntailRolePaths().get(key).size()+ infComputer.getContraRolePaths().get(key).size() + infComputer.getNeutralRolePaths().get(key).size()) ;
+				float probContra = (float) infComputer.getContraRolePaths().get(key).size() / (infComputer.getEntailRolePaths().get(key).size()+ infComputer.getContraRolePaths().get(key).size() + infComputer.getNeutralRolePaths().get(key).size()) ;
+				float probNeutral = (float) infComputer.getNeutralRolePaths().get(key).size() / (infComputer.getEntailRolePaths().get(key).size()+ infComputer.getContraRolePaths().get(key).size() + infComputer.getNeutralRolePaths().get(key).size()) ;
+
+				if (probEntail > probContra && probEntail > probNeutral){
+					if (probNeutral > probContra)
+						cost += neuCost-probEntail*100;
+					else if (probNeutral < probContra)
+						cost += contraCost+probEntail*100;
+					else
+						cost += 0;
+				}
+				
+				if (probContra > probEntail && probContra > probNeutral){
+					if (probEntail > probNeutral)
+						cost += contraCost-probEntail*100;
+					else if (probEntail < probNeutral)
+						cost += neuCost+probContra*100;
+					else
+						cost += 0;
+				}
+				
+				if (probNeutral > probEntail && probNeutral > probContra){
+					if (probEntail > probContra)
+						cost += neuCost-probEntail*100;
+					else if (probEntail < probContra)
+						cost += contraCost-probNeutral*100;
+				}
+				
+				/*if (infComputer.getNeutralRolePaths().get(key).size() > infComputer.getEntailRolePaths().get(key).size() && infComputer.getEntailRolePaths().get(key).size()  > infComputer.getContraRolePaths().get(key).size())
+						cost += contraCost*0.75;			
+				else if (infComputer.getNeutralRolePaths().get(key).size() > infComputer.getContraRolePaths().get(key).size() && infComputer.getContraRolePaths().get(key).size()  > infComputer.getEntailRolePaths().get(key).size() )
+					cost += contraCost*0.25;
+				else if (infComputer.getEntailRolePaths().get(key).size() > infComputer.getNeutralRolePaths().get(key).size() && infComputer.getNeutralRolePaths().get(key).size()  > infComputer.getContraRolePaths().get(key).size() )
+					cost += neuCost*0.25;
+				else if (infComputer.getEntailRolePaths().get(key).size() > infComputer.getContraRolePaths().get(key).size() && infComputer.getContraRolePaths().get(key).size()  > infComputer.getNeutralRolePaths().get(key).size() )
+					cost += contraCost-contraCost*0.75;
+				else if (infComputer.getContraRolePaths().get(key).size() > infComputer.getNeutralRolePaths().get(key).size() && infComputer.getNeutralRolePaths().get(key).size()  > infComputer.getContraRolePaths().get(key).size() )
+					cost += contraCost*0.75;
+				else if (infComputer.getContraRolePaths().get(key).size() > infComputer.getEntailRolePaths().get(key).size() && infComputer.getEntailRolePaths().get(key).size()  > infComputer.getNeutralRolePaths().get(key).size() )
+					cost += contraCost-contraCost*0.25;
+				if (infComputer.getNeutralRolePaths().get(key).size() == infComputer.getEntailRolePaths().get(key).size() && infComputer.getEntailRolePaths().get(key).size()  == infComputer.getContraRolePaths().get(key).size() )
+					cost += 0;*/
+				
+			} 
+				
 		}
-		if (tPath.size() == hPath.size() && hPath.size() == 1){
+		/*if (tPath.size() == hPath.size() && hPath.size() == 1){
 			// if the match is based on opposing roles, it should be neglected
 			if ( (tPath.get(0).getLabel().equals("sem_subj") && hPath.get(0).getLabel().equals("sem_obj")) ||
 				 (tPath.get(0).getLabel().equals("sem_obj") && hPath.get(0).getLabel().equals("sem_subj")) )
-				cost += maxCost*2;
+				cost += contraCost;
 			else if ( (tPath.get(0).getLabel().equals("amod") && hPath.get(0).getLabel().equals("rstr")) ||
 					  (tPath.get(0).getLabel().equals("rstr") && hPath.get(0).getLabel().equals("amod"))   )
 				cost -= 10;
@@ -209,8 +350,8 @@ public class PathScorer implements Serializable {
 		} else if (hPath.size() == 2 && tPath.size() == 1){	
 			if (tPath.get(0).getLabel().equals("amod") && hPath.get(0).getLabel().equals("nmod") && hPath.get(1).getLabel().equals("amod"))
 				cost -= 10;
-		}
-		cost += ((MatchContent) hMPath.getModifiersPair().getContent()).getScore();
+		}*/
+		//cost += ((MatchContent) hMPath.getModifiersPair().getContent()).getScore();
 		
 		// if the match is based on different senses of the same word, the match should be neglected
 		if ( gnliGraph.getStartNode(hMPath.getModifiersPair()) instanceof SkolemNode && !hMPath.getModifiersPair().getLabel().equals("sense")
@@ -240,7 +381,7 @@ public class PathScorer implements Serializable {
 					break;
 				}
 				if (hasSense == true)
-					cost += maxCost;
+					cost += neuCost;
 			}
 			
 		}		
@@ -248,8 +389,8 @@ public class PathScorer implements Serializable {
 	}
 	
 
-	public boolean pathBelowThreshold(float cost) {
-		return cost < maxCost || cost >= maxCost*2;
+	public boolean pathAtNeutralThreshold(float cost) {
+		return cost == neuCost;
 	}
 
 

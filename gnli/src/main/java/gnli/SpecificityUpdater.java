@@ -277,7 +277,9 @@ public class SpecificityUpdater {
 				hypoTextMatch.match.setSpecificity(switchSpecificity(hypoTextMatch.match.getSpecificity(),spec));
 				hypoTextMatch.match.addJustification(justification);
 				float cost = justification.getCost();
-				hypoTextMatch.match.incrementScore("distance", cost);
+				//hypoTextMatch.match.incrementScore("cost", cost);
+				hypoTextMatch.match.addCost(cost);
+				hypoTextMatch.match.incrementScore("distance", (float) ((MatchContent) justification.getModifiersPair().getContent()).getScore());
 				String test = "";
 			} else{
 				gnliGraph.removeMatchEdge(hypoTextMatch.match);
@@ -377,6 +379,14 @@ public class SpecificityUpdater {
 		private void finalizeMatch(MatchEdge match) {
 			applyRestrictions(match);
 			applyProperties(match);
+			float sum = 0;
+			for (Float f : match.getCostList()){
+				sum += f;
+			}
+			float average = 0;
+			if (!match.getCostList().isEmpty())
+				average = sum/match.getCostList().size();
+			match.incrementScore("cost", average);
 		}
 		
 		
@@ -522,7 +532,7 @@ public class SpecificityUpdater {
 				this.pathScorer.addNeutralRolePath(mcp);
 			else if (!correctLabel.equals("") && correctLabel.equals("C"))
 				this.pathScorer.addContraRolePath(mcp);
-			if (this.pathScorer.pathBelowThreshold(mcp.getCost())) {
+			if (!this.pathScorer.pathAtNeutralThreshold(mcp.getCost())) {
 				return mcp;
 			} else {
 				return null;
