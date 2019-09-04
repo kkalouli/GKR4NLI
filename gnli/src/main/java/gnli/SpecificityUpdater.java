@@ -29,6 +29,7 @@ public class SpecificityUpdater {
 	// matchAgenda orders matches: we want to update specificities starting from 
 		// lower nodes in the graphs (fewest modifiers) and working up
 		private List<MatchAgendaItem> matchAgenda;
+		private List<MatchAgendaItem> matchAgendaStable;
 		private List<MatchAgendaItem> newAgenda;
 		private GNLIGraph gnliGraph;
 		private PathScorer pathScorer;
@@ -69,7 +70,10 @@ public class SpecificityUpdater {
 		}
 
 		
-
+		public List<MatchAgendaItem> getMatchAgendaStable(){
+			return matchAgendaStable;
+		}
+		
 
 		/**
 		 * Updates specificity relations on matches until no more updates can be made
@@ -88,7 +92,8 @@ public class SpecificityUpdater {
 			}
 			// Initialize new agenda for next rounds:
 			this.newAgenda = new ArrayList<MatchAgendaItem>(initialSize);
-			
+			// the stable agenda is used in the InferenceChecker to find which match has the fewer modifiers
+			this.matchAgendaStable = matchAgenda;
 			// Take each item of agenda in turn.
 			// Agenda is ordered to have matches with fewest text and hypothesis modifiers first.
 			// This increases the chances of the early matches being updated to completion, and
@@ -131,7 +136,7 @@ public class SpecificityUpdater {
 		
 		private boolean doesNotNeedUpdating(HypoTextMatch hypoTextMatch){
 			 // If it's a coreference link, it's always going to stay identical
-			if (hypoTextMatch.match.getSpecificity() == Specificity.NONE || hypoTextMatch.match.getSpecificity() == Specificity.DISJOINT 
+			if (hypoTextMatch.match.getSpecificity() == Specificity.NONE // || hypoTextMatch.match.getSpecificity() == Specificity.DISJOINT 
 					|| hypoTextMatch.match.getLabel().startsWith("coref") || hypoTextMatch.match.isComplete() ||
 					(hypoTextMatch.hypothesisModifiers.isEmpty() && hypoTextMatch.textModifiers.isEmpty()) ){
 				return true;

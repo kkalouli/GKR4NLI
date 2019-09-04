@@ -25,7 +25,7 @@ public class GraphLabels implements Serializable{
 	/**
 	 * Marks a negative context
 	 */
-	public static final String NOT = "not";
+	//public static final String NOT = "not";
 	
 	public static final String VER = "veridical";
 	
@@ -51,7 +51,7 @@ public class GraphLabels implements Serializable{
 	
 	
 	public static final Set<String> contextEdgeLabels = new HashSet<String>(Arrays.asList(new String[] {
-			CONTEXT_HEAD, OR, NOT, IMPERATIVE, 	INTERROGATIVE, MUST, MAY, MIGHT, SHOULD, OUGHT, NEED, VER, ANTIVER, AVER
+			CONTEXT_HEAD, OR, IMPERATIVE, 	INTERROGATIVE, MUST, MAY, MIGHT, SHOULD, OUGHT, NEED, VER, ANTIVER, AVER
 	}));
 
 	public static final String PRONOUN_RESOLUTION = "prounoun_res";
