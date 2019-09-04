@@ -328,7 +328,7 @@ public class InferenceChecker {
 	}
 	
 	private boolean costInNeutralBounds(double cost){
-		if (cost <= 125.0 && cost >= 75.0)
+		if (cost <= 150.0 && cost >= 75.0)
 			return true;
 		else
 			return false;

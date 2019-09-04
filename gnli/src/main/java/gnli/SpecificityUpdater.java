@@ -278,7 +278,8 @@ public class SpecificityUpdater {
 				hypoTextMatch.match.addJustification(justification);
 				float cost = justification.getCost();
 				//hypoTextMatch.match.incrementScore("cost", cost);
-				hypoTextMatch.match.addCost(cost);
+				if (cost != 0.0)
+					hypoTextMatch.match.addCost(cost);
 				hypoTextMatch.match.incrementScore("distance", (float) ((MatchContent) justification.getModifiersPair().getContent()).getScore());
 				String test = "";
 			} else{

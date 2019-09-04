@@ -519,6 +519,15 @@ public class ContextMapper implements Serializable {
 		SemanticNode<?> ctxHead = null;
 		// get the dep head
 		SemanticNode<?> depHead = depGraph.getInNeighbors(node).iterator().next();
+		// check to see if it is a copula verb being negated, e.g. The man is not beautiful.
+		// in this case, the negated term ("beautiful") should be handled as a verb for 
+		// finding the head variable of the negated node
+		boolean negOnCopula = false;
+		for (SemanticEdge outEdge : depGraph.getOutEdges(depHead)) {
+			if (outEdge.getLabel().equals("cop")){
+				negOnCopula = true;
+			}
+		}
 		//If we have verbal coordination, then the combined node of the two predicates has to be negated
 		if (coordCtxs.containsKey(depHead) && coordCtxs.get(depHead).equals("verbal")){
 			// find the role head of this dep head
@@ -576,7 +585,7 @@ public class ContextMapper implements Serializable {
 			} else {
 				// create the self node of the negation
 				negNode = addSelfContextNodeAndEdgeToGraph(node);
-				if (!verbalForms.contains(((SkolemNodeContent) depHead.getContent()).getPosTag())){
+				if (!verbalForms.contains(((SkolemNodeContent) depHead.getContent()).getPosTag()) && negOnCopula == false ){
 					SemanticNode<?> headOfHead = depGraph.getInNeighbors(depHead).iterator().next();
 					head = headOfHead;
 				} else {
@@ -590,7 +599,7 @@ public class ContextMapper implements Serializable {
 			// create the self node of the negation
 			negNode = addSelfContextNodeAndEdgeToGraph(node);
 			// first if to deal with none negation
-			if (!verbalForms.contains(((SkolemNodeContent) depHead.getContent()).getPosTag())){
+			if (!verbalForms.contains(((SkolemNodeContent) depHead.getContent()).getPosTag()) && negOnCopula == false){
 				SemanticNode<?> headOfHead = depGraph.getInNeighbors(depHead).iterator().next();
 				head = headOfHead;
 			} else {				

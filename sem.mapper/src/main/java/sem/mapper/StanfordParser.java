@@ -35,7 +35,8 @@ public class StanfordParser implements Serializable{
 				PropertiesUtils.asProperties(
 						"annotators", "tokenize,ssplit,pos,lemma,ner,depparse,parse,coref",
 						"depparse.extradependencies", "MAXIMAL",
-						"tokenize.language", "en"));
+						"tokenize.language", "en",
+						"ner.applyFineGrained", "false"));
 	}	
 	
 	
