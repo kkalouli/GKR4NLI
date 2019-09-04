@@ -26,6 +26,8 @@ public class PathScorer implements Serializable {
 	private InferenceComputer infComputer;
 	
 	
+	
+	
 	public PathScorer(GNLIGraph gnliGraph, float neuCost, float contraCost, boolean learning, InferenceComputer infComputer) {
 		super();
 		this.gnliGraph = gnliGraph;
@@ -391,6 +393,10 @@ public class PathScorer implements Serializable {
 
 	public boolean pathAtNeutralThreshold(float cost) {
 		return cost == neuCost;
+	}
+	
+	public void createFeatureVector(){
+		
 	}
 
 

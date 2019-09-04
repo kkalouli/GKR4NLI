@@ -57,6 +57,7 @@ public class InferenceComputer {
 	private HashMap<String, ArrayList<HeadModifierPathPair>> entailRolePaths;
 	private HashMap<String, ArrayList<HeadModifierPathPair>> neutralRolePaths;
 	private HashMap<String, ArrayList<HeadModifierPathPair>> contraRolePaths;
+	private ArrayList<String> pathsAndCtxs;
 	private String sumoContent;
 	private String bertVocab;
 
@@ -82,7 +83,7 @@ public class InferenceComputer {
 		//serializeKb();
 		String wnInstall = props.getProperty("wn_location");
 		String sumoInstall = props.getProperty("sumo_location");
-		this.learning = false;
+		this.learning = true;
 		// initialize bert and bertTokenizer so that there is only one instance
         this.bertVocab = props.getProperty("bert_vocab");
 		this.bert = Bert.load("com/robrua/nlp/easy-bert/bert-uncased-L-12-H-768-A-12");
@@ -104,6 +105,7 @@ public class InferenceComputer {
 		//this.entailRolePaths = new HashMap<String, ArrayList<HeadModifierPathPair>>();
 		//this.neutralRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
 		//this.contraRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		this.pathsAndCtxs = new ArrayList<String>();
 		// for learning==false
 		this.entailRolePaths = deserialize("entail");
 		this.neutralRolePaths =  deserialize("neutral");
@@ -238,6 +240,14 @@ public class InferenceComputer {
 	
 	public void setContraRolePaths(HashMap<String,ArrayList<HeadModifierPathPair>> contraRolePaths){
 		this.contraRolePaths = contraRolePaths;
+	}
+	
+	public void setPathsAndCtxs(ArrayList<String> pathsAndCtxs) {
+		this.pathsAndCtxs = pathsAndCtxs;
+	}
+	
+	public ArrayList<String> getPathsAndCtxs() {
+		return this.pathsAndCtxs;
 	}
 	
 	private void serialize(HashMap<String,ArrayList<HeadModifierPathPair>> rolePaths, String type){	
@@ -408,7 +418,7 @@ public class InferenceComputer {
 	}
 	
 
-	public InferenceDecision computeInference(String sent1, String sent2, String correctLabel, KB kb) throws FileNotFoundException, UnsupportedEncodingException {	
+	public InferenceDecision computeInference(String sent1, String sent2, String correctLabel, KB kb, String pairID) throws FileNotFoundException, UnsupportedEncodingException {	
 		//long startTime = System.currentTimeMillis();
 		List<SemanticGraph> texts = new ArrayList<SemanticGraph>();
 		List<SemanticGraph> hypotheses = new ArrayList<SemanticGraph>();
@@ -441,9 +451,9 @@ public class InferenceComputer {
 		hypotheses.add(graphH);
 		GNLIGraph gnli = new GNLIGraph(texts, hypotheses);
 		
-		gnli.getHypothesisGraph().displayRolesAndCtxs();
-		gnli.getTextGraph().displayRolesAndCtxs();
-		gnli.getTextGraph().displayDependencies();
+		//gnli.getHypothesisGraph().displayRolesAndCtxs();
+		//gnli.getTextGraph().displayRolesAndCtxs();
+		//gnli.getTextGraph().displayDependencies();
 		//gnli.getTextGraph().displayLex();
 		//gnli.getTextGraph().displayProperties();
 		
@@ -454,7 +464,7 @@ public class InferenceComputer {
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli, kb);
 		initialTermMatcher.process();
 		//gnli.display();
-		gnli.matchGraph.display();
+		//gnli.matchGraph.display();
 		//graphT.displayLex();
 		//graphH.displayLex();
 		//gnli.getHypothesisGraph().displayContexts();
@@ -480,10 +490,10 @@ public class InferenceComputer {
 		PathScorer scorer = new PathScorer(gnli,100f, 200f, learning, this);
 		final SpecificityUpdater su = new SpecificityUpdater(gnli,scorer, labelToLearn);
 		su.updateSpecifity();	
-		gnli.matchGraph.display();
+		//gnli.matchGraph.display();
 		// Now look at the updated matches and context veridicalities to
 		// determine entailment relations
-		final InferenceChecker infCh = new InferenceChecker(gnli);
+		final InferenceChecker infCh = new InferenceChecker(gnli, this, su, labelToLearn, pairID);
 		InferenceDecision decision =  infCh.getInferenceDecision();
 		return decision;
 	}
@@ -496,6 +506,10 @@ public class InferenceComputer {
 		// true stands for append = true (dont overwrite)
 		FileWriter fileWriter =  new FileWriter(file.substring(0,file.indexOf(".txt"))+"_with_inference_relation.csv", true);
 		BufferedWriter writer = new BufferedWriter(fileWriter);
+		// file to write the paths and the contexts learnt (for the associative rule mining)
+		FileWriter fileWriterCtxPaths =  new FileWriter(file.substring(0,file.indexOf(".txt"))+"_paths_and_ctx.csv", true);
+		BufferedWriter writerCtxPaths = new BufferedWriter(fileWriterCtxPaths);
+
 		//FileOutputStream fileSer = new FileOutputStream(file.substring(0,file.indexOf(".txt"))+"_serialized_results.ser"); 
         //ObjectOutputStream writerSer = new ObjectOutputStream(fileSer); 
         ArrayList<InferenceDecision> decisionGraphs = new ArrayList<InferenceDecision>();
@@ -519,7 +533,7 @@ public class InferenceComputer {
 			String hypothesis = elements[2];
 			String correctLabel = elements[3];
 			try {
-				InferenceDecision decision = computeInference(premise, hypothesis, correctLabel, kb);
+				InferenceDecision decision = computeInference(premise, hypothesis, correctLabel, kb, id);
 				if (decision != null){
 					decisionGraphs.add(decision);
 					String spec = "";
@@ -542,9 +556,14 @@ public class InferenceComputer {
 
 		// Method for serialization of object 
 		//writerSer.writeObject(decisionGraphs);   
-		
+        for (String line : pathsAndCtxs){
+        	writerCtxPaths.write(line+"\n");
+        }
+        
 		writer.close();
 		fileWriter.close();
+		writerCtxPaths.close();
+		fileWriterCtxPaths.close();		
 		wnDict.close();
 		//writerSer.close(); 
         //fileSer.close(); 
@@ -560,7 +579,7 @@ public class InferenceComputer {
 	 * Print the result on the console for now.
 	 */
 	public void computeInferenceOfPair(DepGraphToSemanticGraph semGraph, String premise, String hypothesis, String correctLabel, KB kb) throws FileNotFoundException, UnsupportedEncodingException{
-		InferenceDecision decision = computeInference(premise, hypothesis, correctLabel, kb);
+		InferenceDecision decision = computeInference(premise, hypothesis, correctLabel, kb, "1");
 		System.out.println("Relation: "+decision.getEntailmentRelation());
 		System.out.println("Strength of the Match: "+decision.getMatchStrength());
 		System.out.println("It was loose contradiction: "+decision.isLooseContr());
@@ -620,8 +639,8 @@ public class InferenceComputer {
 		//long startTime = System.currentTimeMillis();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "2 men are walking.";	
-		String hypothesis = "2 people are walking.";
+		String premise = "Negotiations prevented a long strike.";	
+		String hypothesis = "Negotiations prevented a strike.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_entail_and_neutral_active.txt";
 		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";

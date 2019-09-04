@@ -1,5 +1,7 @@
 package gnli;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -10,6 +12,7 @@ import sem.graph.SemanticGraph;
 import sem.graph.SemanticNode;
 import sem.graph.vetypes.SkolemNode;
 import sem.graph.vetypes.SkolemNodeContent;
+import sem.graph.vetypes.TermNode;
 
 
 
@@ -27,11 +30,15 @@ public class InferenceChecker {
 	private ArrayList<MatchEdge> justifications;
 	private boolean looseContra;
 	private boolean looseEntail;
+	private InferenceComputer infComputer;
+	private SpecificityUpdater updater;
+	private String labelToLearn;
+	private String pairID;
 	
 	enum Polarity {VERIDICAL, ANTIVERIDICAL, AVERIDICAL}
 
 	
-	public InferenceChecker(GNLIGraph gnliGraph) {
+	public InferenceChecker(GNLIGraph gnliGraph, InferenceComputer infComputer, SpecificityUpdater updater, String labelToLearn, String pairID) {
 		this.gnliGraph = gnliGraph;
 		this.entailmentRelation = EntailmentRelation.UNKNOWN; 
 		looseContra = false;
@@ -39,6 +46,10 @@ public class InferenceChecker {
 		matchStrength = 0;
 		matchConfidence = 0;
 		justifications = new ArrayList<MatchEdge>();
+		this.infComputer = infComputer;
+		this.updater = updater;
+		this.labelToLearn = labelToLearn;
+		this.pairID = pairID;
 	}
 	
 	
@@ -61,9 +72,7 @@ public class InferenceChecker {
 			SemanticNode<?> hTerm = gnliGraph.getStartNode(matchEdge);
 			SemanticNode<?> tTerm = gnliGraph.getFinishNode(matchEdge);
 			boolean expletive = false;
-			// get all separate root nodes
-
-			
+			// get all separate root nodes		
 			if (gnliGraph.getHypothesisGraph().getRoleGraph().getInEdges(hTerm).isEmpty()){
 				for (SemanticNode<?> inReach : gnliGraph.getTextGraph().getRoleGraph().getInReach(tTerm)){
 					if (inReach.getLabel().contains("be"))
@@ -102,20 +111,34 @@ public class InferenceChecker {
 			if (tTermCtxs == null){
 				tTermCtxs = fillEmptyContexts((SkolemNode) tTerm, "txt");
 			}			
-			if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, true)) {
-				return;
-			}
+			// comment out following lines in order to always reach the extractItemsSetsForAssociationRuleMining method
+			// in order to get all paths and their contexts (for training)
+			//if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, true)) {
+			//	return;
+			//}
 			/*if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, false)) {
 				looseContra = true;
 			}*/
 			
 		}
-		/*if (!rootNodeMatches.isEmpty() && contradiction(rootNodeMatches, true)) {
-			return;
-		}*/
-		if (!rootNodeMatches.isEmpty() && entailmentOrDisjoint(rootNodeMatches, true)) {
-			return;
+		// include following lines in order to extract the paths and their contexts (for training)
+		if (rootNodeMatches.isEmpty()){
+			MatchEdge matchWithTheMostModifiers = updater.getMatchAgendaStable().get(updater.getMatchAgendaStable().size()-1).match;
+			SemanticNode<?> hTerm = gnliGraph.getMatchGraph().getStartNode(updater.getMatchAgendaStable().get(updater.getMatchAgendaStable().size()-1).match);			
+			rootNodeMatches.put(hTerm,matchWithTheMostModifiers);
 		}
+		try {
+			extractItemsSetsForAssociationRuleMining(rootNodeMatches);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		// comment out following lines in order to extractItemsSetsForAssociationRuleMining
+		// in order to get all paths and their contexts (for training)
+		//if (!rootNodeMatches.isEmpty() && entailmentOrDisjoint(rootNodeMatches, true)) {
+		//	return;
+		//}
 		/*if (entailment(rootNodeMatch, hypRootNode, false)) {
 			looseEntail = true;
 		}*/
@@ -127,7 +150,7 @@ public class InferenceChecker {
 	}
 	
 	
-	private HashMap<SemanticNode<?>,Polarity> fillEmptyContexts(SkolemNode term, String mode){
+	private HashMap<SemanticNode<?>,Polarity> fillEmptyContexts(TermNode term, String mode){
 		HashMap<SemanticNode<?>,Polarity> termCtxs = new HashMap<SemanticNode<?>,Polarity>();
 		 HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>> ctxs = null;
 		 SemanticNode<?> root = null;
@@ -142,7 +165,9 @@ public class InferenceChecker {
 			 root = textRootCtx;
 			 graph = gnliGraph.getTextGraph();
 		 }
-		String ctx = ((SkolemNodeContent) term.getContent()).getContext();
+		 String ctx = "";
+		 if (term instanceof SkolemNode)
+			 ctx = ((SkolemNodeContent) term.getContent()).getContext();
 		for (SemanticNode<?> inReach : graph.getRoleGraph().getInReach(term)){
 			if (ctxs.keySet().contains(inReach)){
 				termCtxs.put(inReach, Polarity.VERIDICAL);
@@ -152,6 +177,16 @@ public class InferenceChecker {
 				else
 				// if the original mapping has set a different context to the node, then get the veridicality of this context and put it in top
 					termCtxs.put(root, ctxs.get(inReach).get(root));
+				break;
+			}
+			// the combined nodes are not included in the ctxs so they have to be treated separately
+			else if (inReach.getLabel().contains("_or_") || inReach.getLabel().contains("_and_")){
+				// if the term has top as its context, then it is veridical
+				if (ctx.equals("top"))
+					termCtxs.put(root, Polarity.VERIDICAL);
+				// if ctx is empty and the term is included in the ctxs, then get the veridicality of the term node
+				else if (ctxs.containsKey(term))
+					termCtxs.put(root, ctxs.get(term).get(root));
 				break;
 			}
 		}
@@ -226,6 +261,63 @@ public class InferenceChecker {
 			} 
 		}
 		return false;
+	}
+	
+	private void extractItemsSetsForAssociationRuleMining(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches) throws IOException{
+		String toWrite = pairID+"\t";
+		for (SemanticNode<?> key : rootNodeMatches.keySet()){		
+			SemanticNode<?> tTerm = gnliGraph.getFinishNode(rootNodeMatches.get(key));
+			HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(key);
+			HashMap<SemanticNode<?>,Polarity> tTermCtxs = textContexts.get(tTerm);
+			// in case one of the nodes is not in the context graph but we still need to find out its context
+			// we get the ctx of that node from its SkolemNodeContent, find this context within the hypothesisContexts
+			// (whatever ctx is in the SkolemContent will necessarily be one of the ctxs of the contetx graph), and put
+			// the ctx found as the key of the hash and the veridical as the value and the root node as another key and
+			// and veridicality of the mother ctx as the value
+			if (hTermCtxs == null){
+				hTermCtxs = fillEmptyContexts((SkolemNode) key, "hyp");
+			}
+			if (tTermCtxs == null){
+				tTermCtxs = fillEmptyContexts((SkolemNode) tTerm, "txt");
+			}	
+			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
+			Polarity tPolarity = tTermCtxs.get(textRootCtx);
+			String matchSpec = rootNodeMatches.get(key).getSpecificity().toString();
+			toWrite += matchSpec+":"+tPolarity.toString()+"-"+hPolarity.toString()+"\t";
+			// get the paths and the ctxs of each path
+			for (HeadModifierPathPair just: rootNodeMatches.get(key).getJustification()){
+				String encodedCtxAndPath = ":";
+				if (just.getModifiersPair() != null)
+					encodedCtxAndPath = ((MatchEdge) just.getModifiersPair()).getSpecificity().toString()+":";	
+				List<SemanticEdge> tPath = just.getPremisePath();
+				List<SemanticEdge> hPath = just.getConclusionPath();
+				if (tPath != null){
+					// for each path, get the concept to which the path ends
+					for (SemanticEdge e: tPath){
+						SemanticNode<?> finish = gnliGraph.getTextGraph().getRoleGraph().getEndNode(e);
+						// get the context of the concept mapped tot his edge
+						Polarity ctx = fillEmptyContexts((TermNode) finish, "txt").get(textRootCtx);					
+						String ctxToAdd = "";
+						if (ctx != null)
+							 ctxToAdd = ctx.toString();		
+						encodedCtxAndPath += ctxToAdd+"/"+e.getLabel()+",";
+					}
+				}
+				encodedCtxAndPath += "-";
+				if (hPath != null){
+					for (SemanticEdge e: hPath){
+						SemanticNode<?> finish = gnliGraph.getHypothesisGraph().getRoleGraph().getEndNode(e);
+						Polarity ctx = fillEmptyContexts((TermNode) finish, "hyp").get(hypRootCtx);
+						String ctxToAdd = "";
+						if (ctx != null)
+							 ctxToAdd = ctx.toString();		
+						encodedCtxAndPath += ctxToAdd+"/"+e.getLabel()+",";
+					}
+				}
+				toWrite += encodedCtxAndPath+"\t";
+			}
+		}
+		infComputer.getPathsAndCtxs().add(toWrite+labelToLearn);
 	}
 	
 	private boolean entailmentOrDisjoint(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches , boolean strict){
@@ -356,14 +448,8 @@ public class InferenceChecker {
 	
 	private HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>> getContextHeads(SemanticGraph semGraph){
 		HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>> ctxHeadsWithVerid = new HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>>();
-		ArrayList<SemanticNode<?>> nodesVerInTop = new ArrayList<SemanticNode<?>>();
-		SemanticNode<?> motherNode = null;
 		for (SemanticNode<?> ctxNode : semGraph.getContextGraph().getNodes()){
 			if (!ctxNode.getLabel().startsWith("ctx") && !ctxNode.getLabel().startsWith("top") ){
-				/*if (ctxNode instanceof SkolemNode && ((SkolemNode) ctxNode).getContext().equals("top")){
-					nodesVerInTop.add(ctxNode);
-					continue;
-				}*/
 				HashMap<SemanticNode<?>, Polarity> hashOfCtxsAndVerid = new HashMap<SemanticNode<?>,Polarity>();
 				SemanticNode<?> motherCtx = semGraph.getContextGraph().getInNeighbors(ctxNode).iterator().next();
 				// if the ctxNode is not within a ctx(node) context
@@ -374,15 +460,20 @@ public class InferenceChecker {
 				if (inNeighbors == null || inNeighbors.isEmpty()){
 					if (semGraph.equals(gnliGraph.getHypothesisGraph())){
 						this.hypRootCtx = motherCtx;
-						motherNode = motherCtx;
 					}
 					else if (semGraph.equals(gnliGraph.getTextGraph())){
-						this.textRootCtx = motherCtx;
-						motherNode = motherCtx;
+						this.textRootCtx = motherCtx;				
 					}
 					hashOfCtxsAndVerid.put(motherCtx, Polarity.VERIDICAL);
 				} 
+				//
 				else {
+					if (semGraph.equals(gnliGraph.getHypothesisGraph())){
+						this.hypRootCtx = inNeighbors.iterator().next();
+					}
+					else if (semGraph.equals(gnliGraph.getTextGraph())){
+						this.textRootCtx = inNeighbors.iterator().next();
+					}
 					Set<SemanticNode<?>> edgesCtxToInReachCtx = semGraph.getContextGraph().getInReach(motherCtx);
 					for (SemanticNode<?> reach : edgesCtxToInReachCtx){
 						if (reach.equals(motherCtx))
@@ -395,11 +486,6 @@ public class InferenceChecker {
 				ctxHeadsWithVerid.put(ctxNode, hashOfCtxsAndVerid);
 			}
 		}
-		/*for (SemanticNode<?> verInTop : nodesVerInTop){
-			HashMap<SemanticNode<?>, Polarity> hashOfCtxsAndVerid = new HashMap<SemanticNode<?>,Polarity>();
-			hashOfCtxsAndVerid.put(motherNode, Polarity.VERIDICAL);
-			ctxHeadsWithVerid.put(verInTop, hashOfCtxsAndVerid);
-		}*/
 		return ctxHeadsWithVerid;
 	}
 	
@@ -407,7 +493,7 @@ public class InferenceChecker {
 	private Polarity computeEdgePolarity(List<SemanticEdge> shortestPath){
 		Polarity polar = null;
 		for (SemanticEdge verEdge : shortestPath){
-			if (verEdge.getLabel().equals("veridical")){
+			if (verEdge.getLabel().equals("veridical") || verEdge.getLabel().equals("imperative")){
 				if (polar == null)
 					polar = Polarity.VERIDICAL;
 			}
@@ -419,7 +505,11 @@ public class InferenceChecker {
 				else if (polar.equals(Polarity.ANTIVERIDICAL))
 					polar = Polarity.VERIDICAL;
 			}
-			else if  (verEdge.getLabel().equals("averidical")){
+			else if  (verEdge.getLabel().equals("averidical") || verEdge.getLabel().equals("coord_or") || 
+					verEdge.getLabel().equals("interrogative") || verEdge.getLabel().equals("may") ||
+					verEdge.getLabel().equals("might") || verEdge.getLabel().equals("must") ||
+					verEdge.getLabel().equals("ought") || verEdge.getLabel().equals("need") ||
+					verEdge.getLabel().equals("should")){
 				polar = Polarity.AVERIDICAL;
 			}
 			else {
