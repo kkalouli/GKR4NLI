@@ -9,6 +9,7 @@ public class InferenceDecision implements Serializable {
 
 	private static final long serialVersionUID = 5461367650157213499L;
 	private EntailmentRelation relation;
+	private EntailmentRelation alternativeRelation;
 	private double matchStrength;
 	private double matchConfidence;
 	private	ArrayList<MatchEdge> justifications;
@@ -16,8 +17,9 @@ public class InferenceDecision implements Serializable {
 	private	boolean looseEntail;
 	private	GNLIGraph gnliGraph;
 			
-		InferenceDecision(EntailmentRelation relation, double matchStrength,double matchConfidence, ArrayList<MatchEdge> justifications, boolean looseContra, boolean looseEntail, GNLIGraph gnliGraph){
+		InferenceDecision(EntailmentRelation relation, double matchStrength,double matchConfidence, EntailmentRelation alternativeRelation, ArrayList<MatchEdge> justifications, boolean looseContra, boolean looseEntail, GNLIGraph gnliGraph){
 			this.relation = relation;
+			this.alternativeRelation = alternativeRelation;
 			this.matchStrength = matchStrength;
 			this.matchConfidence = matchConfidence;
 			this.justifications = justifications;
@@ -28,6 +30,10 @@ public class InferenceDecision implements Serializable {
 		
 		public EntailmentRelation getEntailmentRelation(){
 			return relation;
+		}
+		
+		public EntailmentRelation getAlternativeEntailmentRelation(){
+			return alternativeRelation;
 		}
 		
 		public Double getMatchStrength(){

@@ -60,6 +60,7 @@ public class InferenceComputer {
 	private ArrayList<String> pathsAndCtxs;
 	private String sumoContent;
 	private String bertVocab;
+	private HashMap<String,String> associationRules;
 
 
 	public InferenceComputer() throws FileNotFoundException, UnsupportedEncodingException {
@@ -105,6 +106,7 @@ public class InferenceComputer {
 		//this.entailRolePaths = new HashMap<String, ArrayList<HeadModifierPathPair>>();
 		//this.neutralRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
 		//this.contraRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
+		this.associationRules = new HashMap<String,String>();
 		this.pathsAndCtxs = new ArrayList<String>();
 		// for learning==false
 		this.entailRolePaths = deserialize("entail");
@@ -248,6 +250,14 @@ public class InferenceComputer {
 	
 	public ArrayList<String> getPathsAndCtxs() {
 		return this.pathsAndCtxs;
+	}
+	
+	public void setAssociationRules(HashMap<String,String> associationRules){
+		this.associationRules = associationRules;
+	}
+	
+	public HashMap<String,String> getAssociationRules(){
+		return associationRules;
 	}
 	
 	private void serialize(HashMap<String,ArrayList<HeadModifierPathPair>> rolePaths, String type){	
@@ -509,9 +519,23 @@ public class InferenceComputer {
 		// file to write the paths and the contexts learnt (for the associative rule mining)
 		FileWriter fileWriterCtxPaths =  new FileWriter(file.substring(0,file.indexOf(".txt"))+"_paths_and_ctx.csv", true);
 		BufferedWriter writerCtxPaths = new BufferedWriter(fileWriterCtxPaths);
-
 		//FileOutputStream fileSer = new FileOutputStream(file.substring(0,file.indexOf(".txt"))+"_serialized_results.ser"); 
         //ObjectOutputStream writerSer = new ObjectOutputStream(fileSer); 
+		
+		// read in the association rules
+		FileInputStream fileAssocRules = new FileInputStream("association_rules_fpgrowth.txt");
+		InputStreamReader inputAssocRules = new InputStreamReader(fileAssocRules, "UTF-8");
+		BufferedReader brAssocRules = new BufferedReader(inputAssocRules);
+		String ruleLine;
+        while ((ruleLine = brAssocRules.readLine()) != null) {
+        	String[] elements = ruleLine.split("\\t");        	
+			associationRules.put(elements[1], elements[0]);
+		}
+        brAssocRules.close();
+        inputAssocRules.close();
+        fileAssocRules.close();
+        
+		
         ArrayList<InferenceDecision> decisionGraphs = new ArrayList<InferenceDecision>();
         ArrayList<String> pairs = new ArrayList<String>();
         String strLine;
@@ -545,7 +569,7 @@ public class InferenceComputer {
 					System.out.println("Processed pair "+ id);
 				}
 				else
-					decisionGraphs.add(new InferenceDecision(EntailmentRelation.UNKNOWN, 0.0, 0.0, null, false, false, null));
+					decisionGraphs.add(new InferenceDecision(EntailmentRelation.UNKNOWN, 0.0, 0.0, EntailmentRelation.UNKNOWN, null, false, false, null));
 				
 			} catch (Exception e){
 				writer.write(pair+"\t"+"Exception found:"+e.getMessage()+"\n");
@@ -643,7 +667,7 @@ public class InferenceComputer {
 		String hypothesis = "A something of people are watching group.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_entail_and_neutral_active.txt";
-		String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";
+		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/to_check.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);

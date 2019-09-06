@@ -3,6 +3,8 @@ package gnli;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
@@ -34,6 +36,7 @@ public class InferenceChecker {
 	private SpecificityUpdater updater;
 	private String labelToLearn;
 	private String pairID;
+	private EntailmentRelation alternativeEntailmentRelation;
 	
 	enum Polarity {VERIDICAL, ANTIVERIDICAL, AVERIDICAL}
 
@@ -41,6 +44,7 @@ public class InferenceChecker {
 	public InferenceChecker(GNLIGraph gnliGraph, InferenceComputer infComputer, SpecificityUpdater updater, String labelToLearn, String pairID) {
 		this.gnliGraph = gnliGraph;
 		this.entailmentRelation = EntailmentRelation.UNKNOWN; 
+		this.alternativeEntailmentRelation = EntailmentRelation.UNKNOWN; 
 		looseContra = false;
 		looseEntail = false;
 		matchStrength = 0;
@@ -60,7 +64,7 @@ public class InferenceChecker {
 		if (this.entailmentRelation == EntailmentRelation.UNKNOWN) {
 			computeInferenceRelation();
 		}
-		return new InferenceDecision(entailmentRelation,matchStrength, matchConfidence, justifications, looseContra, looseEntail, gnliGraph);
+		return new InferenceDecision(entailmentRelation,matchStrength, matchConfidence, alternativeEntailmentRelation, justifications, looseContra, looseEntail, gnliGraph);
 	}
 	
 	
@@ -113,35 +117,44 @@ public class InferenceChecker {
 			}			
 			// comment out following lines in order to always reach the extractItemsSetsForAssociationRuleMining method
 			// in order to get all paths and their contexts (for training)
-			//if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, true)) {
-			//	return;
+			contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, true);
+				//return;
 			//}
 			/*if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, false)) {
 				looseContra = true;
 			}*/
 			
 		}
-		// include following lines in order to extract the paths and their contexts (for training)
+
+		// comment out following lines in order to extractItemsSetsForAssociationRuleMining
+		// in order to get all paths and their contexts (for training)
+		if (!rootNodeMatches.isEmpty()){
+			entailmentOrDisjoint(rootNodeMatches, true);
+			//return;
+		}
+		/*if (entailment(rootNodeMatch, hypRootNode, false)) {
+			looseEntail = true;
+		}*/
+		
+		// include following lines in order to extract the paths and their contexts (for training and for testing)
 		if (rootNodeMatches.isEmpty()){
 			MatchEdge matchWithTheMostModifiers = updater.getMatchAgendaStable().get(updater.getMatchAgendaStable().size()-1).match;
 			SemanticNode<?> hTerm = gnliGraph.getMatchGraph().getStartNode(updater.getMatchAgendaStable().get(updater.getMatchAgendaStable().size()-1).match);			
 			rootNodeMatches.put(hTerm,matchWithTheMostModifiers);
 		}
 		try {
-			extractItemsSetsForAssociationRuleMining(rootNodeMatches);
+			// for training:
+			//extractItemsSetsForAssociationRuleMining(rootNodeMatches);
+			// for testing:
+			String encodedPathAndCtx = extractAllPathsAndContext(rootNodeMatches);
+			String relation = computeDecisionOfAssociationMining(encodedPathAndCtx);
+			if (!relation.equals(""))
+				this.alternativeEntailmentRelation = EntailmentRelation.valueOf(relation);
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		// comment out following lines in order to extractItemsSetsForAssociationRuleMining
-		// in order to get all paths and their contexts (for training)
-		//if (!rootNodeMatches.isEmpty() && entailmentOrDisjoint(rootNodeMatches, true)) {
-		//	return;
-		//}
-		/*if (entailment(rootNodeMatch, hypRootNode, false)) {
-			looseEntail = true;
-		}*/
 		
 		if (looseContra == false && looseEntail == false){
 			this.entailmentRelation = EntailmentRelation.NEUTRAL;
@@ -261,6 +274,148 @@ public class InferenceChecker {
 			} 
 		}
 		return false;
+	}
+	
+	private String extractAllPathsAndContext(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches) throws IOException{
+		String toWrite = "";
+		for (SemanticNode<?> key : rootNodeMatches.keySet()){		
+			SemanticNode<?> tTerm = gnliGraph.getFinishNode(rootNodeMatches.get(key));
+			HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(key);
+			HashMap<SemanticNode<?>,Polarity> tTermCtxs = textContexts.get(tTerm);
+			// in case one of the nodes is not in the context graph but we still need to find out its context
+			// we get the ctx of that node from its SkolemNodeContent, find this context within the hypothesisContexts
+			// (whatever ctx is in the SkolemContent will necessarily be one of the ctxs of the contetx graph), and put
+			// the ctx found as the key of the hash and the veridical as the value and the root node as another key and
+			// and veridicality of the mother ctx as the value
+			if (hTermCtxs == null){
+				hTermCtxs = fillEmptyContexts((SkolemNode) key, "hyp");
+			}
+			if (tTermCtxs == null){
+				tTermCtxs = fillEmptyContexts((SkolemNode) tTerm, "txt");
+			}	
+			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
+			Polarity tPolarity = tTermCtxs.get(textRootCtx);
+			String matchSpec = rootNodeMatches.get(key).getSpecificity().toString();
+			toWrite += matchSpec+":"+tPolarity.toString()+"-"+hPolarity.toString()+"\t";
+			// get the paths and the ctxs of each path
+			for (HeadModifierPathPair just: rootNodeMatches.get(key).getJustification()){
+				String encodedCtxAndPath = ":";
+				if (just.getModifiersPair() != null)
+					encodedCtxAndPath = ((MatchEdge) just.getModifiersPair()).getSpecificity().toString()+":";	
+				List<SemanticEdge> tPath = just.getPremisePath();
+				List<SemanticEdge> hPath = just.getConclusionPath();
+				if (tPath != null){
+					// for each path, get the concept to which the path ends
+					for (SemanticEdge e: tPath){
+						SemanticNode<?> finish = gnliGraph.getTextGraph().getRoleGraph().getEndNode(e);
+						// get the context of the concept mapped tot his edge
+						Polarity ctx = fillEmptyContexts((TermNode) finish, "txt").get(textRootCtx);					
+						String ctxToAdd = "";
+						if (ctx != null)
+							 ctxToAdd = ctx.toString();		
+						encodedCtxAndPath += ctxToAdd+"/"+e.getLabel()+",";
+					}
+				}
+				encodedCtxAndPath += "-";
+				if (hPath != null){
+					for (SemanticEdge e: hPath){
+						SemanticNode<?> finish = gnliGraph.getHypothesisGraph().getRoleGraph().getEndNode(e);
+						Polarity ctx = fillEmptyContexts((TermNode) finish, "hyp").get(hypRootCtx);
+						String ctxToAdd = "";
+						if (ctx != null)
+							 ctxToAdd = ctx.toString();		
+						encodedCtxAndPath += ctxToAdd+"/"+e.getLabel()+",";
+					}
+				}
+				toWrite += encodedCtxAndPath+"\t";
+			}
+		}	
+		return toWrite;
+	}
+	
+	private String computeDecisionOfAssociationMining(String encodedCtxAndPath){
+		String relation = "";
+		// split the path into its elements
+		String[] elementsOfPath = encodedCtxAndPath.split("\t");
+		// convert array to list
+		List<String> listOfPath = new ArrayList<String>(Arrays.asList(elementsOfPath)); 
+		// make a copy of the list of the path because we are going to remove elements from it
+		List<String> copyOfListOfPath = new ArrayList<String>(Arrays.asList(elementsOfPath)); 
+		int lengthOfPath = elementsOfPath.length;
+		// counter to keep track of the common elements between path and current rule
+		int currentCommonElem = 0;
+		// list to store rules that were found to have more common elements with the path than the threshold 
+		ArrayList<String> currentCommonRules = new ArrayList<String>();
+		for (String rule : infComputer.getAssociationRules().keySet()){
+			// split also the rule into elements
+			String[] elementsOfRule = rule.split(",\\s");
+			List<String> listOfRule = new ArrayList<String>(Arrays.asList(elementsOfRule)); 
+			// keeps the elements of path that are also included in the rule
+			try {
+				if (listOfPath.retainAll(listOfRule)){
+					// the listOfPath now only contains the common elements, so the size of the list is the number
+					// of common elements
+					int noOfCommonElem = listOfPath.size();
+					// if the no of common elements is greater than the previous one,
+					if (noOfCommonElem > currentCommonElem){
+						// set the current number as the greatest one
+						currentCommonElem = noOfCommonElem;
+						// remove all previous common rules from the list and add this one
+						currentCommonRules.clear();
+						currentCommonRules.add(rule);
+					}
+					// if the no of common elements is equal to the previous one,
+					else if (noOfCommonElem == currentCommonElem && noOfCommonElem != 0 ){
+						// just add the current rule
+						currentCommonRules.add(rule);
+					}
+				}
+			} catch (Exception e){
+				System.out.println(e);
+			}
+		}
+		// we now want to make sure that elements were not found as common elements,
+		// are not included themselves (as a whole) to any other rule
+		// this would annulate them
+		ArrayList<String> relationsExtracted = new ArrayList<String>();
+		// otherwise, listOfPath is already trimmed at this point
+		List<String> listOfPath2 = new ArrayList<String>(Arrays.asList(elementsOfPath)); 
+		for (String commonRule : currentCommonRules){
+			String[] elementsOfRule = commonRule.split(",\\s");
+			List<String> listOfRule = new ArrayList<String>(Arrays.asList(elementsOfRule)); 		
+			// keeps the elements of path that are also included in the rule
+			listOfPath2.retainAll(listOfRule);
+			// from the list containing all elements, remove the common ones (listOfPath now only includes common ones due to
+			// previous step)
+			copyOfListOfPath.removeAll(listOfPath2);
+			String[] remainingElements = copyOfListOfPath.toArray(new String[0]);
+			List<String> listOfRemainingElements = new ArrayList<String>( Arrays.asList(remainingElements)); 
+			// check if all remaining elements are contained in a rule, if not add the relation of the current 
+			// rule to the list of relations
+			if (!infComputer.getAssociationRules().keySet().containsAll(listOfRemainingElements)){
+				relationsExtracted.add(infComputer.getAssociationRules().get(commonRule));
+			}
+		}
+		// check to see which relation exists how many times
+		int countEntail = 0;
+		int countContra = 0;
+		int countNeut = 0;
+		for (String rel : relationsExtracted){
+			if (rel.contains("N"))
+				countNeut ++;
+			else if (rel.contains("C"))
+				countContra ++;
+			else if (rel.contains("E"))
+				countEntail ++;
+		}
+		if (countEntail > countContra && countContra >= countNeut)
+			relation = "ENTAILMENT";
+		else if (countContra > countEntail && countEntail >= countNeut)
+			relation = "CONTRADICTION";
+		else if (countNeut > countContra && countContra >= countEntail)
+			relation = "NEUTRAL";
+		
+		return relation;	
 	}
 	
 	private void extractItemsSetsForAssociationRuleMining(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches) throws IOException{
