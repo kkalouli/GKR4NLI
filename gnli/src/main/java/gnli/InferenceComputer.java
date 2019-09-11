@@ -84,7 +84,7 @@ public class InferenceComputer {
 		//serializeKb();
 		String wnInstall = props.getProperty("wn_location");
 		String sumoInstall = props.getProperty("sumo_location");
-		this.learning = true;
+		this.learning = false;
 		// initialize bert and bertTokenizer so that there is only one instance
         this.bertVocab = props.getProperty("bert_vocab");
 		this.bert = Bert.load("com/robrua/nlp/easy-bert/bert-uncased-L-12-H-768-A-12");
@@ -540,8 +540,8 @@ public class InferenceComputer {
         ArrayList<String> pairs = new ArrayList<String>();
         String strLine;
         while ((strLine = br.readLine()) != null) {
-			pairs.add(strLine);
-			}
+        	pairs.add(strLine);
+		}
         br.close();
         inputReader.close();
         fileInput.close();
@@ -553,6 +553,8 @@ public class InferenceComputer {
 			}
 			String[] elements = pair.split("\t");
 			String id = elements[0];
+			if (id.contains("b"))
+				continue;
 			String premise = elements[1];
 			String hypothesis = elements[2];
 			String correctLabel = elements[3];
@@ -563,7 +565,8 @@ public class InferenceComputer {
 					String spec = "";
 					if (decision.getJustifications() != null && !decision.getJustifications().isEmpty())
 						spec = decision.getJustifications().toString();	
-					writer.write(pair+"\t"+decision.getEntailmentRelation()+"\t"+decision.getMatchStrength()+"\t"+decision.getMatchConfidence()+"\t"+decision.isLooseContr()+
+					writer.write(pair+"\t"+decision.getEntailmentRelation()+"\t"+decision.getMatchStrength()+"\t"+decision.getMatchConfidence()+"\t"+
+							decision.getAlternativeEntailmentRelation()+"\t"+decision.isLooseContr()+
 							"\t"+decision.isLooseEntail()+"\t"+spec+"\n");
 					writer.flush();
 					System.out.println("Processed pair "+ id);
@@ -663,11 +666,11 @@ public class InferenceComputer {
 		//long startTime = System.currentTimeMillis();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "A group of people are watching something.";	
-		String hypothesis = "A something of people are watching group.";
+		String premise = "Two dogs are wrestling and hugging.";	
+		String hypothesis = "There is no dog wrestling and hugging.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
-		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_entail_and_neutral_active.txt";
-		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
+		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_a.txt";
+		String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";
 		//String file = "/home/kkalouli/Documents/diss/to_check.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);

@@ -392,7 +392,9 @@ public class PathScorer implements Serializable {
 	
 
 	public boolean pathAtNeutralThreshold(float cost) {
-		return cost == neuCost;
+		// always return false for now ==> do not remove anz matches for now
+		//return cost == neuCost;
+		return false;
 	}
 	
 	public void createFeatureVector(){

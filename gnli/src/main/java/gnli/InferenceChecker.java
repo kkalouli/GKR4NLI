@@ -139,24 +139,24 @@ public class InferenceChecker {
 		// include following lines in order to extract the paths and their contexts (for training and for testing)
 		if (rootNodeMatches.isEmpty()){
 			MatchEdge matchWithTheMostModifiers = updater.getMatchAgendaStable().get(updater.getMatchAgendaStable().size()-1).match;
-			SemanticNode<?> hTerm = gnliGraph.getMatchGraph().getStartNode(updater.getMatchAgendaStable().get(updater.getMatchAgendaStable().size()-1).match);			
+			SemanticNode<?> hTerm = gnliGraph.getMatchGraph().getStartNode(matchWithTheMostModifiers);			
 			rootNodeMatches.put(hTerm,matchWithTheMostModifiers);
 		}
 		try {
 			// for training:
-			//extractItemsSetsForAssociationRuleMining(rootNodeMatches);
+			extractItemsSetsForAssociationRuleMining(rootNodeMatches);
 			// for testing:
-			String encodedPathAndCtx = extractAllPathsAndContext(rootNodeMatches);
-			String relation = computeDecisionOfAssociationMining(encodedPathAndCtx);
-			if (!relation.equals(""))
-				this.alternativeEntailmentRelation = EntailmentRelation.valueOf(relation);
+			//String encodedPathAndCtx = extractAllPathsAndContext(rootNodeMatches);
+			//String relation = computeDecisionOfAssociationMining(encodedPathAndCtx);
+			//if (!relation.equals(""))
+			//	this.alternativeEntailmentRelation = EntailmentRelation.valueOf(relation);
 			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
-		if (looseContra == false && looseEntail == false){
+		if (this.entailmentRelation == EntailmentRelation.UNKNOWN && looseContra == false && looseEntail == false){
 			this.entailmentRelation = EntailmentRelation.NEUTRAL;
 		}
 		
@@ -575,7 +575,7 @@ public class InferenceChecker {
 	}
 	
 	private boolean costInNeutralBounds(double cost){
-		if (cost <= 150.0 && cost >= 75.0)
+		if (cost <= 125.0 && cost >= 75.0)
 			return true;
 		else
 			return false;

@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.SerializationUtils;
+
 import sem.graph.SemanticEdge;
 import sem.graph.SemanticGraph;
 import sem.graph.SemanticNode;
@@ -43,6 +45,7 @@ public class SpecificityUpdater {
 			this.pathScorer = pathScorer;
 			this.pathScorer.setGNLIGraph(gnliGraph);
 			this.matchAgenda = new ArrayList<MatchAgendaItem>();
+			this.matchAgendaStable = new ArrayList<MatchAgendaItem>();
 			// Set up match agenda and filter:
 			for (MatchEdge match: gnliGraph.getMatches()) {
 				if (gnliGraph.getHypothesisGraph().isRstr((TermNode) gnliGraph.getMatchGraph().getStartNode(match)) &&
@@ -52,6 +55,7 @@ public class SpecificityUpdater {
 				item.match = match;
 				item.noOfMods = getNoOfHypAndTextMods(match);
 				this.matchAgenda.add(item);	
+				this.matchAgendaStable.add(item);
 			}
 			Collections.sort(this.matchAgenda);
 			initialAgendaSize = matchAgenda.size();
@@ -74,6 +78,7 @@ public class SpecificityUpdater {
 			return matchAgendaStable;
 		}
 		
+		
 
 		/**
 		 * Updates specificity relations on matches until no more updates can be made
@@ -92,8 +97,6 @@ public class SpecificityUpdater {
 			}
 			// Initialize new agenda for next rounds:
 			this.newAgenda = new ArrayList<MatchAgendaItem>(initialSize);
-			// the stable agenda is used in the InferenceChecker to find which match has the fewer modifiers
-			this.matchAgendaStable = matchAgenda;
 			// Take each item of agenda in turn.
 			// Agenda is ordered to have matches with fewest text and hypothesis modifiers first.
 			// This increases the chances of the early matches being updated to completion, and
@@ -286,10 +289,13 @@ public class SpecificityUpdater {
 				if (cost != 0.0)
 					hypoTextMatch.match.addCost(cost);
 				hypoTextMatch.match.incrementScore("distance", (float) ((MatchContent) justification.getModifiersPair().getContent()).getScore());
-				String test = "";
 			} else{
 				gnliGraph.removeMatchEdge(hypoTextMatch.match);
-				matchAgenda.remove(hypoTextMatch);
+				/*for (MatchAgendaItem item : matchAgenda) {
+					if (item.match.equals(hypoTextMatch.match)) {
+						matchAgenda.remove(item);
+					}			
+				}*/
 				gnliGraph.removeMatchNode(hypoTextMatch.hypothesisTerm);
 				gnliGraph.removeMatchNode(hypoTextMatch.textTerm);
 			}
@@ -662,7 +668,11 @@ public class SpecificityUpdater {
 		
 		
 		
-		class MatchAgendaItem implements Comparable<MatchAgendaItem>{
+		class MatchAgendaItem implements Comparable<MatchAgendaItem>, Serializable{
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = -1042412107606488880L;
 			int noOfMods;
 			MatchEdge match;
 			
