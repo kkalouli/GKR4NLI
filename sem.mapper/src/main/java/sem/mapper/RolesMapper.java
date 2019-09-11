@@ -486,7 +486,7 @@ public class RolesMapper implements Serializable {
 		// get through the role graph and see if there are any nodes that are coordinated 
 		for (SemanticNode<?> node : graph.getRoleGraph().getNodes()){
 			ArrayList<SemanticEdge> isElementEdges = new ArrayList<SemanticEdge>();
-			for (SemanticEdge edge : graph.getInEdges(node)){
+			for (SemanticEdge edge : graph.getOutEdges(node)){
 				if (edge.getLabel().equals("is_element") && graph.getStartNode(edge) instanceof TermNode){				
 					isElementEdges.add(edge);
 				}
@@ -504,7 +504,7 @@ public class RolesMapper implements Serializable {
 		}
 		String label = "";
 		String ele = "";
-		ArrayList<SemanticEdge> inEdges = new ArrayList<SemanticEdge>();
+		ArrayList<SemanticEdge> outEdges = new ArrayList<SemanticEdge>();
 		for (SemanticNode<?> node : termNodes){
 			String name = node.getLabel();
 			String[] partsOfName = name.split("_(?=(and|or))");
@@ -513,26 +513,35 @@ public class RolesMapper implements Serializable {
 			ele = partsOfName[1].substring(0,partsOfName[1].indexOf("_"));
 			label += "_"+ele+"_";
 			label += partsOfName[1].substring(partsOfName[1].indexOf("_")+1);
-			if (!inEdges.containsAll(graph.getRoleGraph().getInEdges(node)))
-				inEdges.addAll(graph.getRoleGraph().getInEdges(node));
+			// get all children of the combined node to add them to the bigger combined node
+			for (SemanticEdge edge : graph.getRoleGraph().getOutEdges(node)){
+				if (!outEdges.contains(edge)){
+					outEdges.add(edge);
+				}
+			}
 		}
 		TermNode combNode = new TermNode(label, new TermNodeContent());
-		
-		for (SemanticEdge ed : inEdges){
+		ArrayList<SemanticNode<?>> combNodesToRemoveAfterAddingChildren = new ArrayList<SemanticNode<?>>();
+		for (SemanticEdge ed : outEdges){
 			SemanticNode<?> start = graph.getStartNode(ed);
 			SemanticNode<?> finish = graph.getFinishNode(ed);
 			RoleEdge roleEdge = new RoleEdge(ed.getLabel(), new RoleEdgeContent());
-			graph.addRoleEdge(roleEdge, start, combNode);
-			graph.removeRoleNode(finish);
-		}
-		
-		String role = GraphLabels.IS_ELEMENT;
-		for (SemanticNode<?> node : coordNodes){
-			if (graph.getRoleGraph().getEdges(combNode, node).isEmpty() ){
-				RoleEdge combEdge = new RoleEdge(role, new RoleEdgeContent());
-				graph.addRoleEdge(combEdge, combNode, node);
+			// only add the children of the combined nodes once 
+			boolean found = false;
+			for (SemanticEdge edge: graph.getRoleGraph().getEdges()){
+				if (edge.getLabel().equals(roleEdge.getLabel()) && edge.getDestVertexId().equals(finish.getLabel()) && edge.getSourceVertexId().equals(combNode.getLabel()) ){
+					found = true;
+				}				
 			}
-		}		
+			if (found == false)
+				graph.addRoleEdge(roleEdge, combNode, finish);
+			if (!combNodesToRemoveAfterAddingChildren.contains(start))
+				combNodesToRemoveAfterAddingChildren.add(start);	
+		}
+		// remove all double-combined nodes since they have been replaced by the third-combined 
+		for (SemanticNode<?> node : combNodesToRemoveAfterAddingChildren){
+			graph.removeRoleNode(node);
+		}
 	}
 
 	/**

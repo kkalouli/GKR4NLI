@@ -110,6 +110,8 @@ public class ContextMapper implements Serializable {
 	 * @throws IOException 
 	 */
 	public void integrateAllContexts(){
+		//graph.displayRoles();
+		graph.displayDependencies();
 		integrateImplicativeContexts();
 		//graph.displayContexts();
 		integrateCoordinatingContexts();
@@ -511,8 +513,8 @@ public class ContextMapper implements Serializable {
 	 * @param previousNegNode
 	 */
 	private void integrateNotContexts(SemanticNode<?> node, SemanticNode<?> negNode, SemanticNode<?> previousNegNode){
-		//graph.displayContexts();
-		//graph.displayDependencies();
+		graph.displayContexts();
+		graph.displayDependencies();
 		// initialize the head of the negation
 		SemanticNode<?> head = null;
 		// initialize the context of the head of the negation
@@ -1055,9 +1057,33 @@ public class ContextMapper implements Serializable {
 				SemanticNode<?> combNode = graph.getRoleGraph().getInNeighbors(start).iterator().next(); 
 				ContextHeadEdge combEdge1 = new ContextHeadEdge(GraphLabels.CONTEXT_HEAD, new  RoleEdgeContent());
 				ContextHeadEdge combEdge2 = new ContextHeadEdge(GraphLabels.CONTEXT_HEAD, new  RoleEdgeContent());
-				SemanticNode<?> ctxOfCombNode = new ContextNode("ctx("+combNode.getLabel()+")", new ContextNodeContent());
-				graph.addContextEdge(combEdge1, ctxOfCombNode, start);
-				graph.addContextEdge(combEdge2, ctxOfCombNode, finish);
+				String labelOfNode = "ctx("+combNode.getLabel()+")";
+				// make sure you add the combined node only once
+				SemanticNode<?> ctxOfCombNode = null;
+				for (SemanticNode<?> ctxNode : graph.getContextGraph().getNodes()){
+					if (ctxNode.getLabel().equals(labelOfNode)){
+						ctxOfCombNode = ctxNode;
+					}
+				}
+				if (ctxOfCombNode == null)
+					ctxOfCombNode = new ContextNode(labelOfNode, new ContextNodeContent());
+				
+				// make sure we add each edge only once
+				boolean foundCombEdge1 = false;
+				boolean foundCombEdge2 = false;
+				for (SemanticEdge ctxEdge : graph.getContextGraph().getEdges()){
+					if (ctxEdge.getLabel().equals(combEdge1.getLabel()) && ctxEdge.getDestVertexId().equals(start.getLabel()) && ctxEdge.getSourceVertexId().equals(ctxOfCombNode.getLabel())){
+						foundCombEdge1 = true;
+					}
+					if (ctxEdge.getLabel().equals(combEdge2.getLabel()) && ctxEdge.getDestVertexId().equals(finish.getLabel()) && ctxEdge.getSourceVertexId().equals(ctxOfCombNode.getLabel())){
+						foundCombEdge2 = true;
+					}
+				}
+				if (foundCombEdge1 == false)
+					graph.addContextEdge(combEdge1, ctxOfCombNode, start);
+				if (foundCombEdge2 == false)
+					graph.addContextEdge(combEdge2, ctxOfCombNode, finish);
+				
 				verbCoord = true;
 				// again, put everything int he hash. If the "start" verb is already in the hash and has the value "clausal"
 				// then add it again with the type "verbal". The type "verbal" is then the main one for this verb.  
