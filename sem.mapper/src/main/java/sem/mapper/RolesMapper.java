@@ -607,14 +607,15 @@ public class RolesMapper implements Serializable {
 		break;
 		case "compound":role = GraphLabels.COMPOUND;
 		break;
+		//case "mwe":role = GraphLabels.COMPOUND;
+		//break;
 		case "dep": role = GraphLabels.MOD;
 		break;
 		// dont know yet if they should be in there, appos is treated in the DepGraphToSemGraph as part of the LinkGraph
 		/*case "appos":role = GraphLabels.RESTRICTION;
-		break;
-		case "case" : if (passive == false){
-			role = GraphLabels.PMOD;
-			}*/
+		break;*/
+		//case "case" : role = GraphLabels.PMOD;
+		//break;
 		}
 		// nmod can have difefrent subtypes, therefore it is put here and not within the switch 
 		if (role.equals("") && edgeLabel.contains("nmod")){

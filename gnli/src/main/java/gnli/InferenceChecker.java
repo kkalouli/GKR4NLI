@@ -117,9 +117,10 @@ public class InferenceChecker {
 			}			
 			// comment out following lines in order to always reach the extractItemsSetsForAssociationRuleMining method
 			// in order to get all paths and their contexts (for training)
-			contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, true);
-				//return;
-			//}
+			
+			if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, true)) {
+				return;
+			}
 			/*if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, false)) {
 				looseContra = true;
 			}*/
@@ -128,9 +129,8 @@ public class InferenceChecker {
 
 		// comment out following lines in order to extractItemsSetsForAssociationRuleMining
 		// in order to get all paths and their contexts (for training)
-		if (!rootNodeMatches.isEmpty()){
-			entailmentOrDisjoint(rootNodeMatches, true);
-			//return;
+		if (!rootNodeMatches.isEmpty() && entailmentOrDisjoint(rootNodeMatches, true)){
+			return;
 		}
 		/*if (entailment(rootNodeMatch, hypRootNode, false)) {
 			looseEntail = true;
@@ -155,8 +155,8 @@ public class InferenceChecker {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		if (this.entailmentRelation == EntailmentRelation.UNKNOWN && looseContra == false && looseEntail == false){
+		//this.entailmentRelation == EntailmentRelation.UNKNOWN &&
+		if (looseContra == false && looseEntail == false){
 			this.entailmentRelation = EntailmentRelation.NEUTRAL;
 		}
 		
