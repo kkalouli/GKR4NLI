@@ -594,6 +594,8 @@ public class RolesMapper implements Serializable {
 			foundSubj = true;
 		}	
 		break;
+		case "nmod:than" : role = GraphLabels.NMOD_COMP;
+		break;
 		case "nsubj:xsubj": role = GraphLabels.SUBJ;
 		foundSubj = true;
 		break;
