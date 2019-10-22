@@ -503,7 +503,9 @@ public class InferenceChecker {
 			double cost = rootNodeMatches.get(key).getFeatureScore("cost");
 			if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.VERIDICAL) {
 				// it is not a contradiction if there is no disjoint relation and the score is below maxCost*2
-				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)){
+				// it is not a contradiction if there is disjoint and boudns within contradiction (minus and minu s= plus)
+				if ( (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)) ||
+				   (matchSpecificity == Specificity.DISJOINT && costInContraBounds(cost))  ){
 					disjoint = false;
 				} 
 				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
@@ -517,7 +519,8 @@ public class InferenceChecker {
 					entail = false;
 				}
 				// if there is neither equals nor subclass, there is no entail
-				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUBCLASS) {
+				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUBCLASS &&
+					matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost) ) {
 					entail = false;		
 				} 
 				if (matchSpecificity == Specificity.NONE){
@@ -526,7 +529,8 @@ public class InferenceChecker {
 				
 			}
 			else if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
-				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)){
+				if ( (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)) ||
+					 (matchSpecificity == Specificity.DISJOINT && costInContraBounds(cost)) ){
 					disjoint = false;
 				}
 				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
@@ -540,7 +544,8 @@ public class InferenceChecker {
 					entail = false;
 				}
 				// if there is neither equals nor superclass, there is no entail
-				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUPERCLASS) {
+				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUPERCLASS &&
+						matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)) {
 					entail = false;		
 				}
 				if (matchSpecificity == Specificity.NONE){
