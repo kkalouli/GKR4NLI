@@ -189,7 +189,7 @@ public class InitialTermMatcher {
 		}
 		
 		updatePendingMatches();
-		for (CheckedTermNode hTerm : hypothesisTerms) {
+		/*for (CheckedTermNode hTerm : hypothesisTerms) {
 			TermNode similHTerm = null;
 			TermNode similTTerm = null;
 			for (TermNode tTerm : textTerms) {
@@ -201,7 +201,7 @@ public class InitialTermMatcher {
 			}
 			checkEmbedMatch(hTerm, similHTerm, similTTerm);
 		}
-		updatePendingMatches();
+		updatePendingMatches();*/
 		
 	
 	}

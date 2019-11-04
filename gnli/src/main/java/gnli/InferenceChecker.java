@@ -1,7 +1,11 @@
 package gnli;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -12,6 +16,8 @@ import java.util.Set;
 import sem.graph.SemanticEdge;
 import sem.graph.SemanticGraph;
 import sem.graph.SemanticNode;
+import sem.graph.vetypes.SenseNode;
+import sem.graph.vetypes.SenseNodeContent;
 import sem.graph.vetypes.SkolemNode;
 import sem.graph.vetypes.SkolemNodeContent;
 import sem.graph.vetypes.TermNode;
@@ -37,6 +43,8 @@ public class InferenceChecker {
 	private String labelToLearn;
 	private String pairID;
 	private EntailmentRelation alternativeEntailmentRelation;
+	private HashMap<String,String> vnToPWNMap;
+	private boolean rootsWasEmpty;
 	
 	enum Polarity {VERIDICAL, ANTIVERIDICAL, AVERIDICAL}
 
@@ -54,6 +62,10 @@ public class InferenceChecker {
 		this.updater = updater;
 		this.labelToLearn = labelToLearn;
 		this.pairID = pairID;
+		this.vnToPWNMap = infComputer.getVnToPWNMap();
+		this.rootsWasEmpty = false;
+
+
 	}
 	
 	
@@ -118,26 +130,50 @@ public class InferenceChecker {
 			// comment out following lines in order to always reach the extractItemsSetsForAssociationRuleMining method
 			// in order to get all paths and their contexts (for training)
 			
-			if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, true)) {
-				return;
-			}
+			//if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, true)) {
+			//	return;
+			//}
+			contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, true);
+
 			/*if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, false)) {
 				looseContra = true;
 			}*/
 			
 		}
+		
+		if (rootNodeMatches.isEmpty()){
+			MatchEdge matchWithTheMostModifiers = updater.getMatchAgendaStable().get(updater.getMatchAgendaStable().size()-1).match;
+			SemanticNode<?> hTerm = gnliGraph.getMatchGraph().getStartNode(matchWithTheMostModifiers);			
+			rootNodeMatches.put(hTerm,matchWithTheMostModifiers);
+			rootsWasEmpty = true;
+		}
 
 		// comment out following lines in order to extractItemsSetsForAssociationRuleMining
 		// in order to get all paths and their contexts (for training)
-		if (!rootNodeMatches.isEmpty() && entailmentOrDisjoint(rootNodeMatches, true)){
-			return;
+		//if (!rootNodeMatches.isEmpty() && entailmentOrDisjoint(rootNodeMatches, true)){
+		//	return;
+		//}
+		if (!rootNodeMatches.isEmpty()) { 
+			try {
+				extractItemsSetsForAssociationRuleMining(rootNodeMatches);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if (this.entailmentRelation == EntailmentRelation.UNKNOWN) {
+				if (entailmentOrDisjoint(rootNodeMatches, true))
+					return;
+			} else
+				return;				
+		} else {
+			infComputer.getPathsAndCtxs().add(pairID+"\tnothing_found\t"+labelToLearn);
 		}
 		/*if (entailment(rootNodeMatch, hypRootNode, false)) {
 			looseEntail = true;
 		}*/
 		
 		// include following lines in order to extract the paths and their contexts (for training and for testing)
-		if (rootNodeMatches.isEmpty()){
+		/*if (rootNodeMatches.isEmpty()){
 			MatchEdge matchWithTheMostModifiers = updater.getMatchAgendaStable().get(updater.getMatchAgendaStable().size()-1).match;
 			SemanticNode<?> hTerm = gnliGraph.getMatchGraph().getStartNode(matchWithTheMostModifiers);			
 			rootNodeMatches.put(hTerm,matchWithTheMostModifiers);
@@ -154,7 +190,7 @@ public class InferenceChecker {
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+		}*/
 		//this.entailmentRelation == EntailmentRelation.UNKNOWN &&
 		if (looseContra == false && looseEntail == false){
 			this.entailmentRelation = EntailmentRelation.NEUTRAL;
@@ -215,14 +251,27 @@ public class InferenceChecker {
 			matchSpecificity = matchEdge.getOriginalSpecificity();
 		Polarity hPolarity = hTermCtxs.get(hypRootCtx);
 		Polarity tPolarity = tTermCtxs.get(textRootCtx);
+		double cost = matchEdge.getFeatureScore("cost");
 		if (matchSpecificity!= Specificity.NONE && matchSpecificity != Specificity.DISJOINT) {
 			if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.VERIDICAL) {
+				// following if added on 24.10 for snetences like: the man is more happy than the woman
+				// the man is not less happy than the woman
+				if (costInContraBounds(cost)) {
+					this.entailmentRelation = EntailmentRelation.ENTAILMENT;
+					penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
+					return true;
+				}
 				if (matchSpecificity == Specificity.EQUALS || matchSpecificity == Specificity.SUBCLASS) {
 					this.entailmentRelation = EntailmentRelation.CONTRADICTION;
 					penalizeLooseMatching(EntailmentRelation.CONTRADICTION, strict, matchEdge);
 					return true;
 				}
 			} else if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
+				if (costInContraBounds(cost)) {
+					this.entailmentRelation = EntailmentRelation.ENTAILMENT;
+					penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
+					return true;
+				}
 				if (matchSpecificity == Specificity.EQUALS || matchSpecificity == Specificity.SUPERCLASS) {
 					this.entailmentRelation = EntailmentRelation.CONTRADICTION;
 					penalizeLooseMatching(EntailmentRelation.CONTRADICTION, strict, matchEdge);
@@ -420,6 +469,12 @@ public class InferenceChecker {
 	
 	private void extractItemsSetsForAssociationRuleMining(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches) throws IOException{
 		String toWrite = pairID+"\t";
+		// keep track of whether there was a real root (verb) matchign or whether one of the other
+		//matches was used as root
+		String rootsEmpty = "no";
+		if (rootsWasEmpty == true)
+			rootsEmpty = "yes";
+		toWrite += rootsEmpty+"\t";
 		for (SemanticNode<?> key : rootNodeMatches.keySet()){		
 			SemanticNode<?> tTerm = gnliGraph.getFinishNode(rootNodeMatches.get(key));
 			HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(key);
@@ -437,13 +492,45 @@ public class InferenceChecker {
 			}	
 			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
 			Polarity tPolarity = tTermCtxs.get(textRootCtx);
-			String matchSpec = rootNodeMatches.get(key).getSpecificity().toString();
-			toWrite += matchSpec+":"+tPolarity.toString()+"-"+hPolarity.toString()+"\t";
+			String matchSpec = rootNodeMatches.get(key).getOriginalSpecificity().toString();
+			String keyVnClass = "";
+			float keySenseScore = 0;
+			String tTermVnClass = "";
+			float tTermSenseScore = 0;
+			// get the senseKey of the key (hTerm)
+			Set<SemanticNode<?>> keySenseNodes = gnliGraph.getHypothesisGraph().getLexGraph().getOutNeighbors(key);
+			for (SemanticNode<?> sNode : keySenseNodes) {
+				if (sNode instanceof SenseNode) {
+					String keySenseKey = ((SenseNodeContent) sNode.getContent()).getSenseKey();					
+					if (vnToPWNMap.containsKey(keySenseKey)) {
+						 keyVnClass = vnToPWNMap.get(keySenseKey);
+						 if (((SenseNodeContent) sNode.getContent()).getSenseScore() > keySenseScore) {
+							 keySenseScore = ((SenseNodeContent) sNode.getContent()).getSenseScore();
+						 }
+					}
+						
+				}
+			}
+			// get the senseKey of the tTerm
+			Set<SemanticNode<?>> tTermSenseNodes = gnliGraph.getTextGraph().getLexGraph().getOutNeighbors(tTerm);
+			for (SemanticNode<?> sNode : tTermSenseNodes) {
+				if (sNode instanceof SenseNode) {
+					String tTermSenseKey = ((SenseNodeContent) sNode.getContent()).getSenseKey();					
+					if (vnToPWNMap.containsKey(tTermSenseKey)) {
+						tTermVnClass = vnToPWNMap.get(tTermSenseKey);
+						if (((SenseNodeContent) sNode.getContent()).getSenseScore() >= tTermSenseScore) {
+							tTermSenseScore = ((SenseNodeContent) sNode.getContent()).getSenseScore();
+						 }
+					}
+				}
+			}
+			//toWrite += matchSpec+":"+tPolarity.toString()+"-"+hPolarity.toString()+"\t";
+			toWrite += ((SkolemNodeContent) key.getContent()).getStem()+"-"+((SkolemNodeContent) tTerm.getContent()).getStem()+":"+keyVnClass+"-"+tTermVnClass+":"+matchSpec+":"+tPolarity.toString()+"-"+hPolarity.toString()+"\t";
 			// get the paths and the ctxs of each path
 			for (HeadModifierPathPair just: rootNodeMatches.get(key).getJustification()){
 				String encodedCtxAndPath = ":";
 				if (just.getModifiersPair() != null)
-					encodedCtxAndPath = ((MatchEdge) just.getModifiersPair()).getSpecificity().toString()+":";	
+					encodedCtxAndPath = ((MatchEdge) just.getModifiersPair()).getOriginalSpecificity().toString()+":";	
 				List<SemanticEdge> tPath = just.getPremisePath();
 				List<SemanticEdge> hPath = just.getConclusionPath();
 				if (tPath != null){
@@ -503,9 +590,7 @@ public class InferenceChecker {
 			double cost = rootNodeMatches.get(key).getFeatureScore("cost");
 			if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.VERIDICAL) {
 				// it is not a contradiction if there is no disjoint relation and the score is below maxCost*2
-				// it is not a contradiction if there is disjoint and boudns within contradiction (minus and minu s= plus)
-				if ( (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)) ||
-				   (matchSpecificity == Specificity.DISJOINT && costInContraBounds(cost))  ){
+				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)){
 					disjoint = false;
 				} 
 				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
@@ -518,9 +603,14 @@ public class InferenceChecker {
 						|| ( matchSpecificity == Specificity.SUBCLASS && costInNeutralBounds(cost) ) ){
 					entail = false;
 				}
+				if (matchSpecificity == Specificity.DISJOINT && costInContraBounds(cost) ) {
+					disjoint = false;
+				}
+				else if (matchSpecificity == Specificity.DISJOINT && !costInContraBounds(cost) ) {
+					entail = false;
+				}
 				// if there is neither equals nor subclass, there is no entail
-				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUBCLASS &&
-					matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost) ) {
+				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUBCLASS && matchSpecificity != Specificity.DISJOINT  ) {
 					entail = false;		
 				} 
 				if (matchSpecificity == Specificity.NONE){
@@ -529,8 +619,7 @@ public class InferenceChecker {
 				
 			}
 			else if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
-				if ( (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)) ||
-					 (matchSpecificity == Specificity.DISJOINT && costInContraBounds(cost)) ){
+				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost) ){
 					disjoint = false;
 				}
 				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
@@ -543,9 +632,15 @@ public class InferenceChecker {
 						|| ( matchSpecificity == Specificity.SUPERCLASS && costInNeutralBounds(cost) ) ){
 					entail = false;
 				}
+				if (matchSpecificity == Specificity.DISJOINT && costInContraBounds(cost) ) {
+					disjoint = false;
+				}
+				else if (matchSpecificity == Specificity.DISJOINT && !costInContraBounds(cost) ) {
+					entail = false;
+				}
+
 				// if there is neither equals nor superclass, there is no entail
-				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUPERCLASS &&
-						matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)) {
+				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUPERCLASS && matchSpecificity != Specificity.DISJOINT  ){
 					entail = false;		
 				}
 				if (matchSpecificity == Specificity.NONE){

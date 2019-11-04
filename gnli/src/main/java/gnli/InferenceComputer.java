@@ -61,6 +61,7 @@ public class InferenceComputer {
 	private String sumoContent;
 	private String bertVocab;
 	private HashMap<String,String> associationRules;
+	private HashMap<String,String> vnToPWNMap;
 
 
 	public InferenceComputer() throws FileNotFoundException, UnsupportedEncodingException {
@@ -102,11 +103,38 @@ public class InferenceComputer {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		// for learning==true
+		
+		this.vnToPWNMap = new HashMap<String,String>();
+		BufferedReader br = null;
+		InputStreamReader inputReaderVn = null;
+		try {
+			InputStream vnToPWN = getClass().getClassLoader().getResourceAsStream("mappings_vn_wd.txt");
+			inputReaderVn = new InputStreamReader(vnToPWN, "UTF-8");
+			br = new BufferedReader(inputReaderVn);
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		String strLine;
+		//store the file in a hashmap. key: the PWN Sense key, Value: the VN class
+		try {
+			while ((strLine = br.readLine()) != null) { 
+				String[] elems = strLine.split("\\t");
+				vnToPWNMap.put(elems[0]+"::",elems[1]);	
+			}
+			br.close();
+			inputReader.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		//for learning==true
 		//this.entailRolePaths = new HashMap<String, ArrayList<HeadModifierPathPair>>();
 		//this.neutralRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
 		//this.contraRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
-		this.associationRules = new HashMap<String,String>();
+		//this.associationRules = new HashMap<String,String>();
 		this.pathsAndCtxs = new ArrayList<String>();
 		// for learning==false
 		this.entailRolePaths = deserialize("entail");
@@ -218,6 +246,13 @@ public class InferenceComputer {
 		this.semGraph = new DepGraphToSemanticGraph(bert, tokenizer, wnDict, sumoContent);
 		//this.semGraph = new DepGraphToSemanticGraph();
 
+	}
+	public HashMap<String,String> getVnToPWNMap(){
+		return vnToPWNMap;
+	}
+	
+	public void setVnToPWNMap(HashMap<String,String> vnToPWNMap){
+		this.vnToPWNMap = vnToPWNMap;
 	}
 	
 	public HashMap<String,ArrayList<HeadModifierPathPair>> getNeutralRolePaths(){
@@ -516,14 +551,11 @@ public class InferenceComputer {
 		// true stands for append = true (dont overwrite)
 		FileWriter fileWriter =  new FileWriter(file.substring(0,file.indexOf(".txt"))+"_with_inference_relation.csv", true);
 		BufferedWriter writer = new BufferedWriter(fileWriter);
-		// file to write the paths and the contexts learnt (for the associative rule mining)
-		FileWriter fileWriterCtxPaths =  new FileWriter(file.substring(0,file.indexOf(".txt"))+"_paths_and_ctx.csv", true);
-		BufferedWriter writerCtxPaths = new BufferedWriter(fileWriterCtxPaths);
 		//FileOutputStream fileSer = new FileOutputStream(file.substring(0,file.indexOf(".txt"))+"_serialized_results.ser"); 
         //ObjectOutputStream writerSer = new ObjectOutputStream(fileSer); 
 		
-		// read in the association rules
-		FileInputStream fileAssocRules = new FileInputStream("association_rules_fpgrowth.txt");
+		// read in the association rules if we want to use them; we also need to uncmment the initialization in the constructor
+		/*FileInputStream fileAssocRules = new FileInputStream("association_rules_fpgrowth.txt");
 		InputStreamReader inputAssocRules = new InputStreamReader(fileAssocRules, "UTF-8");
 		BufferedReader brAssocRules = new BufferedReader(inputAssocRules);
 		String ruleLine;
@@ -534,6 +566,7 @@ public class InferenceComputer {
         brAssocRules.close();
         inputAssocRules.close();
         fileAssocRules.close();
+        */
         
 		
         ArrayList<InferenceDecision> decisionGraphs = new ArrayList<InferenceDecision>();
@@ -553,6 +586,7 @@ public class InferenceComputer {
 			}
 			String[] elements = pair.split("\t");
 			String id = elements[0];
+			// comment in for SICK test set to do only the one direction
 			if (id.contains("b"))
 				continue;
 			String premise = elements[1];
@@ -580,7 +614,9 @@ public class InferenceComputer {
 			}
 			
 		}
-
+		// file to write the paths and the contexts learnt
+		FileWriter fileWriterCtxPaths =  new FileWriter(file.substring(0,file.indexOf(".txt"))+"_paths_and_ctx.csv", true);
+		BufferedWriter writerCtxPaths = new BufferedWriter(fileWriterCtxPaths);
 		// Method for serialization of object 
 		//writerSer.writeObject(decisionGraphs);   
         for (String line : pathsAndCtxs){
@@ -594,9 +630,9 @@ public class InferenceComputer {
 		wnDict.close();
 		//writerSer.close(); 
         //fileSer.close(); 
-		this.serialize(entailRolePaths, "entail");
-		this.serialize(neutralRolePaths, "neutral");
-		this.serialize(contraRolePaths, "contra");
+		//this.serialize(entailRolePaths, "entail");
+		//this.serialize(neutralRolePaths, "neutral");
+		//this.serialize(contraRolePaths, "contra");
            
 	}/*
 	
@@ -666,12 +702,13 @@ public class InferenceComputer {
 		//long startTime = System.currentTimeMillis();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "Two dogs are wrestling and hugging.";	
-		String hypothesis = "There is no dog wrestling and hugging.";
+		String premise = "The bankers and the professors recommended the judge.";	
+		String hypothesis = "The professors recommended the bankers.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_a.txt";
 		String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";
-		//String file = "/home/kkalouli/Documents/diss/to_check.txt";
+		//String file = "/home/kkalouli/Documents/diss/SICK_test/to_check.txt";
+		//String file = "/home/kkalouli/Documents/diss/experiments/test_merged.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//long endTime = System.currentTimeMillis();

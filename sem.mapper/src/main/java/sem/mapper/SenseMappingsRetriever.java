@@ -71,6 +71,7 @@ public class SenseMappingsRetriever implements Serializable {
 	private ArrayList<String> hypernyms;
 	private ArrayList<String> hyponyms ;
 	private ArrayList<String> antonyms;
+	private String senseKey;
 	private float[] embed;
 	private Properties props;
 	private String wnInstall;
@@ -105,6 +106,7 @@ public class SenseMappingsRetriever implements Serializable {
 		this.hypernyms = new ArrayList<String>();
 		this.hyponyms = new ArrayList<String>();
 		this.antonyms = new ArrayList<String>();
+		this.senseKey = "";
 		/* fill hash with the POS tags of the Penn treebank. The POS
 		have to be matched to the generic POS used in SUMO and PWN.  */
 		hashOfPOS.put("JJ","ADJECTIVE");
@@ -167,6 +169,7 @@ public class SenseMappingsRetriever implements Serializable {
 		this.hypernyms = new ArrayList<String>();
 		this.hyponyms = new ArrayList<String>();
 		this.antonyms = new ArrayList<String>();
+		this.senseKey = "";
 		/* fill hash with the POS tags of the Penn treebank. The POS
 		have to be matched to the generic POS used in SUMO and PWN.  */
 		hashOfPOS.put("JJ","ADJECTIVE");
@@ -246,6 +249,14 @@ public class SenseMappingsRetriever implements Serializable {
 
 	public void setEmbed(float[] embed) {
 		this.embed = embed;
+	}
+	
+	public String getSenseKey() {
+		return senseKey;
+	}
+
+	public void setSenseKey(String senseKey) {
+		this.senseKey = senseKey;
 	}
 	
 	/**
@@ -377,6 +388,7 @@ public class SenseMappingsRetriever implements Serializable {
 				if (id.getSynsetID().toString().substring(4,id.getSynsetID().toString().lastIndexOf("-")).equals(synsetID)){
 					IWord word = wnDict.getWord(id);
 					ISynset synset = word.getSynset();
+					senseKey = word.getSenseKey().toString();
 					// iterate over words associated with the synset and get the synonyms
 					for(IWord w : synset.getWords()){
 						synonyms.add(w.getLemma());

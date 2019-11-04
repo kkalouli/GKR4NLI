@@ -111,7 +111,7 @@ public class ContextMapper implements Serializable {
 	 */
 	public void integrateAllContexts(){
 		//graph.displayRoles();
-		graph.displayDependencies();
+		//graph.displayDependencies();
 		integrateImplicativeContexts();
 		//graph.displayContexts();
 		integrateCoordinatingContexts();
@@ -513,8 +513,8 @@ public class ContextMapper implements Serializable {
 	 * @param previousNegNode
 	 */
 	private void integrateNotContexts(SemanticNode<?> node, SemanticNode<?> negNode, SemanticNode<?> previousNegNode){
-		graph.displayContexts();
-		graph.displayDependencies();
+		//graph.displayContexts();
+		//graph.displayDependencies();
 		// initialize the head of the negation
 		SemanticNode<?> head = null;
 		// initialize the context of the head of the negation

@@ -24,6 +24,7 @@ public class SenseNodeContent extends NodeContent implements Serializable, Compa
 	private static final long serialVersionUID = -5405041614966233844L;
 	private String senseId;
 	private float[] embed;
+	private String senseKey;
 	private List<String> concepts;
 	private List<String> synonyms;
 	private List<String> hypernyms;
@@ -49,6 +50,7 @@ public class SenseNodeContent extends NodeContent implements Serializable, Compa
 		subConcepts = null;
 		superConcepts = null;
 		senseScore = 0;
+		senseKey = "";
 	}
 	
 	/**
@@ -63,6 +65,7 @@ public class SenseNodeContent extends NodeContent implements Serializable, Compa
 		hyponyms = new ArrayList<String>();
 		antonyms = new ArrayList<String>();
 		senseScore = 0;
+		senseKey = "";
 
 	}
 
@@ -74,6 +77,15 @@ public class SenseNodeContent extends NodeContent implements Serializable, Compa
 		this.senseId = senseId;
 	}
 
+	public String getSenseKey() {
+		return senseKey;
+	}
+
+	public void setSenseKey(String senseKey) {
+		this.senseKey = senseKey;
+	}
+
+	
 	/**
 	 * Get the list of taxonomic concept ids associated with the sense
 	 * @return

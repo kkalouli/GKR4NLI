@@ -336,10 +336,13 @@ public class PathScorer implements Serializable {
 			} 
 				
 		}
-		/*if (tPath.size() == hPath.size() && hPath.size() == 1){
+		if (tPath.size() == hPath.size() && hPath.size() == 1){
 			// if the match is based on opposing roles, it should be neglected
 			if ( (tPath.get(0).getLabel().equals("sem_subj") && hPath.get(0).getLabel().equals("sem_obj")) ||
 				 (tPath.get(0).getLabel().equals("sem_obj") && hPath.get(0).getLabel().equals("sem_subj")) )
+				cost += contraCost;
+			else if ( (tPath.get(0).getLabel().equals("sem_subj") && hPath.get(0).getLabel().equals("nmod_comp")) ||
+				 (tPath.get(0).getLabel().equals("nmod_comp") && hPath.get(0).getLabel().equals("sem_subj")) )
 				cost += contraCost;
 			else if ( (tPath.get(0).getLabel().equals("amod") && hPath.get(0).getLabel().equals("rstr")) ||
 					  (tPath.get(0).getLabel().equals("rstr") && hPath.get(0).getLabel().equals("amod"))   )
@@ -352,7 +355,7 @@ public class PathScorer implements Serializable {
 		} else if (hPath.size() == 2 && tPath.size() == 1){	
 			if (tPath.get(0).getLabel().equals("amod") && hPath.get(0).getLabel().equals("nmod") && hPath.get(1).getLabel().equals("amod"))
 				cost -= 10;
-		}*/
+		}
 		//cost += ((MatchContent) hMPath.getModifiersPair().getContent()).getScore();
 		
 		// if the match is based on different senses of the same word, the match should be neglected

@@ -612,6 +612,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 					senseContent.setAntonyms(retriever.getAntonyms());
 					senseContent.setEmbed(retriever.getEmbed());
 					senseContent.setSenseScore(0);
+					senseContent.setSenseKey(retriever.getSenseKey());
 					
 					// create new Sense Node
 					SenseNode senseNode = new SenseNode(sense, senseContent);
@@ -626,6 +627,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 					retriever.setHypernyms(new ArrayList<String>());
 					retriever.setHyponyms(new ArrayList<String>());
 					retriever.setAntonyms(new ArrayList<String>());		
+					retriever.setSenseKey("");
 
 				}
 				// if no senses are found for this node, then add only the embed as lexical node
@@ -641,7 +643,8 @@ public class DepGraphToSemanticGraph implements Serializable {
 					senseContent.setHyponyms(new ArrayList<String>());
 					senseContent.setAntonyms(new ArrayList<String>());
 					senseContent.setEmbed(retriever.getEmbed());
-					senseContent.setSenseScore(0);			
+					senseContent.setSenseScore(0);	
+					senseContent.setSenseKey("");
 					// create new Sense Node
 					SenseNode senseNode = new SenseNode(sense, senseContent);
 					// create new LexEdge
@@ -672,6 +675,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 					senseContent.setAntonyms(retriever.getAntonyms());
 					senseContent.setEmbed(retriever.getEmbed());
 					senseContent.setSenseScore(lexSem.get(key).get(concept));
+					senseContent.setSenseKey(retriever.getSenseKey()); 
 
 					// create new Sense Node
 					SenseNode senseNode = new SenseNode(sense, senseContent);
@@ -685,7 +689,8 @@ public class DepGraphToSemanticGraph implements Serializable {
 					retriever.setSynonyms(new ArrayList<String>());
 					retriever.setHypernyms(new ArrayList<String>());
 					retriever.setHyponyms(new ArrayList<String>());
-					retriever.setAntonyms(new ArrayList<String>());					
+					retriever.setAntonyms(new ArrayList<String>());		
+					retriever.setSenseKey("");
 				}	
 
 			}
@@ -723,6 +728,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 				senseContent.setAntonyms(retriever.getAntonyms());
 				senseContent.setEmbed(retriever.getEmbed());
 				senseContent.setSenseScore(0);
+				senseContent.setSenseKey(retriever.getSenseKey());
 				
 				// create new Sense Node
 				SenseNode senseNode = new SenseNode(sense, senseContent);
@@ -736,7 +742,8 @@ public class DepGraphToSemanticGraph implements Serializable {
 				retriever.setSynonyms(new ArrayList<String>());
 				retriever.setHypernyms(new ArrayList<String>());
 				retriever.setHyponyms(new ArrayList<String>());
-				retriever.setAntonyms(new ArrayList<String>());				
+				retriever.setAntonyms(new ArrayList<String>());		
+				retriever.setSenseKey("");
 			}
 		}
 	}
@@ -985,7 +992,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
 		//emConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/expriment_InferSent/SICK_unique_sent_test_InferSent_onlySkolems.txt");
-		String sentence = "the host is not more crooked than the woman.";//"A family is watching a little boy who is hitting a baseball.";
+		String sentence = "Two children are lying in the snow and are making snow angels.";//"A family is watching a little boy who is hitting a baseball.";
 		String context = "The kid faked the illness.";
 		semConverter.processSentence(sentence, sentence+" "+context);
 	}

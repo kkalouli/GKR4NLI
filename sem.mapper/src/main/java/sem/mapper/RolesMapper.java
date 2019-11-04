@@ -128,6 +128,7 @@ public class RolesMapper implements Serializable {
 			integratePlainEdges();
 			edgesToAdd.clear();
 			combEdges.clear();
+			//graph.displayRoles();
 			//}
 			// if there is clausal coord, add the seperate sentences to the graphs and set all
 			// other variables to false. Then rerun this method for these new graphs. 
@@ -481,6 +482,7 @@ public class RolesMapper implements Serializable {
 	 * Check if there is more than double coordination.e.g There is Abrams, Browne and Chiang.
 	 */
 	private void checkForMoreThanDoubleCoordination(){
+		//graph.displayRoles();
 		ArrayList<SemanticNode<?>> coordNodes = new ArrayList<SemanticNode<?>>();
 		ArrayList<SemanticNode<?>> termNodes = new ArrayList<SemanticNode<?>>();
 		// get through the role graph and see if there are any nodes that are coordinated 
@@ -491,6 +493,8 @@ public class RolesMapper implements Serializable {
 					isElementEdges.add(edge);
 				}
 			}
+			// isElementsEdges.size > 2 to ensure it is really more than double coordination
+			// if it only double do not do anything further
 			if (!isElementEdges.isEmpty() && isElementEdges.size() > 1){
 				for (SemanticEdge ele : isElementEdges){
 					if (!coordNodes.containsAll(graph.getOutNeighbors(graph.getStartNode(ele)))){
@@ -502,6 +506,8 @@ public class RolesMapper implements Serializable {
 				}
 			}
 		}
+		if (termNodes.size() == 1)
+			return;
 		String label = "";
 		String ele = "";
 		ArrayList<SemanticEdge> outEdges = new ArrayList<SemanticEdge>();
