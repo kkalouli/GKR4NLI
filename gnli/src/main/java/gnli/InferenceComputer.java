@@ -509,14 +509,15 @@ public class InferenceComputer {
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli, kb);
 		initialTermMatcher.process();
 		//gnli.display();
-		//gnli.matchGraph.display();
+		gnli.matchGraph.display();
 		//graphT.displayLex();
 		//graphH.displayLex();
 		//gnli.getHypothesisGraph().displayContexts();
-		//gnli.getHypothesisGraph().displayDependencies();
+		gnli.getHypothesisGraph().displayDependencies();
+		gnli.getTextGraph().displayDependencies();
 		//gnli.getHypothesisGraph().displayRoles();
-		//gnli.getHypothesisGraph().displayRolesAndCtxs();
-		//gnli.getTextGraph().displayRolesAndCtxs();
+		gnli.getHypothesisGraph().displayRolesAndCtxs();
+		gnli.getTextGraph().displayRolesAndCtxs();
 		//gnli.getHypothesisGraph().displayDependencies();
 		//gnli.getTextGraph().displayRoles();
 		/*gnli.getTextGraph().displayContexts();
@@ -535,7 +536,7 @@ public class InferenceComputer {
 		PathScorer scorer = new PathScorer(gnli,100f, 200f, learning, this);
 		final SpecificityUpdater su = new SpecificityUpdater(gnli,scorer, labelToLearn);
 		su.updateSpecifity();	
-		//gnli.matchGraph.display();
+		gnli.matchGraph.display();
 		// Now look at the updated matches and context veridicalities to
 		// determine entailment relations
 		final InferenceChecker infCh = new InferenceChecker(gnli, this, su, labelToLearn, pairID);
@@ -702,11 +703,12 @@ public class InferenceComputer {
 		//long startTime = System.currentTimeMillis();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "The bankers and the professors recommended the judge.";	
-		String hypothesis = "The professors recommended the bankers.";
+		String premise = "The man is more happy than the woman.";	
+		String hypothesis = "The man is not less happy than the woman.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_a.txt";
-		String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";
+		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
+		//String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/to_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/test_merged.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);

@@ -493,8 +493,6 @@ public class RolesMapper implements Serializable {
 					isElementEdges.add(edge);
 				}
 			}
-			// isElementsEdges.size > 2 to ensure it is really more than double coordination
-			// if it only double do not do anything further
 			if (!isElementEdges.isEmpty() && isElementEdges.size() > 1){
 				for (SemanticEdge ele : isElementEdges){
 					if (!coordNodes.containsAll(graph.getOutNeighbors(graph.getStartNode(ele)))){
@@ -506,7 +504,9 @@ public class RolesMapper implements Serializable {
 				}
 			}
 		}
-		if (termNodes.size() == 1)
+		// termNodes.size() == 1 to ensure it is really more than double coordination
+		// if it only double do not do anything further
+		if (termNodes.size() == 1 )
 			return;
 		String label = "";
 		String ele = "";

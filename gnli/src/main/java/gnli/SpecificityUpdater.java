@@ -71,6 +71,8 @@ public class SpecificityUpdater {
 			specifiers.add("most");
 			specifiers.add("some");
 			specifiers.add("several");
+			specifiers.add("all");
+			specifiers.add("every");
 		}
 
 		

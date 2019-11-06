@@ -356,6 +356,15 @@ public class PathScorer implements Serializable {
 			if (tPath.get(0).getLabel().equals("amod") && hPath.get(0).getLabel().equals("nmod") && hPath.get(1).getLabel().equals("amod"))
 				cost -= 10;
 		}
+		if (tPath.size() == 2 && hPath.size() == 1){
+			if ( tPath.get(0).getLabel().equals("sem_subj") && tPath.get(1).getLabel().equals("is_element") && hPath.get(0).getLabel().equals("sem_obj"))
+					cost += contraCost;
+		}
+		if (tPath.size() == 1 && hPath.size() == 2){
+			if ( hPath.get(0).getLabel().equals("sem_subj") && hPath.get(1).getLabel().equals("is_element") && tPath.get(0).getLabel().equals("sem_obj"))
+					cost += contraCost;
+		}
+
 		//cost += ((MatchContent) hMPath.getModifiersPair().getContent()).getScore();
 		
 		// if the match is based on different senses of the same word, the match should be neglected
