@@ -142,10 +142,12 @@ public class InferenceChecker {
 		}
 		
 		if (rootNodeMatches.isEmpty()){
-			MatchEdge matchWithTheMostModifiers = updater.getMatchAgendaStable().get(updater.getMatchAgendaStable().size()-1).match;
-			SemanticNode<?> hTerm = gnliGraph.getMatchGraph().getStartNode(matchWithTheMostModifiers);			
-			rootNodeMatches.put(hTerm,matchWithTheMostModifiers);
-			rootsWasEmpty = true;
+			if (updater.getMatchAgendaStable() != null && !updater.getMatchAgendaStable().isEmpty()) {
+				MatchEdge matchWithTheMostModifiers = updater.getMatchAgendaStable().get(updater.getMatchAgendaStable().size()-1).match;
+				SemanticNode<?> hTerm = gnliGraph.getMatchGraph().getStartNode(matchWithTheMostModifiers);			
+				rootNodeMatches.put(hTerm,matchWithTheMostModifiers);
+				rootsWasEmpty = true;
+			} 
 		}
 
 		// comment out following lines in order to extractItemsSetsForAssociationRuleMining
