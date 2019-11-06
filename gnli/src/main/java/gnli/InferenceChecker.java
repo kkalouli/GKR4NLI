@@ -252,11 +252,12 @@ public class InferenceChecker {
 		Polarity hPolarity = hTermCtxs.get(hypRootCtx);
 		Polarity tPolarity = tTermCtxs.get(textRootCtx);
 		double cost = matchEdge.getFeatureScore("cost");
-		if (matchSpecificity!= Specificity.NONE && matchSpecificity != Specificity.DISJOINT) {
+		if (matchSpecificity!= Specificity.NONE) {
 			if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.VERIDICAL) {
 				// following if added on 24.10 for snetences like: the man is more happy than the woman
 				// the man is not less happy than the woman
-				if (costInContraBounds(cost)) {
+				// specificity disjoint added on 4.11 to account for sentences like: he didnt disagree.. - he agreed...
+				if ( matchSpecificity == Specificity.DISJOINT) {
 					this.entailmentRelation = EntailmentRelation.ENTAILMENT;
 					penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
 					return true;
@@ -267,7 +268,7 @@ public class InferenceChecker {
 					return true;
 				}
 			} else if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
-				if (costInContraBounds(cost)) {
+				if (costInContraBounds(cost) ||  matchSpecificity == Specificity.DISJOINT) {
 					this.entailmentRelation = EntailmentRelation.ENTAILMENT;
 					penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
 					return true;
@@ -615,6 +616,7 @@ public class InferenceChecker {
 				} 
 				if (matchSpecificity == Specificity.NONE){
 					disjoint = false;
+					entail = false;
 				} 
 				
 			}
@@ -645,11 +647,15 @@ public class InferenceChecker {
 				}
 				if (matchSpecificity == Specificity.NONE){
 					disjoint = false;
+					entail = false;
 				} 
 			} else{
 				entail = false;
 				disjoint = false;
 			}
+			// if at least one disjoint case was found, do not go to the next rootNode because it is certainly contradiction
+			if (entail == false)
+				break;
 		}
 		if (entail == true){
 			this.entailmentRelation = EntailmentRelation.ENTAILMENT;
@@ -668,7 +674,7 @@ public class InferenceChecker {
 	}
 	
 	private boolean costInContraBounds(double cost){
-		if (cost <= 225.0 && cost >= 175.0)
+		if (cost >= 175.0)  //if (cost <= 225.0 && cost >= 175.0)
 			return true;
 		else
 			return false;

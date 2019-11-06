@@ -657,6 +657,7 @@ public class DeterminerEntailments {
 		eMap.put("N_sg_several_pl_SUPERCLASS",Specificity.NONE); 				// 1 man =/=> several old men
 		eMap.put("N_sg_several_pl_SUBCLASS",Specificity.NONE); 					// 1 old man =/=> several men
 		eMap.put("N_sg_several_pl_EQUALS",Specificity.NONE); 					// 1 man =/=> several men
+		
 		//************** many *****************
 		// many-many
 		eMap.put("many_pl_many_pl_SUPERCLASS",Specificity.SUPERCLASS);  	// many men =/=> many old men 
