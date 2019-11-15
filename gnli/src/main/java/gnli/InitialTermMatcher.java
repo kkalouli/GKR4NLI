@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +12,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.articulate.sigma.KB;
+import com.articulate.sigma.KButilities;
 import com.articulate.sigma.Formula;
 import gnli.GNLIGraph;
 import gnli.MatchContent;
@@ -189,7 +191,7 @@ public class InitialTermMatcher {
 		}
 		
 		updatePendingMatches();
-		/*for (CheckedTermNode hTerm : hypothesisTerms) {
+		for (CheckedTermNode hTerm : hypothesisTerms) {
 			TermNode similHTerm = null;
 			TermNode similTTerm = null;
 			for (TermNode tTerm : textTerms) {
@@ -201,7 +203,7 @@ public class InitialTermMatcher {
 			}
 			checkEmbedMatch(hTerm, similHTerm, similTTerm);
 		}
-		updatePendingMatches();*/
+		updatePendingMatches();
 		
 	
 	}
@@ -319,6 +321,28 @@ public class InitialTermMatcher {
 					tSenseId = tSenseId.substring(4);
 					matchType = MatchOrigin.MatchType.SENSE_CMP;
 				}
+				/*
+				 following code to get first an second super concept of each term: if the terms have a same super
+				 concept with max depth 2, they are disjoint
+				String hSuperConcept1 = "";
+				String hSuperConcept2 = "";
+				String tSuperConcept1 = "";
+				String tSuperConcept2 = "";
+				for (String superConcept : hSuperConcepts.keySet()){
+					if (hSuperConcepts.get(superConcept) == 0){
+						hSuperConcept1 = superConcept;
+					} else if (hSuperConcepts.get(superConcept) == 1){
+						hSuperConcept2 = superConcept;
+					}
+				}
+				for (String superConcept : tSuperConcepts.keySet()){
+					if (tSuperConcepts.get(superConcept) == 0){
+						tSuperConcept1 = superConcept;
+					} else if (tSuperConcepts.get(superConcept) == 1){
+						tSuperConcept2 = superConcept;
+					}
+				}
+				*/
 				if (tSenseId != null && hSenseId != null && !tSenseId.equals("U") && !hSenseId.equals("U") && !((SkolemNodeContent) tTerm.getContent()).getStem().equals("be")
 						&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be") && !POSToExclude.contains(((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech()) 
 						&& !POSToExclude.contains(((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech())){
@@ -437,6 +461,78 @@ public class InitialTermMatcher {
 					else if (isSubclassHT == true)
 						spec = Specificity.SUPERCLASS;
 				}
+				
+				// check if some of the parents of the one term are also parents of the other term (only first two) ==> disjoint , e.g. red vs. yellow
+				// get first 2 parents of tTerm
+				ArrayList<Formula> formsTSuperConcepts = new ArrayList<Formula>();
+				if (!kb.askWithRestriction(0,"subclass",1,tConcept.substring(0,tConcept.length()-1)).isEmpty() ){				
+					formsTSuperConcepts.add(kb.askWithRestriction(0,"subclass",1,tConcept.substring(0,tConcept.length()-1)).get(kb.askWithRestriction(0,"subclass",1,tConcept.substring(0,tConcept.length()-1)).size()-1));
+					if (kb.askWithRestriction(0,"subclass",1,tConcept.substring(0,tConcept.length()-1)).size() > 1)
+						formsTSuperConcepts.add(kb.askWithRestriction(0,"subclass",1,tConcept.substring(0,tConcept.length()-1)).get(kb.askWithRestriction(0,"subclass",1,tConcept.substring(0,tConcept.length()-1)).size()-2));
+				}
+				if (!kb.askWithRestriction(0,"instance",1,tConcept.substring(0,tConcept.length()-1)).isEmpty()){
+					formsTSuperConcepts.add(kb.askWithRestriction(0,"instance",1,tConcept.substring(0,tConcept.length()-1)).get(kb.askWithRestriction(0,"instance",1,tConcept.substring(0,tConcept.length()-1)).size()-1));
+					if (kb.askWithRestriction(0,"instance",1,tConcept.substring(0,tConcept.length()-1)).size() > 1)
+						formsTSuperConcepts.add(kb.askWithRestriction(0,"instance",1,tConcept.substring(0,tConcept.length()-1)).get(kb.askWithRestriction(0,"instance",1,tConcept.substring(0,tConcept.length()-1)).size()-2));
+				}
+				if (!kb.askWithRestriction(0,"subrelation",1,tConcept.substring(0,tConcept.length()-1)).isEmpty()){
+					formsTSuperConcepts.add(kb.askWithRestriction(0,"subrelation",1,tConcept.substring(0,tConcept.length()-1)).get(kb.askWithRestriction(0,"subrelation",1,tConcept.substring(0,tConcept.length()-1)).size()-1));
+					if (kb.askWithRestriction(0,"subrelation",1,tConcept.substring(0,tConcept.length()-1)).size() > 1)
+						formsTSuperConcepts.add(kb.askWithRestriction(0,"subrelation",1,tConcept.substring(0,tConcept.length()-1)).get(kb.askWithRestriction(0,"subrelation",1,tConcept.substring(0,tConcept.length()-1)).size()-2));
+				}
+				if (!kb.askWithRestriction(0,"subAttribute",1,tConcept.substring(0,tConcept.length()-1)).isEmpty()){
+					formsTSuperConcepts.add(kb.askWithRestriction(0,"subAttribute",1,tConcept.substring(0,tConcept.length()-1)).get(kb.askWithRestriction(0,"subAttribute",1,tConcept.substring(0,tConcept.length()-1)).size()-1));
+					if (kb.askWithRestriction(0,"subAttribute",1,tConcept.substring(0,tConcept.length()-1)).size() > 1)
+						formsTSuperConcepts.add(kb.askWithRestriction(0,"subAttribute",1,tConcept.substring(0,tConcept.length()-1)).get(kb.askWithRestriction(0,"subAttribute",1,tConcept.substring(0,tConcept.length()-1)).size()-2));
+				}
+
+																
+				// get first 2 parents of hTerm
+				ArrayList<Formula> formsHSuperConcepts = new ArrayList<Formula>();
+				if (!kb.askWithRestriction(0,"subclass",1,hConcept.substring(0,hConcept.length()-1)).isEmpty() ){				
+					formsHSuperConcepts.add(kb.askWithRestriction(0,"subclass",1,hConcept.substring(0,hConcept.length()-1)).get(kb.askWithRestriction(0,"subclass",1,hConcept.substring(0,hConcept.length()-1)).size()-1));
+					if (kb.askWithRestriction(0,"subclass",1,hConcept.substring(0,hConcept.length()-1)).size() > 1)
+						formsHSuperConcepts.add(kb.askWithRestriction(0,"subclass",1,hConcept.substring(0,hConcept.length()-1)).get(kb.askWithRestriction(0,"subclass",1,hConcept.substring(0,hConcept.length()-1)).size()-2));
+				}
+				if (!kb.askWithRestriction(0,"instance",1,hConcept.substring(0,hConcept.length()-1)).isEmpty()){
+					formsHSuperConcepts.add(kb.askWithRestriction(0,"instance",1,hConcept.substring(0,hConcept.length()-1)).get(kb.askWithRestriction(0,"instance",1,hConcept.substring(0,hConcept.length()-1)).size()-1));
+					if (kb.askWithRestriction(0,"instance",1,hConcept.substring(0,hConcept.length()-1)).size() > 1)
+						formsHSuperConcepts.add(kb.askWithRestriction(0,"instance",1,hConcept.substring(0,hConcept.length()-1)).get(kb.askWithRestriction(0,"instance",1,hConcept.substring(0,hConcept.length()-1)).size()-2));
+				}
+				if (!kb.askWithRestriction(0,"subrelation",1,hConcept.substring(0,hConcept.length()-1)).isEmpty()){
+					formsHSuperConcepts.add(kb.askWithRestriction(0,"subrelation",1,hConcept.substring(0,hConcept.length()-1)).get(kb.askWithRestriction(0,"subrelation",1,hConcept.substring(0,hConcept.length()-1)).size()-1));
+					if (kb.askWithRestriction(0,"subrelation",1,hConcept.substring(0,hConcept.length()-1)).size() > 1)
+						formsHSuperConcepts.add(kb.askWithRestriction(0,"subrelation",1,hConcept.substring(0,hConcept.length()-1)).get(kb.askWithRestriction(0,"subrelation",1,hConcept.substring(0,hConcept.length()-1)).size()-2));
+				}
+				if (!kb.askWithRestriction(0,"subAttribute",1,hConcept.substring(0,hConcept.length()-1)).isEmpty()){
+					formsHSuperConcepts.add(kb.askWithRestriction(0,"subAttribute",1,hConcept.substring(0,hConcept.length()-1)).get(kb.askWithRestriction(0,"subAttribute",1,hConcept.substring(0,hConcept.length()-1)).size()-1));
+					if (kb.askWithRestriction(0,"subAttribute",1,hConcept.substring(0,hConcept.length()-1)).size() > 1)
+						formsHSuperConcepts.add(kb.askWithRestriction(0,"subAttribute",1,hConcept.substring(0,hConcept.length()-1)).get(kb.askWithRestriction(0,"subAttribute",1,hConcept.substring(0,hConcept.length()-1)).size()-2));
+				}
+
+				
+				ArrayList<String> tParents = new ArrayList<String>();
+				ArrayList<String> hParents = new ArrayList<String>();
+				
+				Iterator<Formula> itT = formsTSuperConcepts.iterator();
+		        while (itT.hasNext()) {
+		            Formula f = itT.next();
+		            tParents.add(f.getArgument(2));
+		        }
+		        Iterator<Formula> itH = formsHSuperConcepts.iterator();
+		        while (itH.hasNext()) {
+		            Formula f = itH.next();
+		            hParents.add(f.getArgument(2));
+		        }
+		        
+		        for (String tP : tParents){
+		        	for (String hP : hParents){
+		        		if (tP.equals(hP)){
+		        			spec = Specificity.DISJOINT;
+		        		}
+		        	}
+		        }
+
 				if (spec != null){
 					linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, spec, 0, 0);
 				}

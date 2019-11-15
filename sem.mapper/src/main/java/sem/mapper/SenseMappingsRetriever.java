@@ -571,7 +571,7 @@ public class SenseMappingsRetriever implements Serializable {
 	public HashMap<String, Map<String, Float>> mapNodeToSenseAndConcept(SkolemNode node, SemanticGraph graph,HashMap <String, Map<String,Float>> senses){
 		HashMap<String,Map<String,Float>> lexSem = new HashMap<String,Map<String,Float>>();
 		int positionOfNode = node.getPosition();
-		String keyToGet = Integer.toString(positionOfNode-1) + "_" + node.getSurface();
+		String keyToGet = Integer.toString(positionOfNode-1) + "_" + node.getSurface().toLowerCase();
 		Map<String,Float> senseProp = senses.get(keyToGet);
 		//String sense = "";
 		String concept = "";
