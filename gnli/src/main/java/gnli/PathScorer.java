@@ -196,6 +196,7 @@ public class PathScorer implements Serializable {
 	 */
 	public float pathPenalty(HeadModifierPathPair hMPath, List<SemanticEdge> tPath, List<SemanticEdge> hPath) {
 		float cost = 0;	
+		/*
 		if (pathsAreIdentical(hMPath) == false && learning == false){
 			String key = hPath.toString()+"/"+tPath.toString();
 			// following costs after 1st learning
@@ -211,6 +212,7 @@ public class PathScorer implements Serializable {
 				*/
 			// following costs after 2nd learning
 			// path exists in only one of the lists
+		/*
 			if (infComputer.getNeutralRolePaths().containsKey(key) && 
 					!infComputer.getEntailRolePaths().containsKey(key) &&
 					!infComputer.getContraRolePaths().containsKey(key)){
@@ -333,9 +335,10 @@ public class PathScorer implements Serializable {
 				if (infComputer.getNeutralRolePaths().get(key).size() == infComputer.getEntailRolePaths().get(key).size() && infComputer.getEntailRolePaths().get(key).size()  == infComputer.getContraRolePaths().get(key).size() )
 					cost += 0;*/
 				
-			} 
+			//} 
 				
-		}
+		//}
+		
 		if (tPath.size() == hPath.size() && hPath.size() == 1){
 			// if the match is based on opposing roles, it should be neglected
 			if ( (tPath.get(0).getLabel().equals("sem_subj") && hPath.get(0).getLabel().equals("sem_obj")) ||
@@ -359,10 +362,14 @@ public class PathScorer implements Serializable {
 		if (tPath.size() == 2 && hPath.size() == 1){
 			if ( tPath.get(0).getLabel().equals("sem_subj") && tPath.get(1).getLabel().equals("is_element") && hPath.get(0).getLabel().equals("sem_obj"))
 					cost += contraCost;
+			if ( tPath.get(0).getLabel().equals("sem_obj") && tPath.get(1).getLabel().equals("is_element") && hPath.get(0).getLabel().equals("sem_subj"))
+				cost += contraCost;
 		}
 		if (tPath.size() == 1 && hPath.size() == 2){
 			if ( hPath.get(0).getLabel().equals("sem_subj") && hPath.get(1).getLabel().equals("is_element") && tPath.get(0).getLabel().equals("sem_obj"))
 					cost += contraCost;
+			if ( hPath.get(0).getLabel().equals("sem_obj") && hPath.get(1).getLabel().equals("is_element") && tPath.get(0).getLabel().equals("sem_subj"))
+				cost += contraCost;
 		}
 
 		//cost += ((MatchContent) hMPath.getModifiersPair().getContent()).getScore();
@@ -398,7 +405,7 @@ public class PathScorer implements Serializable {
 					cost += neuCost;
 			}
 			
-		}		
+		}	
 		return cost;
 	}
 	
@@ -409,10 +416,6 @@ public class PathScorer implements Serializable {
 		return false;
 	}
 	
-	public void createFeatureVector(){
-		
-	}
-
 
 
 }
