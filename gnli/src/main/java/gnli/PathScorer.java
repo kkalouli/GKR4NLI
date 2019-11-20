@@ -361,14 +361,20 @@ public class PathScorer implements Serializable {
 		}
 		if (tPath.size() == 2 && hPath.size() == 1){
 			if ( tPath.get(0).getLabel().equals("sem_subj") && tPath.get(1).getLabel().equals("is_element") && hPath.get(0).getLabel().equals("sem_obj"))
-					cost += contraCost;
+				cost += contraCost;
 			if ( tPath.get(0).getLabel().equals("sem_obj") && tPath.get(1).getLabel().equals("is_element") && hPath.get(0).getLabel().equals("sem_subj"))
+				cost += contraCost;
+				// added on 19.11
+			if (tPath.get(0).getLabel().equals("sem_comp") && tPath.get(1).getLabel().equals("sem_subj") && hPath.get(0).getLabel().equals("sem_obj"))
 				cost += contraCost;
 		}
 		if (tPath.size() == 1 && hPath.size() == 2){
 			if ( hPath.get(0).getLabel().equals("sem_subj") && hPath.get(1).getLabel().equals("is_element") && tPath.get(0).getLabel().equals("sem_obj"))
-					cost += contraCost;
+				cost += contraCost;
 			if ( hPath.get(0).getLabel().equals("sem_obj") && hPath.get(1).getLabel().equals("is_element") && tPath.get(0).getLabel().equals("sem_subj"))
+				cost += contraCost;
+			// added on 19.11
+			if ( hPath.get(0).getLabel().equals("sem_comp") && hPath.get(1).getLabel().equals("sem_subj") && tPath.get(0).getLabel().equals("sem_obj"))
 				cost += contraCost;
 		}
 
