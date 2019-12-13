@@ -16,8 +16,9 @@ public class InferenceDecision implements Serializable {
 	private	boolean looseContra;
 	private	boolean looseEntail;
 	private	GNLIGraph gnliGraph;
+	private boolean hasComplexCtxs;
 			
-		InferenceDecision(EntailmentRelation relation, double matchStrength,double matchConfidence, EntailmentRelation alternativeRelation, ArrayList<MatchEdge> justifications, boolean looseContra, boolean looseEntail, GNLIGraph gnliGraph){
+		InferenceDecision(EntailmentRelation relation, double matchStrength,double matchConfidence, boolean hasComplexCtxs, EntailmentRelation alternativeRelation, ArrayList<MatchEdge> justifications, boolean looseContra, boolean looseEntail, GNLIGraph gnliGraph){
 			this.relation = relation;
 			this.alternativeRelation = alternativeRelation;
 			this.matchStrength = matchStrength;
@@ -26,6 +27,7 @@ public class InferenceDecision implements Serializable {
 			this.looseContra = looseContra;
 			this.looseEntail = looseEntail;
 			this.gnliGraph = gnliGraph;
+			this.hasComplexCtxs = hasComplexCtxs;
 		}
 		
 		public EntailmentRelation getEntailmentRelation(){
@@ -60,5 +62,9 @@ public class InferenceDecision implements Serializable {
 			return gnliGraph;
 		}
 			
+		public boolean hasComplexCtxs(){
+			return hasComplexCtxs;
+		}
+		
 }
 	

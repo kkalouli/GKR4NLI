@@ -62,6 +62,7 @@ public class InferenceComputer {
 	private String bertVocab;
 	private HashMap<String,String> associationRules;
 	private HashMap<String,String> vnToPWNMap;
+	//private HashMap<String,String> assoRulesMap;
 
 
 	public InferenceComputer() throws FileNotFoundException, UnsupportedEncodingException {
@@ -105,18 +106,26 @@ public class InferenceComputer {
 		}
 		
 		this.vnToPWNMap = new HashMap<String,String>();
+		//this.assoRulesMap = new HashMap<String,String>();
 		BufferedReader br = null;
+		//BufferedReader brAssoRules = null;
 		InputStreamReader inputReaderVn = null;
+		//InputStreamReader inputReaderAssoRules = null;
 		try {
 			InputStream vnToPWN = getClass().getClassLoader().getResourceAsStream("mappings_vn_wd.txt");
 			inputReaderVn = new InputStreamReader(vnToPWN, "UTF-8");
 			br = new BufferedReader(inputReaderVn);
+			
+			//InputStream assoRules = getClass().getClassLoader().getResourceAsStream("association_rules.txt");
+			//inputReaderAssoRules = new InputStreamReader(assoRules, "UTF-8");
+			//brAssoRules = new BufferedReader(inputReaderAssoRules);
 		} catch (UnsupportedEncodingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
 		String strLine;
+		String strLine2;
 		//store the file in a hashmap. key: the PWN Sense key, Value: the VN class
 		try {
 			while ((strLine = br.readLine()) != null) { 
@@ -125,6 +134,13 @@ public class InferenceComputer {
 			}
 			br.close();
 			inputReader.close();
+			
+			/*while ((strLine2 = br.readLine()) != null) { 
+				String[] elems = strLine2.split("\\t");
+				assoRulesMap.put(elems[0],elems[1]);	
+			}
+			brAssoRules.close();
+			inputReaderAssoRules.close();*/
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -255,6 +271,14 @@ public class InferenceComputer {
 		this.vnToPWNMap = vnToPWNMap;
 	}
 	
+	/*public HashMap<String,String> getAssoRulesMap(){
+		return assoRulesMap;
+	}
+	
+	public void setAssoRulesMap(HashMap<String,String> assoRulesMap){
+		this.assoRulesMap = assoRulesMap;
+	}*/
+	
 	public HashMap<String,ArrayList<HeadModifierPathPair>> getNeutralRolePaths(){
 		return this.neutralRolePaths;
 	}
@@ -343,7 +367,7 @@ public class InferenceComputer {
 		ObjectInputStream in;
 		if (type.equals("entail")){
 			try {
-				fileIn = new FileInputStream("serialized_RolePaths_entail_2nd_learning.ser");
+				fileIn = new FileInputStream("serialized_RolePaths_entail_3rd_learning.ser");
 				in = new ObjectInputStream(fileIn);
 				rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
 				/*for (String key: rolePaths.keySet()) {
@@ -381,7 +405,7 @@ public class InferenceComputer {
 			}
 		} else if (type.equals("contra")) {
 			try {
-				fileIn = new FileInputStream("serialized_RolePaths_contra_2nd_learning.ser");
+				fileIn = new FileInputStream("serialized_RolePaths_contra_3rd_learning.ser");
 				in = new ObjectInputStream(fileIn);
 		        rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
 		        /*for (String key: rolePaths.keySet()) {
@@ -420,7 +444,7 @@ public class InferenceComputer {
 			}
 		} else {
 			try {
-				fileIn = new FileInputStream("serialized_RolePaths_neutral_2nd_learning.ser");
+				fileIn = new FileInputStream("serialized_RolePaths_neutral_3rd_learning.ser");
 				in = new ObjectInputStream(fileIn);
 		        rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
 		        /*for (String key: rolePaths.keySet()) {
@@ -509,15 +533,15 @@ public class InferenceComputer {
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli, kb);
 		initialTermMatcher.process();
 		//gnli.display();
-		gnli.matchGraph.display();
+		//gnli.matchGraph.display();
 		//graphT.displayLex();
 		//graphH.displayLex();
 		//gnli.getHypothesisGraph().displayContexts();
-		gnli.getHypothesisGraph().displayDependencies();
-		gnli.getTextGraph().displayDependencies();
+		//gnli.getHypothesisGraph().displayDependencies();
+		//gnli.getTextGraph().displayDependencies();
 		//gnli.getHypothesisGraph().displayRoles();
-		gnli.getHypothesisGraph().displayRolesAndCtxs();
-		gnli.getTextGraph().displayRolesAndCtxs();
+		//gnli.getHypothesisGraph().displayRolesAndCtxs();
+		//gnli.getTextGraph().displayRolesAndCtxs();
 		//gnli.getHypothesisGraph().displayDependencies();
 		//gnli.getTextGraph().displayRoles();
 		/*gnli.getTextGraph().displayContexts();
@@ -536,7 +560,7 @@ public class InferenceComputer {
 		PathScorer scorer = new PathScorer(gnli,100f, 200f, learning, this);
 		final SpecificityUpdater su = new SpecificityUpdater(gnli,scorer, labelToLearn);
 		su.updateSpecifity();	
-		gnli.matchGraph.display();
+		//gnli.matchGraph.display();
 		// Now look at the updated matches and context veridicalities to
 		// determine entailment relations
 		final InferenceChecker infCh = new InferenceChecker(gnli, this, su, labelToLearn, pairID);
@@ -601,13 +625,13 @@ public class InferenceComputer {
 					if (decision.getJustifications() != null && !decision.getJustifications().isEmpty())
 						spec = decision.getJustifications().toString();	
 					writer.write(pair+"\t"+decision.getEntailmentRelation()+"\t"+decision.getMatchStrength()+"\t"+decision.getMatchConfidence()+"\t"+
-							decision.getAlternativeEntailmentRelation()+"\t"+decision.isLooseContr()+
+							decision.hasComplexCtxs() + "\t" +decision.getAlternativeEntailmentRelation()+"\t"+decision.isLooseContr()+
 							"\t"+decision.isLooseEntail()+"\t"+spec+"\n");
 					writer.flush();
 					System.out.println("Processed pair "+ id);
 				}
 				else
-					decisionGraphs.add(new InferenceDecision(EntailmentRelation.UNKNOWN, 0.0, 0.0, EntailmentRelation.UNKNOWN, null, false, false, null));
+					decisionGraphs.add(new InferenceDecision(EntailmentRelation.UNKNOWN, 0.0, 0.0, false, EntailmentRelation.UNKNOWN, null, false, false, null));
 				
 			} catch (Exception e){
 				writer.write(pair+"\t"+"Exception found:"+e.getMessage()+"\n");
@@ -703,14 +727,15 @@ public class InferenceComputer {
 		//long startTime = System.currentTimeMillis();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "The man is more happy than the woman.";	
-		String hypothesis = "The man is not less happy than the woman.";
+		String premise = "the man is carrying a young bag.";	
+		String hypothesis = "the man is not carrying an old bag.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
-		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_a.txt";
-		String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
+		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_a_and_Cb_and_Eb.txt";
+		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";
+		//String file = "/home/kkalouli/Documents/diss/experiments/dasgupta_all.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/to_check.txt";
-		//String file = "/home/kkalouli/Documents/diss/experiments/test_merged.txt";
+		String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//long endTime = System.currentTimeMillis();

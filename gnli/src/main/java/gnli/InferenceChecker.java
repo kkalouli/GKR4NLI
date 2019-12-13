@@ -45,6 +45,7 @@ public class InferenceChecker {
 	private EntailmentRelation alternativeEntailmentRelation;
 	private HashMap<String,String> vnToPWNMap;
 	private boolean rootsWasEmpty;
+	private boolean hasComplexCtxs;
 	
 	enum Polarity {VERIDICAL, ANTIVERIDICAL, AVERIDICAL}
 
@@ -64,6 +65,7 @@ public class InferenceChecker {
 		this.pairID = pairID;
 		this.vnToPWNMap = infComputer.getVnToPWNMap();
 		this.rootsWasEmpty = false;
+		this.hasComplexCtxs = false;
 
 
 	}
@@ -76,7 +78,7 @@ public class InferenceChecker {
 		if (this.entailmentRelation == EntailmentRelation.UNKNOWN) {
 			computeInferenceRelation();
 		}
-		return new InferenceDecision(entailmentRelation,matchStrength, matchConfidence, alternativeEntailmentRelation, justifications, looseContra, looseEntail, gnliGraph);
+		return new InferenceDecision(entailmentRelation,matchStrength, matchConfidence, hasComplexCtxs, alternativeEntailmentRelation, justifications, looseContra, looseEntail, gnliGraph);
 	}
 	
 	
@@ -138,6 +140,22 @@ public class InferenceChecker {
 			/*if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, false)) {
 				looseContra = true;
 			}*/
+			for (SemanticNode<?> key: hTermCtxs.keySet()) {
+				if (key.getLabel().contains("top")) {
+					hasComplexCtxs = false;
+				} else {
+					hasComplexCtxs = true;
+					break;
+				}			
+			}
+			for (SemanticNode<?> key: tTermCtxs.keySet()) {
+				if (key.getLabel().contains("top")) {
+					hasComplexCtxs = false;
+				} else {
+					hasComplexCtxs = true;
+					break;
+				}			
+			}
 			
 		}
 		
@@ -162,11 +180,12 @@ public class InferenceChecker {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			if (this.entailmentRelation == EntailmentRelation.UNKNOWN) {
+			if (this.entailmentRelation == EntailmentRelation.UNKNOWN && rootsWasEmpty == false) {
 				if (entailmentOrDisjoint(rootNodeMatches, true))
-					return;
-			} else
-				return;				
+					return; 
+			} else if (this.entailmentRelation != EntailmentRelation.UNKNOWN)
+				return;
+		
 		} else {
 			infComputer.getPathsAndCtxs().add(pairID+"\tnothing_found\t"+labelToLearn);
 		}
@@ -259,7 +278,7 @@ public class InferenceChecker {
 				// following if added on 24.10 for snetences like: the man is more happy than the woman
 				// the man is not less happy than the woman
 				// specificity disjoint added on 4.11 to account for sentences like: he didnt disagree.. - he agreed...
-				if ( matchSpecificity == Specificity.DISJOINT) {
+				if ( matchSpecificity == Specificity.DISJOINT || costInContraBounds(cost) ) {
 					this.entailmentRelation = EntailmentRelation.ENTAILMENT;
 					penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
 					return true;
@@ -270,7 +289,7 @@ public class InferenceChecker {
 					return true;
 				}
 			} else if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
-				if (costInContraBounds(cost) ||  matchSpecificity == Specificity.DISJOINT) {
+				if (matchSpecificity == Specificity.DISJOINT) {
 					this.entailmentRelation = EntailmentRelation.ENTAILMENT;
 					penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
 					return true;
@@ -588,14 +607,31 @@ public class InferenceChecker {
 			if (tTermCtxs == null){
 				tTermCtxs = fillEmptyContexts((SkolemNode) tTerm, "txt");
 			}	
+			// check whether there are complex contexts for getting it as a feature
+			for (SemanticNode<?> cCtx: hTermCtxs.keySet()) {
+				if (cCtx.getLabel().contains("top")) {
+					hasComplexCtxs = false;
+				} else {
+					hasComplexCtxs = true;
+					break;
+				}			
+			}
+			for (SemanticNode<?> cCtx: tTermCtxs.keySet()) {
+				if (cCtx.getLabel().contains("top")) {
+					hasComplexCtxs = false;
+				} else {
+					hasComplexCtxs = true;
+					break;
+				}			
+			}
 			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
 			Polarity tPolarity = tTermCtxs.get(textRootCtx);
 			double cost = rootNodeMatches.get(key).getFeatureScore("cost");
 			if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.VERIDICAL) {
 				// it is not a contradiction if there is no disjoint relation and the score is below maxCost*2
-				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)){
+				/*if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)){
 					disjoint = false;
-				} 
+				} */
 				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
 				if ( (matchSpecificity == Specificity.EQUALS && costInContraBounds(cost) )
 						|| ( matchSpecificity == Specificity.EQUALS && costInNeutralBounds(cost) )){
@@ -642,7 +678,7 @@ public class InferenceChecker {
 				else if (matchSpecificity == Specificity.DISJOINT && !costInContraBounds(cost) ) {
 					entail = false;
 				}
-
+				
 				// if there is neither equals nor superclass, there is no entail
 				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUPERCLASS && matchSpecificity != Specificity.DISJOINT  ){
 					entail = false;		

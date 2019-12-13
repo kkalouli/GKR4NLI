@@ -191,7 +191,7 @@ public class InitialTermMatcher {
 		}
 		
 		updatePendingMatches();
-		for (CheckedTermNode hTerm : hypothesisTerms) {
+		/*for (CheckedTermNode hTerm : hypothesisTerms) {
 			TermNode similHTerm = null;
 			TermNode similTTerm = null;
 			for (TermNode tTerm : textTerms) {
@@ -204,6 +204,7 @@ public class InitialTermMatcher {
 			checkEmbedMatch(hTerm, similHTerm, similTTerm);
 		}
 		updatePendingMatches();
+		*/
 		
 	
 	}
@@ -464,7 +465,7 @@ public class InitialTermMatcher {
 				
 				// check if some of the parents of the one term are also parents of the other term (only first two) ==> disjoint , e.g. red vs. yellow
 				// get first 2 parents of tTerm
-				ArrayList<Formula> formsTSuperConcepts = new ArrayList<Formula>();
+				/*ArrayList<Formula> formsTSuperConcepts = new ArrayList<Formula>();
 				if (!kb.askWithRestriction(0,"subclass",1,tConcept.substring(0,tConcept.length()-1)).isEmpty() ){				
 					formsTSuperConcepts.add(kb.askWithRestriction(0,"subclass",1,tConcept.substring(0,tConcept.length()-1)).get(kb.askWithRestriction(0,"subclass",1,tConcept.substring(0,tConcept.length()-1)).size()-1));
 					if (kb.askWithRestriction(0,"subclass",1,tConcept.substring(0,tConcept.length()-1)).size() > 1)
@@ -531,7 +532,7 @@ public class InitialTermMatcher {
 		        			spec = Specificity.DISJOINT;
 		        		}
 		        	}
-		        }
+		        }*/
 
 				if (spec != null){
 					linkContent = new MatchContent(MatchOrigin.MatchType.CONCEPT, ((SenseNodeContent) hSenseNode.getContent()).getSenseId(), ((SenseNodeContent) tSenseNode.getContent()).getSenseId(), tConcept, spec, 0, 0);

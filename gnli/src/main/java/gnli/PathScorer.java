@@ -338,7 +338,6 @@ public class PathScorer implements Serializable {
 			//} 
 				
 		//}
-		
 		if (tPath.size() == hPath.size() && hPath.size() == 1){
 			// if the match is based on opposing roles, it should be neglected
 			if ( (tPath.get(0).getLabel().equals("sem_subj") && hPath.get(0).getLabel().equals("sem_obj")) ||
@@ -364,7 +363,11 @@ public class PathScorer implements Serializable {
 				cost += contraCost;
 			if ( tPath.get(0).getLabel().equals("sem_obj") && tPath.get(1).getLabel().equals("is_element") && hPath.get(0).getLabel().equals("sem_subj"))
 				cost += contraCost;
-				// added on 19.11
+			if ( tPath.get(0).getLabel().equals("sem_comp") && tPath.get(1).getLabel().equals("sem_subj") && hPath.get(0).getLabel().equals("nmod_comp"))
+				cost += contraCost;
+			if ( tPath.get(0).getLabel().equals("sem_comp") && tPath.get(1).getLabel().equals("nmod_comp") && hPath.get(0).getLabel().equals("sem_subj"))
+				cost += contraCost;
+				// added on 19.11 for embedded ctxs: he knew the authors, he knew that the authors talked.
 			if (tPath.get(0).getLabel().equals("sem_comp") && tPath.get(1).getLabel().equals("sem_subj") && hPath.get(0).getLabel().equals("sem_obj"))
 				cost += contraCost;
 		}
@@ -372,6 +375,10 @@ public class PathScorer implements Serializable {
 			if ( hPath.get(0).getLabel().equals("sem_subj") && hPath.get(1).getLabel().equals("is_element") && tPath.get(0).getLabel().equals("sem_obj"))
 				cost += contraCost;
 			if ( hPath.get(0).getLabel().equals("sem_obj") && hPath.get(1).getLabel().equals("is_element") && tPath.get(0).getLabel().equals("sem_subj"))
+				cost += contraCost;
+			if ( hPath.get(0).getLabel().equals("sem_comp") && hPath.get(1).getLabel().equals("sem_subj") && tPath.get(0).getLabel().equals("nmod_comp"))
+				cost += contraCost;
+			if ( hPath.get(0).getLabel().equals("sem_comp") && hPath.get(1).getLabel().equals("nmod_comp") && tPath.get(0).getLabel().equals("sem_subj"))
 				cost += contraCost;
 			// added on 19.11
 			if ( hPath.get(0).getLabel().equals("sem_comp") && hPath.get(1).getLabel().equals("sem_subj") && tPath.get(0).getLabel().equals("sem_obj"))
@@ -410,6 +417,7 @@ public class PathScorer implements Serializable {
 				if (hasSense == true)
 					cost += neuCost;
 			}
+			
 			
 		}	
 		return cost;
