@@ -231,27 +231,4 @@ public class GKRServlet extends HttpServlet {
 	    }
 	}
     
-    /*protected void createImages(Integer counter){
-    	ServletContext context = getServletContext();
-    	String fullPath = context.getRealPath("src/main/webapp/images/");
-    	String typo = "/Library/Tomcat/webapps/sem.mapper/";
-    	String kate_apache = "/Users/kkalouli/Documents/Programs/apache-tomcat-9.0.19/webapps/sem.mapper/";
-    	String kate_appRun = "src/main/webapp/";
-    	String gpu_appRun = "/home/kkalouli/Documents/project/semantic_processing/sem.mapper/src/main/webapp/";
-    	String gpu_apache = "/home/kkalouli/Documents/Programs/apache-tomcat-9.0.20/webapps/sem.mapper/";
-    	try {
-			ImageIO.write(graph.saveRolesAsImage(),"png", new File(kate_appRun+"images/roles_"+counter+".png")); 
-			ImageIO.write(graph.saveDepsAsImage(),"png", new File(kate_appRun+"images/deps_"+counter+".png"));
-		    ImageIO.write(graph.saveContextsAsImage(),"png", new File(kate_appRun+"images/ctxs_"+counter+".png"));
-		    ImageIO.write(graph.savePropertiesAsImage(),"png", new File(kate_appRun+"images/props_"+counter+".png"));
-		    ImageIO.write(graph.saveLexAsImage(),"png", new File(kate_appRun+"images/lex_"+counter+".png"));
-		    ImageIO.write(graph.saveCorefAsImage(),"png", new File(kate_appRun+"images/coref_"+counter+".png"));
-		    
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-    }*/
-    
-    
 }

@@ -58,6 +58,7 @@ public class SpecificityUpdater {
 				this.matchAgendaStable.add(item);
 			}
 			Collections.sort(this.matchAgenda);
+			Collections.sort(this.matchAgendaStable);
 			initialAgendaSize = matchAgenda.size();
 			this.correctLabel = correctLabel;
 			this.specifiers = new ArrayList<String>();

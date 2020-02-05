@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import gnli.InferenceChecker.EntailmentRelation;
 import sem.graph.SemanticEdge;
 import sem.graph.SemanticGraph;
 import sem.graph.SemanticNode;
@@ -45,7 +46,20 @@ public class InferenceChecker {
 	private EntailmentRelation alternativeEntailmentRelation;
 	private HashMap<String,String> vnToPWNMap;
 	private boolean rootsWasEmpty;
-	private boolean hasComplexCtxs;
+	private boolean tHasComplexCtxs;
+	private boolean hHasComplexCtxs;
+	private boolean contraFlag;
+	private boolean tVeridical;
+	private boolean tAntiveridical;
+	private boolean tAveridical;
+	private boolean hVeridical;
+	private boolean hAntiveridical;
+	private boolean hAveridical;
+	private boolean equalsRel;
+	private boolean superRel;
+	private boolean subRel;
+	private boolean disjointRel;
+	private Integer ruleUsed;
 	
 	enum Polarity {VERIDICAL, ANTIVERIDICAL, AVERIDICAL}
 
@@ -65,7 +79,17 @@ public class InferenceChecker {
 		this.pairID = pairID;
 		this.vnToPWNMap = infComputer.getVnToPWNMap();
 		this.rootsWasEmpty = false;
-		this.hasComplexCtxs = false;
+		this.tHasComplexCtxs = false;
+		this.hHasComplexCtxs = false;
+		this.contraFlag = false;
+		this.tVeridical = false;
+		this.tAntiveridical = false;
+		this.tAveridical = false;
+		this.equalsRel = false;
+		this.superRel = false;
+		this.subRel = false;
+		this.disjointRel = false;
+		this.ruleUsed = 0;
 
 
 	}
@@ -78,7 +102,11 @@ public class InferenceChecker {
 		if (this.entailmentRelation == EntailmentRelation.UNKNOWN) {
 			computeInferenceRelation();
 		}
-		return new InferenceDecision(entailmentRelation,matchStrength, matchConfidence, hasComplexCtxs, alternativeEntailmentRelation, justifications, looseContra, looseEntail, gnliGraph);
+						
+		return new InferenceDecision(entailmentRelation,matchStrength, matchConfidence, ruleUsed, tHasComplexCtxs, hHasComplexCtxs, contraFlag,
+				tVeridical, tAntiveridical,  tAveridical, hVeridical, hAntiveridical, hAveridical,
+				equalsRel, superRel, subRel, disjointRel,
+				alternativeEntailmentRelation, justifications, looseContra, looseEntail, gnliGraph);
 	}
 	
 	
@@ -142,17 +170,17 @@ public class InferenceChecker {
 			}*/
 			for (SemanticNode<?> key: hTermCtxs.keySet()) {
 				if (key.getLabel().contains("top")) {
-					hasComplexCtxs = false;
+					hHasComplexCtxs = false;
 				} else {
-					hasComplexCtxs = true;
+					hHasComplexCtxs = true;
 					break;
 				}			
 			}
 			for (SemanticNode<?> key: tTermCtxs.keySet()) {
 				if (key.getLabel().contains("top")) {
-					hasComplexCtxs = false;
+					tHasComplexCtxs = false;
 				} else {
-					hasComplexCtxs = true;
+					tHasComplexCtxs = true;
 					break;
 				}			
 			}
@@ -176,6 +204,7 @@ public class InferenceChecker {
 		if (!rootNodeMatches.isEmpty()) { 
 			try {
 				extractItemsSetsForAssociationRuleMining(rootNodeMatches);
+				extractFeaturesForInferenceDecision(rootNodeMatches);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -215,6 +244,7 @@ public class InferenceChecker {
 		//this.entailmentRelation == EntailmentRelation.UNKNOWN &&
 		if (looseContra == false && looseEntail == false){
 			this.entailmentRelation = EntailmentRelation.NEUTRAL;
+			this.ruleUsed = 25;
 		}
 		
 	}
@@ -270,7 +300,7 @@ public class InferenceChecker {
 			matchSpecificity = matchEdge.getSpecificity();
 		else 
 			matchSpecificity = matchEdge.getOriginalSpecificity();
-		Polarity hPolarity = hTermCtxs.get(hypRootCtx);
+		Polarity hPolarity = hTermCtxs.get(hypRootCtx);		
 		Polarity tPolarity = tTermCtxs.get(textRootCtx);
 		double cost = matchEdge.getFeatureScore("cost");
 		if (matchSpecificity!= Specificity.NONE) {
@@ -278,25 +308,53 @@ public class InferenceChecker {
 				// following if added on 24.10 for snetences like: the man is more happy than the woman
 				// the man is not less happy than the woman
 				// specificity disjoint added on 4.11 to account for sentences like: he didnt disagree.. - he agreed...
-				if ( matchSpecificity == Specificity.DISJOINT || costInContraBounds(cost) ) {
+				if ( matchSpecificity == Specificity.DISJOINT) {
 					this.entailmentRelation = EntailmentRelation.ENTAILMENT;
 					penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
+					this.ruleUsed = 1;
 					return true;
 				}
-				if (matchSpecificity == Specificity.EQUALS || matchSpecificity == Specificity.SUBCLASS) {
+				if (costInContraBounds(cost) ) {
+					this.entailmentRelation = EntailmentRelation.ENTAILMENT;
+					penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
+					this.ruleUsed = 2;
+					return true;
+				}
+				if (matchSpecificity == Specificity.EQUALS) {
 					this.entailmentRelation = EntailmentRelation.CONTRADICTION;
 					penalizeLooseMatching(EntailmentRelation.CONTRADICTION, strict, matchEdge);
+					this.ruleUsed = 3;
+					return true;
+				}
+				if (matchSpecificity == Specificity.SUBCLASS) {
+					this.entailmentRelation = EntailmentRelation.CONTRADICTION;
+					penalizeLooseMatching(EntailmentRelation.CONTRADICTION, strict, matchEdge);
+					this.ruleUsed = 4;
 					return true;
 				}
 			} else if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
 				if (matchSpecificity == Specificity.DISJOINT) {
 					this.entailmentRelation = EntailmentRelation.ENTAILMENT;
 					penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
+					this.ruleUsed = 5;
 					return true;
 				}
-				if (matchSpecificity == Specificity.EQUALS || matchSpecificity == Specificity.SUPERCLASS) {
+				if (costInContraBounds(cost)) {
+					this.entailmentRelation = EntailmentRelation.ENTAILMENT;
+					penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
+					this.ruleUsed = 6;
+					return true;
+				}
+				if (matchSpecificity == Specificity.EQUALS) {
 					this.entailmentRelation = EntailmentRelation.CONTRADICTION;
 					penalizeLooseMatching(EntailmentRelation.CONTRADICTION, strict, matchEdge);
+					this.ruleUsed = 7;
+					return true;
+				}
+				if (matchSpecificity == Specificity.SUPERCLASS) {
+					this.entailmentRelation = EntailmentRelation.CONTRADICTION;
+					penalizeLooseMatching(EntailmentRelation.CONTRADICTION, strict, matchEdge);
+					this.ruleUsed = 8;
 					return true;
 				}
 			}
@@ -584,6 +642,134 @@ public class InferenceChecker {
 		infComputer.getPathsAndCtxs().add(toWrite+labelToLearn);
 	}
 	
+	private void extractFeaturesForInferenceDecision(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches) throws IOException{
+		for (SemanticNode<?> key : rootNodeMatches.keySet()){		
+			double cost = rootNodeMatches.get(key).getFeatureScore("cost");
+			SemanticNode<?> tTerm = gnliGraph.getFinishNode(rootNodeMatches.get(key));
+			HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(key);
+			HashMap<SemanticNode<?>,Polarity> tTermCtxs = textContexts.get(tTerm);
+			// in case one of the nodes is not in the context graph but we still need to find out its context
+			// we get the ctx of that node from its SkolemNodeContent, find this context within the hypothesisContexts
+			// (whatever ctx is in the SkolemContent will necessarily be one of the ctxs of the contetx graph), and put
+			// the ctx found as the key of the hash and the veridical as the value and the root node as another key and
+			// and veridicality of the mother ctx as the value
+			if (hTermCtxs == null){
+				hTermCtxs = fillEmptyContexts((SkolemNode) key, "hyp");
+			}
+			if (tTermCtxs == null){
+				tTermCtxs = fillEmptyContexts((SkolemNode) tTerm, "txt");
+			}	
+			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
+			Polarity tPolarity = tTermCtxs.get(textRootCtx);
+			String matchSpec = rootNodeMatches.get(key).getSpecificity().toString();
+			if (hPolarity == Polarity.AVERIDICAL) {
+				hAveridical = true;
+			} 
+			if (hPolarity == Polarity.ANTIVERIDICAL) {
+				hAntiveridical = true;
+			} 
+			if (hPolarity == Polarity.VERIDICAL) {
+				hVeridical = true;
+			}
+			
+			if (tPolarity == Polarity.AVERIDICAL) {
+				tAveridical = true;
+			} 
+			if (tPolarity == Polarity.ANTIVERIDICAL) {
+				tAntiveridical = true;
+			} 
+			if (tPolarity == Polarity.VERIDICAL) {
+				tVeridical = true;
+			}
+			
+			if (matchSpec.equals("EQUALS")) {
+				equalsRel = true;
+			}
+			
+			if (matchSpec.equals("SUPERCLASS")) {
+				superRel = true;
+			}
+			
+			if (matchSpec.equals("SUBCLASS")) {
+				subRel = true;
+			}
+			
+			if (matchSpec.equals("DISJOINT")) {
+				disjointRel = true;
+			}
+			if (costInContraBounds(cost)) {
+				contraFlag = true;
+			}
+			
+			// get the paths and the ctxs of each path
+			for (HeadModifierPathPair just: rootNodeMatches.get(key).getJustification()){
+				String justSpec = "";
+				if (just.getModifiersPair() != null)
+					justSpec = ((MatchEdge) just.getModifiersPair()).getSpecificity().toString();	
+				List<SemanticEdge> tPath = just.getPremisePath();
+				List<SemanticEdge> hPath = just.getConclusionPath();
+				Polarity tCtx = null;
+				Polarity hCtx = null;
+				if (tPath != null){
+					// for each path, get the concept to which the path ends
+					for (SemanticEdge e: tPath){
+						SemanticNode<?> finish = gnliGraph.getTextGraph().getRoleGraph().getEndNode(e);
+						// get the context of the concept mapped tot his edge
+						Polarity ctx = fillEmptyContexts((TermNode) finish, "txt").get(textRootCtx);					
+						if (ctx != null)
+							tCtx = ctx;
+					}
+				}
+				if (hPath != null){
+					for (SemanticEdge e: hPath){
+						SemanticNode<?> finish = gnliGraph.getHypothesisGraph().getRoleGraph().getEndNode(e);
+						Polarity ctx = fillEmptyContexts((TermNode) finish, "hyp").get(hypRootCtx);
+						if (ctx != null)
+							hCtx = ctx;		
+					}
+				}
+				if (hCtx == Polarity.AVERIDICAL) {
+					hAveridical = true;
+				} 
+				if (hCtx == Polarity.ANTIVERIDICAL) {
+					hAntiveridical = true;
+				} 
+				if (hCtx == Polarity.VERIDICAL) {
+					hVeridical = true;
+				}
+				
+				if (tCtx == Polarity.AVERIDICAL) {
+					tAveridical = true;
+					System.out.println("test1");
+				} 
+				if (tCtx == Polarity.ANTIVERIDICAL) {
+					tAntiveridical = true;
+				} 
+				if (tCtx == Polarity.VERIDICAL) {
+					tVeridical = true;
+				}
+					
+				if (justSpec.equals("EQUALS")) {
+					equalsRel = true;
+				}
+				
+				if (justSpec.equals("SUPERCLASS")) {
+					superRel = true;
+				}
+				
+				if (justSpec.equals("SUBCLASS")) {
+					subRel = true;
+				}
+				
+				if (justSpec.equals("DISJOINT")) {
+					disjointRel = true;
+				}				
+			}
+		}
+			
+	}
+
+	
 	private boolean entailmentOrDisjoint(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches , boolean strict){
 		boolean entail = true;
 		boolean disjoint = true;
@@ -610,17 +796,17 @@ public class InferenceChecker {
 			// check whether there are complex contexts for getting it as a feature
 			for (SemanticNode<?> cCtx: hTermCtxs.keySet()) {
 				if (cCtx.getLabel().contains("top")) {
-					hasComplexCtxs = false;
+					hHasComplexCtxs = false;
 				} else {
-					hasComplexCtxs = true;
+					hHasComplexCtxs = true;
 					break;
 				}			
 			}
 			for (SemanticNode<?> cCtx: tTermCtxs.keySet()) {
 				if (cCtx.getLabel().contains("top")) {
-					hasComplexCtxs = false;
+					tHasComplexCtxs = false;
 				} else {
-					hasComplexCtxs = true;
+					tHasComplexCtxs = true;
 					break;
 				}			
 			}
@@ -636,60 +822,85 @@ public class InferenceChecker {
 				if ( (matchSpecificity == Specificity.EQUALS && costInContraBounds(cost) )
 						|| ( matchSpecificity == Specificity.EQUALS && costInNeutralBounds(cost) )){
 					entail = false;
+					this.ruleUsed = 9;
 				}
 				// if there is subclass relation but the score is higher than maxCost*2, then there is no entail but contradiction
 				if ( (matchSpecificity == Specificity.SUBCLASS && costInContraBounds(cost) )
 						|| ( matchSpecificity == Specificity.SUBCLASS && costInNeutralBounds(cost) ) ){
 					entail = false;
+					this.ruleUsed = 10;
 				}
 				if (matchSpecificity == Specificity.DISJOINT && costInContraBounds(cost) ) {
 					disjoint = false;
+					this.ruleUsed = 11;
 				}
 				else if (matchSpecificity == Specificity.DISJOINT && !costInContraBounds(cost) ) {
 					entail = false;
+					this.ruleUsed = 12;
 				}
 				// if there is neither equals nor subclass, there is no entail
 				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUBCLASS && matchSpecificity != Specificity.DISJOINT  ) {
-					entail = false;		
+					entail = false;
+					disjoint = false;
+					this.ruleUsed = 13;
 				} 
 				if (matchSpecificity == Specificity.NONE){
 					disjoint = false;
 					entail = false;
+					this.ruleUsed = 14;
 				} 
+				if (ruleUsed < 9 && matchSpecificity == Specificity.EQUALS ){
+					this.ruleUsed = 15;
+				} else if (ruleUsed < 9 && matchSpecificity == Specificity.SUBCLASS ){
+					this.ruleUsed = 16;
+				}
 				
 			}
 			else if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
-				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost) ){
+				/*if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost) ){
 					disjoint = false;
-				}
+				}*/
 				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
 				if ( (matchSpecificity == Specificity.EQUALS && costInContraBounds(cost) )
 						|| ( matchSpecificity == Specificity.EQUALS && costInNeutralBounds(cost) )){
 					entail = false;
+					this.ruleUsed = 17;
 				}
 				// if there is superclass relation but the score is higher than maxCost*2, then there is no entail but contradiction
 				if ( (matchSpecificity == Specificity.SUPERCLASS && costInContraBounds(cost) )
 						|| ( matchSpecificity == Specificity.SUPERCLASS && costInNeutralBounds(cost) ) ){
 					entail = false;
+					this.ruleUsed = 18;
 				}
 				if (matchSpecificity == Specificity.DISJOINT && costInContraBounds(cost) ) {
 					disjoint = false;
+					this.ruleUsed = 19;
 				}
 				else if (matchSpecificity == Specificity.DISJOINT && !costInContraBounds(cost) ) {
 					entail = false;
+					this.ruleUsed = 20;
 				}
 				
 				// if there is neither equals nor superclass, there is no entail
 				if (matchSpecificity != Specificity.EQUALS && matchSpecificity != Specificity.SUPERCLASS && matchSpecificity != Specificity.DISJOINT  ){
 					entail = false;		
+					disjoint = false;
+					this.ruleUsed = 21;
 				}
 				if (matchSpecificity == Specificity.NONE){
 					disjoint = false;
 					entail = false;
+					this.ruleUsed = 22;
 				} 
+				if (ruleUsed < 9 && matchSpecificity == Specificity.EQUALS ){
+					this.ruleUsed = 23;
+				} else if (ruleUsed < 9 && matchSpecificity == Specificity.SUPERCLASS ){
+					this.ruleUsed = 24;
+				}
 			} else{
 				entail = false;
 				disjoint = false;
+				this.ruleUsed = 25;
 			}
 			// if at least one disjoint case was found, do not go to the next rootNode because it is certainly contradiction
 			if (entail == false)

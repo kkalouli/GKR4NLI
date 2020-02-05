@@ -575,7 +575,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		try {		
 			senses = retriever.disambiguateSensesWithJIGSAW(wholeCtx); // stanGraph.toRecoveredSentenceString());
 			// next line needed for non-multithreading
-			retriever.getEmbedForWholeCtx(wholeCtx);
+			//retriever.getEmbedForWholeCtx(wholeCtx);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -699,7 +699,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		}
 		// make sure you get indirect semantics for things added later to the context graph
 		for (SemanticNode<?> ctxNode : graph.getContextGraph().getNodes()){
-			if (ctxNode.getLabel().contains("person") || ctxNode.getLabel().contains("thing")){
+			if (ctxNode.getLabel().equalsIgnoreCase("person") || ctxNode.getLabel().equalsIgnoreCase("thing")){
 				String sense = "";
 				String concept = "";
 				if (ctxNode.getLabel().contains("person")){
@@ -868,23 +868,23 @@ public class DepGraphToSemanticGraph implements Serializable {
 		InputStreamReader inputReader = new InputStreamReader(fileInput, "UTF-8");
 		BufferedReader br = new BufferedReader(inputReader);
 		// true stands for append = true (dont overwrite)
-		//BufferedWriter writer = new BufferedWriter( new FileWriter(file.substring(0,file.indexOf(".txt"))+"_processed.csv", true));
+		BufferedWriter writer = new BufferedWriter( new FileWriter(file.substring(0,file.indexOf(".txt"))+"_processed.csv", true));
 		FileOutputStream fileSer = null;
 		ObjectOutputStream writerSer = null;
 		String strLine;
 		ArrayList<sem.graph.SemanticGraph> semanticGraphs = new ArrayList<sem.graph.SemanticGraph>();
 		while ((strLine = br.readLine()) != null) {
 			if (strLine.startsWith("####")){
-				//writer.write(strLine+"\n\n");
-				//writer.flush();
+				writer.write(strLine+"\n\n");
+				writer.flush();
 				continue;
 			}
 			String text = strLine.split("\t")[1];
 			SemanticGraph stanGraph = parser.parseOnly(text);
 			sem.graph.SemanticGraph graph = this.getGraph(stanGraph, text, text);
 			//System.out.println(graph.displayAsString());
-			//writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
-			//writer.flush();
+			writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
+			writer.flush();
 			System.out.println("Processed sentence "+ strLine.split("\t")[0]);
 			if (graph != null)
 				semanticGraphs.add(graph);
@@ -901,7 +901,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
-		//writer.close();
+		writer.close();
 		br.close();
 		fileSer.close();
 		writerSer.close();
@@ -991,9 +991,10 @@ public class DepGraphToSemanticGraph implements Serializable {
 	public static void main(String args[]) throws IOException {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
-		//emConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/expriment_InferSent/SICK_unique_sent_test_InferSent_onlySkolems.txt");
+		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/expriment_InferSent/SICK_unique_sent_test_InferSent_onlySkolems.txt");
+		semConverter.processTestsuite("/home/kkalouli/Documents/diss/experiments/UD_corpus_cleaned.txt");
 		String sentence = "Two children are lying in the snow and are making snow angels.";//"A family is watching a little boy who is hitting a baseball.";
 		String context = "The kid faked the illness.";
-		semConverter.processSentence(sentence, sentence+" "+context);
+		//semConverter.processSentence(sentence, sentence+" "+context);
 	}
 }

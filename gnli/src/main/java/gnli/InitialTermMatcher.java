@@ -203,8 +203,7 @@ public class InitialTermMatcher {
 			}
 			checkEmbedMatch(hTerm, similHTerm, similTTerm);
 		}
-		updatePendingMatches();
-		*/
+		updatePendingMatches();*/
 		
 	
 	}
