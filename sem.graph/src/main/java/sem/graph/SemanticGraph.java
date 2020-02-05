@@ -758,6 +758,8 @@ public class SemanticGraph implements Serializable  {
 	 * @return
 	 */
 	private String getNodeAndPropertiesAsText(SemanticNode<?> node, SemanticNode<?> ctxRoot){
+		if (node == null)
+			return "";
 		String nodeText = "("+node.getLabel();
 		// get all properties of this node
 		for (SemanticEdge prop : propertyGraph.getOutEdges(node)){

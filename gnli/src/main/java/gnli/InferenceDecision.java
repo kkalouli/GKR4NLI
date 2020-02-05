@@ -16,9 +16,24 @@ public class InferenceDecision implements Serializable {
 	private	boolean looseContra;
 	private	boolean looseEntail;
 	private	GNLIGraph gnliGraph;
-	private boolean hasComplexCtxs;
+	private boolean tHasComplexCtxs;
+	private boolean hHasComplexCtxs;
+	private boolean contraFlag;
+	private boolean tVeridical;
+	private boolean tAntiveridical;
+	private boolean tAveridical;
+	private boolean hVeridical;
+	private boolean hAntiveridical;
+	private boolean hAveridical;
+	private boolean equalsRel;
+	private boolean superRel;
+	private boolean subRel;
+	private boolean disjointRel;
+	private Integer ruleUsed;
 			
-		InferenceDecision(EntailmentRelation relation, double matchStrength,double matchConfidence, boolean hasComplexCtxs, EntailmentRelation alternativeRelation, ArrayList<MatchEdge> justifications, boolean looseContra, boolean looseEntail, GNLIGraph gnliGraph){
+		InferenceDecision(EntailmentRelation relation, double matchStrength,double matchConfidence, Integer ruleUsed, boolean tHasComplexCtxs, boolean hHasComplexCtxs, boolean contraFlag,
+				boolean tVeridical, boolean tAntiveridical, boolean tAveridical, boolean hVeridical, boolean hAntiveridical, boolean hAveridical,
+				boolean equalsRel, boolean superRel, boolean subRel, boolean disjointRel, EntailmentRelation alternativeRelation, ArrayList<MatchEdge> justifications, boolean looseContra, boolean looseEntail, GNLIGraph gnliGraph){
 			this.relation = relation;
 			this.alternativeRelation = alternativeRelation;
 			this.matchStrength = matchStrength;
@@ -27,7 +42,20 @@ public class InferenceDecision implements Serializable {
 			this.looseContra = looseContra;
 			this.looseEntail = looseEntail;
 			this.gnliGraph = gnliGraph;
-			this.hasComplexCtxs = hasComplexCtxs;
+			this.tHasComplexCtxs = tHasComplexCtxs;
+			this.hHasComplexCtxs = hHasComplexCtxs;
+			this.contraFlag = contraFlag;
+			this.tVeridical = tVeridical;
+			this.tAntiveridical = tAntiveridical;
+			this.tAveridical = tAveridical;
+			this.hVeridical = hVeridical;
+			this.hAntiveridical = hAntiveridical;
+			this.hAveridical = hAveridical;
+			this.equalsRel = equalsRel;
+			this.superRel = superRel;
+			this.subRel = subRel;
+			this.disjointRel = disjointRel;
+			this.ruleUsed = ruleUsed;
 		}
 		
 		public EntailmentRelation getEntailmentRelation(){
@@ -62,9 +90,60 @@ public class InferenceDecision implements Serializable {
 			return gnliGraph;
 		}
 			
-		public boolean hasComplexCtxs(){
-			return hasComplexCtxs;
+		public boolean tHasComplexCtxs(){
+			return tHasComplexCtxs;
 		}
 		
+		public boolean hHasComplexCtxs(){
+			return hHasComplexCtxs;
+		}
+		
+		public boolean hasContraFlag() {
+			return contraFlag;
+		}
+		
+		public boolean tHasAverCtx() {
+			return tAveridical;
+		}
+		
+		public boolean tHasVerCtx() {
+			return tVeridical;
+		}
+		
+		public boolean tHasAntiVerCtx() {
+			return tAntiveridical;
+		}
+		
+		public boolean hHasAverCtx() {
+			return hAveridical;
+		}
+		
+		public boolean hHasVerCtx() {
+			return hVeridical;
+		}
+		
+		public boolean hHasAntiVerCtx() {
+			return hAntiveridical;
+		}
+		
+		public boolean hasEqualsRel() {
+			return equalsRel;
+		}
+		
+		public boolean hasSuperRel() {
+			return superRel;
+		}
+		
+		public boolean hasSubRel() {
+			return subRel;
+		}
+		
+		public boolean hasDisjointRel() {
+			return disjointRel;
+		}
+		
+		public Integer getRuleUsed() {
+			return ruleUsed;
+		}
 }
 	

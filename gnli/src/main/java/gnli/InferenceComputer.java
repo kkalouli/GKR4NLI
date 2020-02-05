@@ -264,6 +264,16 @@ public class InferenceComputer {
 		//this.semGraph = new DepGraphToSemanticGraph();
 
 	}
+	
+	public DepGraphToSemanticGraph getDependencyGraphInstacne() {
+		return semGraph;
+	}
+	
+	public KB getKB() {
+		return kb;
+	}
+	
+	
 	public HashMap<String,String> getVnToPWNMap(){
 		return vnToPWNMap;
 	}
@@ -368,7 +378,7 @@ public class InferenceComputer {
 		ObjectInputStream in;
 		if (type.equals("entail")){
 			try {
-				fileIn = new FileInputStream("serialized_RolePaths_entail_3rd_learning.ser");
+				fileIn = new FileInputStream("serialized_RolePaths_entail_2nd_learning.ser");
 				in = new ObjectInputStream(fileIn);
 				rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
 				/*for (String key: rolePaths.keySet()) {
@@ -406,7 +416,7 @@ public class InferenceComputer {
 			}
 		} else if (type.equals("contra")) {
 			try {
-				fileIn = new FileInputStream("serialized_RolePaths_contra_3rd_learning.ser");
+				fileIn = new FileInputStream("serialized_RolePaths_contra_2nd_learning.ser");
 				in = new ObjectInputStream(fileIn);
 		        rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
 		        /*for (String key: rolePaths.keySet()) {
@@ -445,7 +455,7 @@ public class InferenceComputer {
 			}
 		} else {
 			try {
-				fileIn = new FileInputStream("serialized_RolePaths_neutral_3rd_learning.ser");
+				fileIn = new FileInputStream("serialized_RolePaths_neutral_2nd_learning.ser");
 				in = new ObjectInputStream(fileIn);
 		        rolePaths = (HashMap<String, ArrayList<HeadModifierPathPair>>) in.readObject();
 		        /*for (String key: rolePaths.keySet()) {
@@ -613,7 +623,7 @@ public class InferenceComputer {
 			String[] elements = pair.split("\t");
 			String id = elements[0];
 			// comment in for SICK test set to do only the one direction
-			if (id.contains("b"))
+			if (id.contains("a"))
 				continue;
 			String premise = elements[1];
 			String hypothesis = elements[2];
@@ -626,13 +636,14 @@ public class InferenceComputer {
 					if (decision.getJustifications() != null && !decision.getJustifications().isEmpty())
 						spec = decision.getJustifications().toString();	
 					writer.write(pair+"\t"+decision.getEntailmentRelation()+"\t"+decision.getMatchStrength()+"\t"+decision.getMatchConfidence()+"\t"+
-							decision.hasComplexCtxs() + "\t" +decision.getAlternativeEntailmentRelation()+"\t"+decision.isLooseContr()+
+							decision.tHasComplexCtxs() + "\t" +decision.hHasComplexCtxs() + "\t" + decision.getAlternativeEntailmentRelation()+"\t"+decision.isLooseContr()+
 							"\t"+decision.isLooseEntail()+"\t"+spec+"\n");
 					writer.flush();
 					System.out.println("Processed pair "+ id);
 				}
 				else
-					decisionGraphs.add(new InferenceDecision(EntailmentRelation.UNKNOWN, 0.0, 0.0, false, EntailmentRelation.UNKNOWN, null, false, false, null));
+					decisionGraphs.add(new InferenceDecision(EntailmentRelation.UNKNOWN, 0.0, 0.0, 0, false, false, false,false,false,
+							false, false, false, false, false, false, false, false, EntailmentRelation.UNKNOWN, null, false, false, null));
 				
 			} catch (Exception e){
 				writer.write(pair+"\t"+"Exception found:"+e.getMessage()+"\n");
@@ -667,7 +678,7 @@ public class InferenceComputer {
 	 * Process a single pair to find the inference relation. 
 	 * Print the result on the console for now.
 	 */
-	public void computeInferenceOfPair(DepGraphToSemanticGraph semGraph, String premise, String hypothesis, String correctLabel, KB kb) throws FileNotFoundException, UnsupportedEncodingException{
+	public void computeInferenceOfPair(String premise, String hypothesis, String correctLabel, KB kb) throws FileNotFoundException, UnsupportedEncodingException{
 		InferenceDecision decision = computeInference(premise, hypothesis, correctLabel, kb, "1");
 		System.out.println("Relation: "+decision.getEntailmentRelation());
 		System.out.println("Strength of the Match: "+decision.getMatchStrength());
@@ -676,6 +687,16 @@ public class InferenceComputer {
 		System.out.println("Specificity that led to the decision:"+decision.getJustifications().toString());
 		
 	}
+	
+	/***
+	 * Process a single pair to find the inference relation. 
+	 * Print the result on the console for now.
+	 */
+	public InferenceDecision computeInferenceOfPair(String premise, String hypothesis, String correctLabel) throws FileNotFoundException, UnsupportedEncodingException{
+		InferenceDecision decision = computeInference(premise, hypothesis, correctLabel, this.getKB(), "1");
+		return decision;
+	}
+	
 	
 	
 	@SuppressWarnings("unchecked")
@@ -756,12 +777,17 @@ public class InferenceComputer {
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_a_and_Cb_and_Eb.txt";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";
-		//String file = "/home/kkalouli/Documents/diss/experiments/dasgupta_all.txt";
+		//String file = "/home/kkalouli/Documents/diss/test_heidel.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/to_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
-		String file = "/Users/kkalouli/Documents/QuestionsAtTheInterfaces/P8/heidelberg_collaboration/test_heidel.txt";
-		comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
+		//String file = "/Users/kkalouli/Documents/QuestionsAtTheInterfaces/P8/heidelberg_collaboration/test_heidel.txt";
+		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
 		//comp.computeInferenceOfTestsuite(file, semGraph, kb);
+		String file = "/home/kkalouli/Desktop/not_run_through_gnli_yet_both_dirs.txt";
+		//String file = "/home/kkalouli/Documents/diss/experiments/still_to_be_checked_only_NEUTRAL_low_jac_similarity_both_dirs.txt";
+		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
+		//comp.computeInferenceOfPair(premise, hypothesis, "E", kb);
+		comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//long endTime = System.currentTimeMillis();
 		//System.out.println("The whole thing took " + (endTime - startTime) + " milliseconds");
 		//comp.investigateSerializedDecisions(file);

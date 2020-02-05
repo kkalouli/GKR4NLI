@@ -126,6 +126,7 @@ public class SenseMappingsRetriever implements Serializable {
 		hashOfPOS.put("VBN","VERB");
 		hashOfPOS.put("VBP","VERB");
 		hashOfPOS.put("VBZ","VERB");
+		hashOfPOS.put("CD","NOUN");
 		this.props = new Properties();
 		InputStreamReader streamReader = new InputStreamReader(configFile);
 		try {
@@ -189,6 +190,7 @@ public class SenseMappingsRetriever implements Serializable {
 		hashOfPOS.put("VBN","VERB");
 		hashOfPOS.put("VBP","VERB");
 		hashOfPOS.put("VBZ","VERB");
+		hashOfPOS.put("CD","NOUN");
 		this.props = new Properties();
 		InputStreamReader streamReader = new InputStreamReader(configFile);
 		try {
