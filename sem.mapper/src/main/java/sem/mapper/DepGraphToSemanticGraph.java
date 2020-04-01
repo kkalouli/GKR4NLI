@@ -699,7 +699,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		}
 		// make sure you get indirect semantics for things added later to the context graph
 		for (SemanticNode<?> ctxNode : graph.getContextGraph().getNodes()){
-			if (ctxNode.getLabel().equalsIgnoreCase("person") || ctxNode.getLabel().equalsIgnoreCase("thing")){
+			if (ctxNode.getLabel().contains("person_") || ctxNode.getLabel().contains("thing_")){
 				String sense = "";
 				String concept = "";
 				if (ctxNode.getLabel().contains("person")){
@@ -992,9 +992,9 @@ public class DepGraphToSemanticGraph implements Serializable {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
 		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/expriment_InferSent/SICK_unique_sent_test_InferSent_onlySkolems.txt");
-		semConverter.processTestsuite("/home/kkalouli/Documents/diss/experiments/UD_corpus_cleaned.txt");
-		String sentence = "Two children are lying in the snow and are making snow angels.";//"A family is watching a little boy who is hitting a baseball.";
+		//semConverter.processTestsuite("/home/kkalouli/Documents/diss/experiments/UD_corpus_cleaned.txt");
+		String sentence = "John believed that Mary was sick.";//"A family is watching a little boy who is hitting a baseball.";
 		String context = "The kid faked the illness.";
-		//semConverter.processSentence(sentence, sentence+" "+context);
+		semConverter.processSentence(sentence, sentence+" "+context);
 	}
 }

@@ -622,8 +622,8 @@ public class InferenceComputer {
 			String[] elements = pair.split("\t");
 			String id = elements[0];
 			// comment in for SICK test set to do only the one direction
-			if (id.contains("a"))
-				continue;
+			//if (id.contains("b"))
+			//	continue;
 			String premise = elements[1];
 			String hypothesis = elements[2];
 			String correctLabel = elements[3];
@@ -748,15 +748,16 @@ public class InferenceComputer {
 		//long startTime = System.currentTimeMillis();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "Mary believes that John is handsome.";	
-		String hypothesis = "John is handsome.";
+		String premise = "Nobody is riding a bike.";	
+		String hypothesis = "Two people are riding a bike.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_a_and_Cb_and_Eb.txt";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";
 		//String file = "/home/kkalouli/Documents/diss/test_heidel.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/to_check.txt";
-		String file = "/home/kkalouli/Desktop/not_run_through_gnli_yet_both_dirs.txt";
+		//String file = "/home/kkalouli/Desktop/test.txt";
+		String file = "/home/kkalouli/Documents/diss/experiments/SICK_unique_sent_sanity_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/still_to_be_checked_only_NEUTRAL_low_jac_similarity_both_dirs.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
 		//comp.computeInferenceOfPair(premise, hypothesis, "E", kb);

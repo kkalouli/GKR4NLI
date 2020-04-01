@@ -815,9 +815,9 @@ public class InferenceChecker {
 			double cost = rootNodeMatches.get(key).getFeatureScore("cost");
 			if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.VERIDICAL) {
 				// it is not a contradiction if there is no disjoint relation and the score is below maxCost*2
-				/*if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)){
+				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)){
 					disjoint = false;
-				} */
+				}
 				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
 				if ( (matchSpecificity == Specificity.EQUALS && costInContraBounds(cost) )
 						|| ( matchSpecificity == Specificity.EQUALS && costInNeutralBounds(cost) )){
@@ -857,9 +857,9 @@ public class InferenceChecker {
 				
 			}
 			else if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
-				/*if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost) ){
+				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost) ){
 					disjoint = false;
-				}*/
+				}
 				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
 				if ( (matchSpecificity == Specificity.EQUALS && costInContraBounds(cost) )
 						|| ( matchSpecificity == Specificity.EQUALS && costInNeutralBounds(cost) )){
