@@ -259,11 +259,18 @@ public class GNLIGraph implements Serializable {
 	public void display() {
 		Set<SemanticNode<?>> mergedNodes = new HashSet<SemanticNode<?>>();
 		mergedNodes.addAll(this.hypothesisGraph.getRoleGraph().getNodes());
+		mergedNodes.addAll(this.hypothesisGraph.getContextGraph().getNodes());
+		mergedNodes.addAll(this.textGraph.getRoleGraph().getNodes());
 		mergedNodes.addAll(this.textGraph.getContextGraph().getNodes());
+		
 		
 		Set<SemanticEdge> mergedEdges = new HashSet<SemanticEdge>();
 		mergedEdges.addAll(this.hypothesisGraph.getRoleGraph().getEdges());
+		mergedEdges.addAll(this.hypothesisGraph.getContextGraph().getEdges());
 		mergedEdges.addAll(this.textGraph.getContextGraph().getEdges());
+		mergedEdges.addAll(this.textGraph.getRoleGraph().getEdges());
+		
+		mergedEdges.addAll(this.getMatches());
 		
 		SemGraph subgraph = this.gnliGraph.getSubGraph(mergedNodes, mergedEdges);
 		subgraph.display();

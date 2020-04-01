@@ -39,6 +39,7 @@ import gnli.GNLIGraph;
 import gnli.InferenceChecker.EntailmentRelation;
 import jigsaw.JIGSAW;
 import gnli.InitialTermMatcher;
+import sem.graph.SemGraph;
 import sem.graph.SemanticGraph;
 import sem.mapper.DepGraphToSemanticGraph;
 
@@ -79,10 +80,10 @@ public class InferenceComputer {
 		}
 		// initialize the SUMO reader
         this.sumoKB = props.getProperty("sumo_kb");
-		KBmanager.getMgr().initializeOnce(sumoKB);
+		//KBmanager.getMgr().initializeOnce(sumoKB);
 		//KBmanager.getMgr().initializeOnce("/Users/caldadmin/Documents/.sigmakee/KBs");
 		//KBmanager.getMgr().initializeOnce("/home/kkalouli/Documents/.sigmakee/KBs");
-		this.kb = KBmanager.getMgr().getKB("SUMO");
+		//this.kb = KBmanager.getMgr().getKB("SUMO");
 		//serializeKb();
 		String wnInstall = props.getProperty("wn_location");
 		String sumoInstall = props.getProperty("sumo_location");
@@ -720,6 +721,28 @@ public class InferenceComputer {
 			return pairsToReturn;
 	}
 	
+	public void investigateSerializedDecisions(String file){
+		ArrayList<InferenceDecision> decisions = deserializeFileWithComputedPairs(file);
+		for (InferenceDecision dec : decisions){
+		GNLIGraph gnliGraph = dec.getGNLIGraph();
+		gnliGraph.display();
+		SemanticGraph hGraph = gnliGraph.hypothesisGraph;
+		SemanticGraph tGraph = gnliGraph.textGraph;
+		SemanticGraph mGraph = gnliGraph.matchGraph;
+		hGraph.displayRolesAndCtxs();
+		tGraph.displayRolesAndCtxs();
+		mGraph.display();
+		String relation = dec.getEntailmentRelation().toString();
+		ArrayList<MatchEdge> justif = dec.getJustifications();
+		System.out.println(relation);
+		
+		
+		}
+		
+		
+		
+	}
+	
 	public class GKRConcurrentTask implements Callable<SemanticGraph> {
 		 private String sent1;
 		 private String sent2;
@@ -758,15 +781,18 @@ public class InferenceComputer {
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/to_check.txt";
 		//String file = "/home/kkalouli/Desktop/test.txt";
 		String file = "/home/kkalouli/Documents/diss/experiments/SICK_unique_sent_sanity_check.txt";
+		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
+		//String file = "/Users/kkalouli/Documents/QuestionsAtTheInterfaces/P8/heidelberg_collaboration/test_heidel.txt";
+		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
+		//comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//String file = "/home/kkalouli/Documents/diss/experiments/still_to_be_checked_only_NEUTRAL_low_jac_similarity_both_dirs.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
 		//comp.computeInferenceOfPair(premise, hypothesis, "E", kb);
 		comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//long endTime = System.currentTimeMillis();
 		//System.out.println("The whole thing took " + (endTime - startTime) + " milliseconds");
-		//comp.deserializeFileWithComputedPairs(file);
-		
-		
+		//comp.investigateSerializedDecisions(file);
+	
 	}
 	
 	
