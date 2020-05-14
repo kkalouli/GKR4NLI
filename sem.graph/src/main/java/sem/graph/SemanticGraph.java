@@ -145,7 +145,7 @@ public class SemanticGraph implements Serializable  {
 	}
 	
 	/**
-	 * Get underlying SemGraph for distributional graph
+	 * Get underlying SemGraph for roles and ctx graph
 	 * @return
 	 */
 	public SemGraph getRolesAndCtxGraph() {
@@ -158,6 +158,26 @@ public class SemanticGraph implements Serializable  {
 		mergedEdges.addAll(this.getContextGraph().getEdges());
 		return this.getSubGraph(mergedNodes, mergedEdges);
 	}
+	
+	
+	/**
+	 * Get underlying SemGraph for roles, ctx and properties graph
+	 * @return
+	 */
+	public SemGraph getRolesCtxAndPropertiesGraph() {
+		Set<SemanticNode<?>> mergedNodes = new HashSet<SemanticNode<?>>();
+		mergedNodes.addAll(this.getRoleGraph().getNodes());
+		mergedNodes.addAll(this.getContextGraph().getNodes());
+		mergedNodes.addAll(this.getPropertyGraph().getNodes());
+		
+		Set<SemanticEdge> mergedEdges = new HashSet<SemanticEdge>();
+		mergedEdges.addAll(this.getRoleGraph().getEdges());
+		mergedEdges.addAll(this.getContextGraph().getEdges());
+		mergedEdges.addAll(this.getPropertyGraph().getEdges());
+		return this.getSubGraph(mergedNodes, mergedEdges);
+	}
+	
+	
 	
 	/**
 	 * Get underlying SemGraph for distributional graph
@@ -545,6 +565,14 @@ public class SemanticGraph implements Serializable  {
 	
 	public void displayRolesAndCtxs() {	
 		this.getRolesAndCtxGraph().display();
+	}
+	
+	public void displayRolesCtxsAndProperties() {	
+		this.getRolesCtxAndPropertiesGraph().display();
+	}
+	
+	public void displayRolesAndLinks() {	
+		this.getRolesAndCorefGraph().display();
 	}
 	
 	public void exportGraphAsJson(){

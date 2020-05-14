@@ -113,6 +113,7 @@ public class ContextMapper implements Serializable {
 		//graph.displayRoles();
 		//graph.displayDependencies();
 		integrateImplicativeContexts();
+		integrateClausalContexts();
 		//graph.displayContexts();
 		integrateCoordinatingContexts();
 		//graph.displayContexts();

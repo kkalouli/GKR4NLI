@@ -64,7 +64,7 @@ public class GraphLabels implements Serializable{
 	}));
 	
 	
-	public static final String CARDINAL = "cardinal";
+	public static final String CARDINAL = "cardinality";
 	public static final String SPECIFIER = "specifier";
 	public static final String TENSE = "tense";
 	public static final String ASPECT = "aspect";
