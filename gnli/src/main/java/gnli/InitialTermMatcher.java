@@ -306,12 +306,16 @@ public class InitialTermMatcher {
 			List<String> tAntonyms = ((SenseNodeContent) tSenseNode.getContent()).getAntonyms();
 			Map<String, Integer> tSuperConcepts = ((SenseNodeContent) tSenseNode.getContent()).getSuperConcepts();
 			Map<String, Integer> tSubConcepts = ((SenseNodeContent) tSenseNode.getContent()).getSubConcepts();
+			List<String> tHypernyms = ((SenseNodeContent) tSenseNode.getContent()).getHypernyms();
+			List<String> tHyponyms = ((SenseNodeContent) tSenseNode.getContent()).getHyponyms();
 			for (final SenseNode hSenseNode : gnliGraph.getHypothesisGraph().getSenses(hTerm)) {
 				String hSenseId = ((SenseNodeContent) hSenseNode.getContent()).getSenseId();
 				List<String> hSynonyms = ((SenseNodeContent) hSenseNode.getContent()).getSynonyms();
 				List<String> hAntonyms = ((SenseNodeContent) hSenseNode.getContent()).getAntonyms();
 				Map<String, Integer> hSuperConcepts = ((SenseNodeContent) hSenseNode.getContent()).getSuperConcepts();
 				Map<String, Integer> hSubConcepts = ((SenseNodeContent) hSenseNode.getContent()).getSubConcepts();
+				List<String> hHypernyms = ((SenseNodeContent) hSenseNode.getContent()).getHypernyms();
+				List<String> hHyponyms = ((SenseNodeContent) hSenseNode.getContent()).getHyponyms();
 				MatchOrigin.MatchType matchType  = MatchOrigin.MatchType.SENSE;
 				if (hSenseId.startsWith("cmp_")){
 					hSenseId = hSenseId.substring(4);
@@ -343,12 +347,30 @@ public class InitialTermMatcher {
 					}
 				}
 				*/
+				String hTermOnlyStem = hTerm.getLabel().substring(0,hTerm.getLabel().indexOf("_"));
+				String tTermOnlyStem = tTerm.getLabel().substring(0,tTerm.getLabel().indexOf("_"));
 				if (tSenseId != null && hSenseId != null && !tSenseId.equals("U") && !hSenseId.equals("U") && !((SkolemNodeContent) tTerm.getContent()).getStem().equals("be")
 						&& !((SkolemNodeContent) hTerm.getContent()).getStem().equals("be") && !POSToExclude.contains(((SkolemNodeContent) tTerm.getContent()).getPartOfSpeech()) 
 						&& !POSToExclude.contains(((SkolemNodeContent) hTerm.getContent()).getPartOfSpeech())){
 					// maximum best score of a sense is 1. If hTerm and tTerm have both best scores, then max total score is 2, so penalty is 2 - actualScore 
 					float penalty = 2 - (tSenseNode.getContent().getSenseScore() + hSenseNode.getContent().getSenseScore());
 					if (tSenseId.equals(hSenseId)) {
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.EQUALS, penalty, 0);
+					} else if (tSynonyms.contains(hTermOnlyStem) || hSynonyms.contains(tTermOnlyStem)){
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.EQUALS, penalty, 0);
+					} else if (tHypernyms.contains(hTermOnlyStem)) {// || !Collections.disjoint(tHypernyms, hSynonyms)){
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.SUBCLASS, penalty, tHypernyms.indexOf(hTermOnlyStem));
+					} else if (hHypernyms.contains(tTermOnlyStem)) { // || !Collections.disjoint(hHypernyms, tSynonyms)){
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.SUPERCLASS, penalty, hHypernyms.indexOf(tTermOnlyStem));
+					} else if (hHyponyms.contains(tTermOnlyStem)) { // || !Collections.disjoint(hHyponyms, tSynonyms)){
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.SUBCLASS, penalty, hHyponyms.indexOf(tTermOnlyStem));
+					} else if (tHyponyms.contains(hTermOnlyStem)) { // || !Collections.disjoint(tHyponyms, hSynonyms)){
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.SUPERCLASS, penalty, tHyponyms.indexOf(hTermOnlyStem));
+					} else if (hAntonyms.contains(tTermOnlyStem) || tAntonyms.contains(hTermOnlyStem)
+							|| !Collections.disjoint(tAntonyms, hSynonyms) || !Collections.disjoint(hAntonyms, tSynonyms)){
+						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.DISJOINT, penalty, 0);
+					}
+					/*if (tSenseId.equals(hSenseId)) {
 						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.EQUALS, penalty, 0);
 					} else if (tSynonyms.contains(hTerm.getLabel().substring(0,hTerm.getLabel().indexOf("_"))) || hSynonyms.contains(tTerm.getLabel().substring(0,tTerm.getLabel().indexOf("_")))){
 						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.EQUALS, penalty, 0);
@@ -362,7 +384,7 @@ public class InitialTermMatcher {
 						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.SUPERCLASS, penalty, tSubConcepts.get(hSenseId));
 					} else if (hAntonyms.contains(tTerm.getLabel().substring(0,tTerm.getLabel().indexOf("_"))) || tAntonyms.contains(hTerm.getLabel().substring(0,hTerm.getLabel().indexOf("_"))) ){
 						linkContent = new MatchContent(matchType, hSenseId, tSenseId,null, Specificity.DISJOINT, penalty, 0);
-					}
+					}*/
 					
 					if (linkContent != null)
 						contents.put(linkContent,tTerm);

@@ -17,6 +17,7 @@ import sem.graph.vetypes.ContextHeadEdge;
 import sem.graph.vetypes.ContextNode;
 import sem.graph.vetypes.ContextNodeContent;
 import sem.graph.vetypes.GraphLabels;
+import sem.graph.vetypes.RoleEdge;
 import sem.graph.vetypes.RoleEdgeContent;
 import sem.graph.vetypes.SkolemNode;
 import sem.graph.vetypes.SkolemNodeContent;

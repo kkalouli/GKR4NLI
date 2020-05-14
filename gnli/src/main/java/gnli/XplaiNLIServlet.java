@@ -48,7 +48,6 @@ import sem.mapper.GKRServlet.getMxGraphConcurrentTask;
 
 // uncomment to use through Gretty plugin
 //@WebServlet(name = "GNLIServlet", urlPatterns = {"gnli"}, loadOnStartup = 1) 
-//@WebServlet(name="xplainli",urlPatterns={"/xplainli"})
 public class XplaiNLIServlet extends HttpServlet {
 		
 		/**
@@ -172,8 +171,8 @@ public class XplaiNLIServlet extends HttpServlet {
 			rulesMap.put(7, new ArrayList<String>(Arrays.asList("Hver", "Pantiver", "eq")));
 			rulesMap.put(8, new ArrayList<String>(Arrays.asList("Hver", "Pantiver", "super")));
 			// entail or disjoint implementation with veridical contexts 
-			rulesMap.put(9, new ArrayList<String>(Arrays.asList("Hver", "Pver", "eq", "contraFlag")));
-			rulesMap.put(10, new ArrayList<String>(Arrays.asList("Hver", "Pver", "sub", "contraFlag")));
+			rulesMap.put(9, new ArrayList<String>(Arrays.asList("Hver", "Pver", "eq", "dis", "contraFlag")));
+			rulesMap.put(10, new ArrayList<String>(Arrays.asList("Hver", "Pver", "sub", "dis", "contraFlag")));
 			rulesMap.put(11, new ArrayList<String>(Arrays.asList("Hver", "Pver", "dis", "contraFlag")));
 			rulesMap.put(12, new ArrayList<String>(Arrays.asList("Hver", "Pver", "dis", "contraFlag")));
 			rulesMap.put(13, new ArrayList<String>(Arrays.asList("Hver", "Pver", "super")));
@@ -182,8 +181,8 @@ public class XplaiNLIServlet extends HttpServlet {
 			rulesMap.put(15, new ArrayList<String>(Arrays.asList("Hver", "Pver", "eq", "contraFlag")));
 			rulesMap.put(16, new ArrayList<String>(Arrays.asList("Hver", "Pver", "sub", "contraFlag")));
 			// entail or disjoint implementation with antiveridical contexts 
-			rulesMap.put(17, new ArrayList<String>(Arrays.asList("Hantiver", "Pantiver", "eq", "contraFlag")));
-			rulesMap.put(18, new ArrayList<String>(Arrays.asList("Hantiver", "Pantiver", "super", "contraFlag")));
+			rulesMap.put(17, new ArrayList<String>(Arrays.asList("Hantiver", "Pantiver", "eq", "dis", "contraFlag")));
+			rulesMap.put(18, new ArrayList<String>(Arrays.asList("Hantiver", "Pantiver", "super", "dis", "contraFlag")));
 			rulesMap.put(19, new ArrayList<String>(Arrays.asList("Hantiver", "Pantiver", "dis", "contraFlag")));
 			rulesMap.put(20, new ArrayList<String>(Arrays.asList("Hantiver", "Pantiver", "dis", "contraFlag")));
 			rulesMap.put(21, new ArrayList<String>(Arrays.asList("Hantiver", "Pantiver", "sub")));
@@ -328,6 +327,7 @@ public class XplaiNLIServlet extends HttpServlet {
 	        
 	        
 	        checkForBertFeatures();
+	        featuresValues.clear();
 	        fillMapOfFeaturesValues();
 	        createJSONObject();
 	        request.setAttribute("premise", premise);

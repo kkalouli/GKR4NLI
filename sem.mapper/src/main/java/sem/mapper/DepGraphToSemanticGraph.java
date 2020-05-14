@@ -703,7 +703,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		}
 		// make sure you get indirect semantics for things added later to the context graph
 		for (SemanticNode<?> ctxNode : graph.getContextGraph().getNodes()){
-			if (ctxNode.getLabel().equalsIgnoreCase("person") || ctxNode.getLabel().equalsIgnoreCase("thing")){
+			if (ctxNode.getLabel().contains("person_") || ctxNode.getLabel().contains("thing_")){
 				String sense = "";
 				String concept = "";
 				if (ctxNode.getLabel().contains("person")){

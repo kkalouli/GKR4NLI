@@ -623,8 +623,8 @@ public class InferenceComputer {
 			String[] elements = pair.split("\t");
 			String id = elements[0];
 			// comment in for SICK test set to do only the one direction
-			if (id.contains("a"))
-				continue;
+			//if (id.contains("b"))
+			//	continue;
 			String premise = elements[1];
 			String hypothesis = elements[2];
 			String correctLabel = elements[3];
@@ -779,12 +779,14 @@ public class InferenceComputer {
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";
 		//String file = "/home/kkalouli/Documents/diss/test_heidel.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/to_check.txt";
+		//String file = "/home/kkalouli/Desktop/test.txt";
+		String file = "/home/kkalouli/Documents/diss/experiments/SICK_unique_sent_sanity_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
 		//String file = "/Users/kkalouli/Documents/QuestionsAtTheInterfaces/P8/heidelberg_collaboration/test_heidel.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
 		//comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//String file = "/home/kkalouli/Desktop/not_run_through_gnli_yet_both_dirs.txt";
-		String file = "/Users/kkalouli/Desktop/test.txt";
+		//String file = "/Users/kkalouli/Desktop/test.txt";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK reannotation/Larry_and_Hai_collaboration/to_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/still_to_be_checked_only_NEUTRAL_low_jac_similarity_both_dirs.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
