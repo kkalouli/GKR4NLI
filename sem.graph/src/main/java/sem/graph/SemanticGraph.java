@@ -648,6 +648,20 @@ public class SemanticGraph implements Serializable  {
 		return this.roleGraph.getMxGraph();
 	}
 	
+	public String displayAsString2(){
+		StringBuilder stringToDisplay = new StringBuilder();	
+		for (SemanticNode<?> node : graph.getNodes()){
+			stringToDisplay.append(node.getLabel()+":\n\t");
+			Set<SemanticNode<?>> children = graph.getOutNeighbors(node);
+			for (SemanticNode<?> child : children){
+				stringToDisplay.append(node.getLabel()+":\n\t");
+			}
+			
+		}
+		return stringToDisplay.toString();
+		
+	}
+	
 
 	
 	/**

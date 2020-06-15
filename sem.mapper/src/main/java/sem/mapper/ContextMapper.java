@@ -203,6 +203,7 @@ public class ContextMapper implements Serializable {
 	 * only use if we want to add the direct relation of the child of the implicative to the negated node. (for now, case 2 is intergated in case 1, see below)
 	 */
 	private void checkForPostIntegrationMistakes(){
+		//graph.displayContexts();
 		// Case 1
 		HashMap<String, SemanticNode<?>> nodeLabels = new HashMap<String, SemanticNode<?>>();
 		ArrayList<ArrayList<SemanticNode<?>>> sameNodes = new ArrayList<ArrayList<SemanticNode<?>>>();	
@@ -214,7 +215,7 @@ public class ContextMapper implements Serializable {
 			else {
 				ArrayList<SemanticNode<?>> listOfSame = new ArrayList<SemanticNode<?>>();
 				listOfSame.add(cNode);
-				listOfSame.add(nodeLabels.get(cNode.getLabel()));
+				listOfSame.add(nodeLabels.get(cNode.getLabel()));			
 				sameNodes.add(listOfSame);
 			}
 		}
@@ -289,19 +290,24 @@ public class ContextMapper implements Serializable {
 			graph.removeContextEdge(e);
 		}
 		
-		// add [negation] nodes to the correct nodes that have remained: comment out for now: might not need it
-		/*for (SemanticNode<?> negNode : mapWithNegations.keySet()){
+		//graph.displayContexts();
+		// add [negation] nodes to the correct nodes that have remained
+		for (SemanticNode<?> negNode : mapWithNegations.keySet()){
 			ArrayList<String> value = mapWithNegations.get(negNode);
 			String edge = value.get(0);
 			String finishNodeString = value.get(1);
 			// have to create a new edge with this edge label because the other one has already been removed
 			ContextHeadEdge newCtxEdge = new ContextHeadEdge(edge, new RoleEdgeContent());
 			// have to find the node that is still in the graph and has the same name as the finishNode
-			SemanticNode<?> finish = nodeLabels.get(finishNodeString); 
+			SemanticNode<?> finish = null;
+			for (SemanticNode<?> n : graph.getContextGraph().getNodes()){
+				if (n.getLabel().equals(finishNodeString))
+					 finish = n; 
+			}		
 			graph.addContextEdge(newCtxEdge, negNode, finish);	
-		}*/
+		}
 		
-		// Case 2: not used for now because no "negation" node is added
+		// Case 2
 		SemanticNode<?> toRemove = null;
 		//graph.displayContexts();
 		for (SemanticNode<?> n : graph.getContextGraph().getNodes()){
@@ -359,6 +365,8 @@ public class ContextMapper implements Serializable {
 	 */
 	private void integrateInterrogativeContexts(){
 		//list of verbs that introduce indirect questions (TODO: expand list)
+		//graph.displayContexts();
+		//graph.displayRoles();
 		ArrayList<String> interrVerbs = new ArrayList<String>();
 		interrVerbs.add("ask");
 		interrVerbs.add("wonder");
@@ -377,7 +385,7 @@ public class ContextMapper implements Serializable {
 				Set<SemanticEdge> childrenEdges = roleGraph.getOutEdges(rNode);
 				// get the children of that node: the sem_comp child is the one that is in the interrogative context 
 				for (SemanticEdge e : childrenEdges){
-					if (e.getLabel().equals("sem_comp")){
+					if (e.getLabel().equals("sem_comp") || e.getLabel().equals("sem_xcomp")){
 						child = graph.getFinishNode(e);
 					}
 				}
@@ -445,12 +453,14 @@ public class ContextMapper implements Serializable {
 					((SkolemNodeContent) head.getContent()).setContext(headNode.getLabel());
 				} 
 				/* if negation is involved, then there are two cases:
-				 * 1. negation over the modal (can, could, would): here the neg context graph is practically 
+				 * 1. negation over the modal (can, may, might, need, could, would): here the neg context graph is practically 
 				 * disolved and we just keep the negation context node which is then used as top for the 
 				 * modal context graph to eb created
 				 */
 				else if (((SkolemNodeContent) node.getContent()).getStem().equals("can") 
 						|| ((SkolemNodeContent) node.getContent()).getStem().equals("could")
+						|| ((SkolemNodeContent) node.getContent()).getStem().equals("may")
+						|| ((SkolemNodeContent) node.getContent()).getStem().equals("may")
 						|| ((SkolemNodeContent) node.getContent()).getStem().equals("need")
 						|| ((SkolemNodeContent) node.getContent()).getStem().equals("would")){
 					// remove all edges and nodes that are dependent on the negation_context node
@@ -1158,6 +1168,9 @@ public class ContextMapper implements Serializable {
 	 * @throws IOException
 	 */
 	private void integrateImplicativeContexts(){
+		//graph.displayDependencies();
+		//TODO: fix context graph when there is a modal, negation and implicative and the parser says that the 
+		//negation goes to the implicative: Mary said that John should not fail to remember to close the window.
 		//go through each node of the role graph and see if it is such a word
 		for (SemanticNode<?> node : graph.getRoleGraph().getNodes()){
 			if (!(node instanceof SkolemNode))
@@ -1205,11 +1218,13 @@ public class ContextMapper implements Serializable {
 			// get the truth condition of that stem+comple from the hash: take the positive truth condition even if it's a negated context for now 
 			String truth = mapOfImpl.get(stem+comple).split("_")[0];
 			ContextNode negation = null;
-			// if there is negation create a new node which will be added to the graph to hold the truth condition of the negation: comment out for now: might not need it
-			// this adds the instantiability of the child of the implicative to the parent of the implicative, i.e. the negation in this case
-			/*if (isNeg == true){
+			/*if there is negation create a new node which will be added to the graph to hold the truth condition of the negation
+			this adds the instantiability of the child of the implicative to the parent of the implicative, i.e. the negation in this case
+			Mary did not remember that she had closed the window // Mary did not remember to close the window. :
+			if this is not added, the twp sentences have the same commitments that closing didnt happen. */
+			if (isNeg == true){
 				negation = new ContextNode("negation", new ContextNodeContent());
-			}*/
+			}
 			// put the node into the hash with the implicatives
 			implCtxs.put(node, "impl");
 			ContextHeadEdge labelEdge = getEdgeLabelAccordingToTruthCondition(truth);

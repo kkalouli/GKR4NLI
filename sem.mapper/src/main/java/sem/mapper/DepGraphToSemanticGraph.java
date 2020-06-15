@@ -709,16 +709,29 @@ public class DepGraphToSemanticGraph implements Serializable {
 				if (ctxNode.getLabel().contains("person")){
 					sense = "00007846";
 					concept = "Human=";
+					try {
+						retriever.getLexRelationsOfSynset("person", "00007846", "NN");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
-				else {
+				else if (ctxNode.getLabel().contains("thing")){
 					sense = "04424218";
 					concept = "Artifact=";
-				}
-				try {
-					retriever.getLexRelationsOfSynset(((SkolemNode) ctxNode).getStem(), sense, ((SkolemNode) ctxNode).getPartOfSpeech());
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					try {
+						retriever.getLexRelationsOfSynset("thing", "04424218", "NN");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} else {
+					try {
+						retriever.getLexRelationsOfSynset(((SkolemNode) ctxNode).getStem(), sense, ((SkolemNode) ctxNode).getPartOfSpeech());
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 				// create new sense Content
 				SenseNodeContent senseContent = new SenseNodeContent(sense);
@@ -878,12 +891,14 @@ public class DepGraphToSemanticGraph implements Serializable {
 		String strLine;
 		ArrayList<sem.graph.SemanticGraph> semanticGraphs = new ArrayList<sem.graph.SemanticGraph>();
 		while ((strLine = br.readLine()) != null) {
-			if (strLine.startsWith("####")){
+			if (strLine.startsWith("#")){
 				writer.write(strLine+"\n\n");
 				writer.flush();
 				continue;
 			}
 			String text = strLine.split("\t")[1];
+			if (!text.endsWith("(.|?|!)"))
+				text = text+".";
 			SemanticGraph stanGraph = parser.parseOnly(text);
 			sem.graph.SemanticGraph graph = this.getGraph(stanGraph, text, text);
 			//System.out.println(graph.displayAsString());
@@ -986,7 +1001,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
+		// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
 		return semanticGraphs;
@@ -997,9 +1012,9 @@ public class DepGraphToSemanticGraph implements Serializable {
 	public static void main(String args[]) throws IOException {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
-		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/expriment_InferSent/SICK_unique_sent_test_InferSent_onlySkolems.txt");
+		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/HP_testsuite/HP_testsuite_shortened_active.txt");
 		//semConverter.processTestsuite("/home/kkalouli/Documents/diss/experiments/UD_corpus_cleaned.txt");
-		String sentence = "Mary likes Anna, her new boss.";//"A family is watching a little boy who is hitting a baseball.";
+		String sentence = "Few people are listeners."; //A family is watching a little boy who is hitting a baseball.";
 		String context = "The kid faked the illness.";
 		semConverter.processSentence(sentence, sentence+" "+context);
 	}

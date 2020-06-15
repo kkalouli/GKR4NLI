@@ -44,7 +44,7 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 		this();
 		this.matchOrigin.add(new MatchOrigin(matchType));
 		switch (matchType) {
-		case STEM:
+		case LEMMA:
 		case SURFACE:
 		case CONCEPT:
 		case SENSE:

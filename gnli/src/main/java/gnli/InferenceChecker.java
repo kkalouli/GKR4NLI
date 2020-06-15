@@ -203,7 +203,7 @@ public class InferenceChecker {
 		//}
 		if (!rootNodeMatches.isEmpty()) { 
 			try {
-				extractItemsSetsForAssociationRuleMining(rootNodeMatches);
+				//extractItemsSetsForAssociationRuleMining(rootNodeMatches);
 				extractFeaturesForInferenceDecision(rootNodeMatches);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
