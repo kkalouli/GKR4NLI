@@ -880,6 +880,9 @@ public class DepGraphToSemanticGraph implements Serializable {
 				continue;
 			}
 			String text = strLine.split("\t")[1];
+	        if (!text.endsWith(".") && !text.endsWith("?") && !text.endsWith("!")){
+	        	text = text+".";
+	        }
 			SemanticGraph stanGraph = parser.parseOnly(text);
 			sem.graph.SemanticGraph graph = this.getGraph(stanGraph, text, text);
 			//System.out.println(graph.displayAsString());
@@ -909,6 +912,72 @@ public class DepGraphToSemanticGraph implements Serializable {
 		inputReader.close();
 		//plainSkolemsWriter.close();
 	}
+	
+	/***
+	 * Process a testsuite for the DEMO.
+	 * Process a testsuite of sentences with GKR. One sentence per line.
+	 * Lines starting with # are considered comments.
+	 * The output is formatted as string: in this format only the dependency graph, the
+	 * concepts graph, the contextual graph and the properties graph are displayed
+	 * @param file
+	 * @param semConverter
+	 * @throws IOException
+	 */
+
+	public String processDemoTestsuite(InputStream file) throws IOException{
+		InputStreamReader inputReader = new InputStreamReader(file, "UTF-8");
+		BufferedReader br = new BufferedReader(inputReader);
+		// true stands for append = true (dont overwrite)
+		String outputName = "/home/kkalouli/Documents/Programs/apache-tomcat-9.0.20/webapps/sem.mapper/processed.txt";
+		BufferedWriter writer = new BufferedWriter( new FileWriter(outputName, true));
+		FileOutputStream fileSer = null;
+		ObjectOutputStream writerSer = null;
+		String strLine;
+		ArrayList<sem.graph.SemanticGraph> semanticGraphs = new ArrayList<sem.graph.SemanticGraph>();
+		while ((strLine = br.readLine()) != null) {
+			if (strLine.startsWith("####")){
+				writer.write(strLine+"\n\n");
+				writer.flush();
+				continue;
+			}
+			String text = strLine.split("\t")[1];
+	        if (!text.endsWith(".") && !text.endsWith("?") && !text.endsWith("!")){
+	        	text = text+".";
+	        }
+	        if (!text.matches("(\\w*(\\s|,|\\.|\\?|!|\"|-|')*)*")) {
+	        	writer.write(strLine+"\nSentence cannot be processed. Invalid characters.\n\n");
+	        	continue;
+	        }
+			SemanticGraph stanGraph = parser.parseOnly(text);
+			sem.graph.SemanticGraph graph = this.getGraph(stanGraph, text, text);
+			//System.out.println(graph.displayAsString());
+			writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
+			///System.out.println("Processed sentence "+ strLine.split("\t")[0]);
+			//if (graph != null)
+			//	semanticGraphs.add(graph);
+		}
+		// serialize and write to file
+		/*try {
+			fileSer = new FileOutputStream("serialized_SemanticGraphs.ser");
+			writerSer = new ObjectOutputStream(fileSer);
+			writerSer.writeObject(semanticGraphs); 				
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} */
+		writer.close();
+		br.close();
+		//fileSer.close();
+		//writerSer.close();
+		//fileInput.close();
+		inputReader.close();
+		return outputName;
+		//plainSkolemsWriter.close();*/
+	}
+
 
 	/***
 	 * Process a single sentence with GKR. 
