@@ -167,7 +167,7 @@ public class InitialTermMatcher {
 		}
 
 		updatePendingMatches();
-		for (CheckedTermNode hTerm : hypothesisTerms) {
+		/*for (CheckedTermNode hTerm : hypothesisTerms) {
 			HashMap<MatchContent, TermNode> conceptContents = new HashMap<MatchContent,TermNode>();
 			for (TermNode tTerm : textTerms) {
 				HashMap<MatchContent, TermNode>  contents = checkConceptMatch(hTerm, tTerm, conceptContents);
@@ -188,7 +188,7 @@ public class InitialTermMatcher {
 					}
 				}
 			}
-		}
+		}*/
 		
 		updatePendingMatches();
 		/*for (CheckedTermNode hTerm : hypothesisTerms) {
@@ -243,8 +243,8 @@ public class InitialTermMatcher {
 			tStem = ((SkolemNodeContent) tTerm.getContent()).getStem();
 		}
 		if (hStem != null && !hStem.equals("_") && tStem != null && hStem.equals(tStem)) {
-			final MatchContent linkContent = new MatchContent(MatchOrigin.MatchType.STEM);
-			final MatchEdge stemMatch = new MatchEdge("stem", linkContent);
+			final MatchContent linkContent = new MatchContent(MatchOrigin.MatchType.LEMMA);
+			final MatchEdge stemMatch = new MatchEdge("lemma", linkContent);
 			gnliGraph.addMatchEdge(stemMatch, hTerm, tTerm);
 			retval.add(stemMatch);
 			cHTerm.pendMatch();

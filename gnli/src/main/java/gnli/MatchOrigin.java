@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 public class MatchOrigin implements Serializable { 
 	private static final long serialVersionUID = 5464834181048581205L;
-	public static enum MatchType {STEM, SURFACE, SENSE, EMBED, CONCEPT, DERIVED, NONE, SENSE_CMP}
+	public static enum MatchType {LEMMA, SURFACE, SENSE, EMBED, CONCEPT, DERIVED, NONE, SENSE_CMP}
 	private MatchType matchType;
 	private String hSense = null;
 	private String tSense = null;
@@ -61,7 +61,7 @@ public class MatchOrigin implements Serializable {
 		case SENSE:
 			sb.append(hSense).append("\t").append(tSense);
 			break;
-		case STEM:
+		case LEMMA:
 			break;
 		case SURFACE:
 			break;

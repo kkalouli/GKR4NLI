@@ -60,6 +60,8 @@ public interface SemGraph  {
 	
 	public List<SemanticNode<?>> breadthFirstTraversal(Graph<SemanticNode<?>, SemanticEdge> graph, SemanticNode<?> node);
 	
+	public List<SemanticEdge> breadthFirstTraversalEdges(Graph<SemanticNode<?>, SemanticEdge> graph, SemanticNode<?> node);
+
 	public Set<SemanticNode<?>> getInReach(SemanticNode<?> node);
 	
 	public SemanticNode<?> getStartNode(SemanticEdge edge);
@@ -81,6 +83,8 @@ public interface SemGraph  {
 	public BufferedImage saveGraphAsImage();
 	
 	public String getMxGraph();
+
+	Set<SemanticEdge> getOutReachEdges(SemanticNode<?> node);
 	
 	//public BufferedImage saveGraphAsImage(Map<Color, List<SemanticNode<?>>> nodeProperties, Map<Color, List<SemanticEdge>> edgeProperties);
 	

@@ -63,6 +63,7 @@ import com.mxgraph.view.mxGraph;
 import sem.graph.vetypes.ContextEdge;
 import sem.graph.vetypes.ContextNode;
 import sem.graph.vetypes.LexEdge;
+import sem.graph.vetypes.LinkEdge;
 import sem.graph.vetypes.RoleEdge;
 import sem.graph.vetypes.SenseNode;
 import sem.graph.vetypes.SkolemNode;
@@ -250,6 +251,24 @@ public class SemJGraphT implements  SemGraph, Serializable{
 		}
 		return retval;
 	}
+	
+	@Override
+	public Set<SemanticEdge> getOutReachEdges(SemanticNode<?> node) {
+		return new HashSet<SemanticEdge>(breadthFirstTraversalEdges(this.graph, node));
+	}
+		
+	public List<SemanticEdge> breadthFirstTraversalEdges(Graph<SemanticNode<?>, SemanticEdge> graph, SemanticNode<?> node) {
+		List<SemanticEdge> retval = new ArrayList<SemanticEdge>();
+		if (graph.containsVertex(node)) {
+			BreadthFirstIterator<SemanticNode<?>, SemanticEdge> bfi 
+				= new BreadthFirstIterator<SemanticNode<?>, SemanticEdge>(graph, node);
+			while (bfi.hasNext()) {
+				SemanticEdge rnode = bfi.getSpanningTreeEdge(bfi.next());
+				retval.add(rnode);
+			}
+		}
+		return retval;
+	}
 
 	@Override
 	public Set<SemanticNode<?>> getInReach(SemanticNode<?> node) {
@@ -403,6 +422,7 @@ public class SemJGraphT implements  SemGraph, Serializable{
 		mxGraphComponent component = new mxGraphComponent(jgxAdapter);
 		component.setConnectable(false);
 		component.getGraph().setAllowDanglingEdges(false);
+		
 		mxHierarchicalLayout layout = new mxHierarchicalLayout(jgxAdapter);
 		layout.setIntraCellSpacing(80);
 		//layout.setFineTuning(true);
@@ -427,7 +447,12 @@ public class SemJGraphT implements  SemGraph, Serializable{
 			} else if (((mxCell) node).getValue() instanceof TermNode){
 				component.getGraph().setCellStyles(mxConstants.STYLE_FILLCOLOR, "#FFA500", new Object[]{node});
 				component.getGraph().setCellStyles(mxConstants.STYLE_STROKECOLOR, "#FFA500", new Object[]{node});
-			} else {
+			} else if (((mxCell) node).getValue() instanceof LinkEdge) {
+				component.getGraph().setCellStyles(mxConstants.STYLE_FILLCOLOR, "#FF7F50", new Object[]{node});
+				component.getGraph().setCellStyles(mxConstants.STYLE_FONTCOLOR, "#FF7F50", new Object[]{node});
+				component.getGraph().setCellStyles(mxConstants.STYLE_STROKECOLOR, "#FF7F50", new Object[]{node});
+			}	
+			else {
 				component.getGraph().setCellStyles(mxConstants.STYLE_FILLCOLOR, "#9CC1A5", new Object[]{node});
 				component.getGraph().setCellStyles(mxConstants.STYLE_STROKECOLOR, "#9CC1A5", new Object[]{node});
 			}

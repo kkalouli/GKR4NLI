@@ -203,7 +203,7 @@ public class InferenceChecker {
 		//}
 		if (!rootNodeMatches.isEmpty()) { 
 			try {
-				extractItemsSetsForAssociationRuleMining(rootNodeMatches);
+				//extractItemsSetsForAssociationRuleMining(rootNodeMatches);
 				extractFeaturesForInferenceDecision(rootNodeMatches);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -815,9 +815,8 @@ public class InferenceChecker {
 			double cost = rootNodeMatches.get(key).getFeatureScore("cost");
 			if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.VERIDICAL) {
 				// it is not a contradiction if there is no disjoint relation and the score is below maxCost*2
-				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost)){
+				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost))
 					disjoint = false;
-				}
 				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
 				if ( (matchSpecificity == Specificity.EQUALS && costInContraBounds(cost) )
 						|| ( matchSpecificity == Specificity.EQUALS && costInNeutralBounds(cost) )){
@@ -826,7 +825,7 @@ public class InferenceChecker {
 				}
 				// if there is subclass relation but the score is higher than maxCost*2, then there is no entail but contradiction
 				if ( (matchSpecificity == Specificity.SUBCLASS && costInContraBounds(cost) )
-						|| ( matchSpecificity == Specificity.SUBCLASS && costInNeutralBounds(cost) ) ){
+						|| ( matchSpecificity == Specificity.SUBCLASS)){ // && costInNeutralBounds(cost) ) ){
 					entail = false;
 					this.ruleUsed = 10;
 				}

@@ -544,15 +544,15 @@ public class InferenceComputer {
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli, kb);
 		initialTermMatcher.process();
 		//gnli.display();
-		//gnli.matchGraph.display();
+		gnli.matchGraph.display();
 		//graphT.displayLex();
 		//graphH.displayLex();
 		//gnli.getHypothesisGraph().displayContexts();
 		//gnli.getHypothesisGraph().displayDependencies();
 		//gnli.getTextGraph().displayDependencies();
 		//gnli.getHypothesisGraph().displayRoles();
-		//gnli.getHypothesisGraph().displayRolesAndCtxs();
-		//gnli.getTextGraph().displayRolesAndCtxs();
+		gnli.getHypothesisGraph().displayRolesAndCtxs();
+		gnli.getTextGraph().displayRolesAndCtxs();
 		//gnli.getHypothesisGraph().displayDependencies();
 		//gnli.getTextGraph().displayRoles();
 		/*gnli.getTextGraph().displayContexts();
@@ -571,7 +571,7 @@ public class InferenceComputer {
 		PathScorer scorer = new PathScorer(gnli,100f, 200f, learning, this);
 		final SpecificityUpdater su = new SpecificityUpdater(gnli,scorer, labelToLearn);
 		su.updateSpecifity();	
-		//gnli.matchGraph.display();
+		gnli.matchGraph.display();
 		// Now look at the updated matches and context veridicalities to
 		// determine entailment relations
 		final InferenceChecker infCh = new InferenceChecker(gnli, this, su, labelToLearn, pairID);
@@ -784,10 +784,16 @@ public class InferenceComputer {
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
 		//String file = "/Users/kkalouli/Documents/QuestionsAtTheInterfaces/P8/heidelberg_collaboration/test_heidel.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
-		comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//String file = "/home/kkalouli/Documents/diss/experiments/still_to_be_checked_only_NEUTRAL_low_jac_similarity_both_dirs.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
 		//comp.computeInferenceOfPair(premise, hypothesis, "E", kb);
+		//comp.computeInferenceOfTestsuite(file, semGraph, kb);
+		//String file = "/home/kkalouli/Desktop/not_run_through_gnli_yet_both_dirs.txt";
+		//String file = "/Users/kkalouli/Desktop/test.txt";
+		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK reannotation/Larry_and_Hai_collaboration/to_check.txt";
+		//String file = "/home/kkalouli/Documents/diss/experiments/still_to_be_checked_only_NEUTRAL_low_jac_similarity_both_dirs.txt";
+		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
+		comp.computeInferenceOfPair(premise, hypothesis, "E", kb);
 		//comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//long endTime = System.currentTimeMillis();
 		//System.out.println("The whole thing took " + (endTime - startTime) + " milliseconds");

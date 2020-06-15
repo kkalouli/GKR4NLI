@@ -519,6 +519,10 @@ public class DepGraphToSemanticGraph implements Serializable {
 					PropertyEdge specifierEdge = new PropertyEdge(GraphLabels.SPECIFIER, new PropertyEdgeContent());
 					graph.addPropertyEdge(specifierEdge, node, new ValueNode(specifier, new ValueNodeContent()));
 				}
+				else if (specifier.equals("")){
+					PropertyEdge specifierEdge = new PropertyEdge(GraphLabels.SPECIFIER, new PropertyEdgeContent());
+					graph.addPropertyEdge(specifierEdge, node, new ValueNode("bare", new ValueNodeContent()));
+				}
 				// adding the property edge part_of (e.g. five of seven, five is the specifier and seven the part_of)
 				if (!part_of.equals("")){
 					PropertyEdge partOfEdge = new PropertyEdge(GraphLabels.PART_OF, new PropertyEdgeContent());
@@ -705,16 +709,29 @@ public class DepGraphToSemanticGraph implements Serializable {
 				if (ctxNode.getLabel().contains("person")){
 					sense = "00007846";
 					concept = "Human=";
+					try {
+						retriever.getLexRelationsOfSynset("person", "00007846", "NN");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
-				else {
+				else if (ctxNode.getLabel().contains("thing")){
 					sense = "04424218";
 					concept = "Artifact=";
-				}
-				try {
-					retriever.getLexRelationsOfSynset(((SkolemNode) ctxNode).getStem(), sense, ((SkolemNode) ctxNode).getPartOfSpeech());
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					try {
+						retriever.getLexRelationsOfSynset("thing", "04424218", "NN");
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				} else {
+					try {
+						retriever.getLexRelationsOfSynset(((SkolemNode) ctxNode).getStem(), sense, ((SkolemNode) ctxNode).getPartOfSpeech());
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 				}
 				// create new sense Content
 				SenseNodeContent senseContent = new SenseNodeContent(sense);
@@ -805,7 +822,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 					if (n instanceof SkolemNode){
 						if (((SkolemNodeContent) n.getContent()).getPosition() == k.getTarget()){
 							// in the first pass of this chain, set the startNode, in all other ones set the finishNode (the start Node remains the same)
-							if (startNode == null && !((SkolemNodeContent) n.getContent()).getPartOfSpeech().contains("PRP")){
+							if (startNode == null){ //) && !((SkolemNodeContent) n.getContent()).getPartOfSpeech().contains("PRP")){
 								startNode = n;
 							} else {
 								finishNode = n;
@@ -874,7 +891,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		String strLine;
 		ArrayList<sem.graph.SemanticGraph> semanticGraphs = new ArrayList<sem.graph.SemanticGraph>();
 		while ((strLine = br.readLine()) != null) {
-			if (strLine.startsWith("####")){
+			if (strLine.startsWith("#")){
 				writer.write(strLine+"\n\n");
 				writer.flush();
 				continue;
@@ -997,6 +1014,8 @@ public class DepGraphToSemanticGraph implements Serializable {
 		graph.displayLex();	
 		graph.displayRolesAndCtxs();
 		graph.displayCoref();
+		graph.displayRolesAndLinks();
+		graph.displayRolesCtxsAndProperties();
 		/*String ctxs = graph.getContextGraph().getMxGraph();
 		String roles = graph.getRoleGraph().getMxGraph();
 		String deps = graph.getDependencyGraph().getMxGraph();
@@ -1049,7 +1068,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
+		// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
 		return semanticGraphs;
@@ -1060,9 +1079,9 @@ public class DepGraphToSemanticGraph implements Serializable {
 	public static void main(String args[]) throws IOException {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
-		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/expriment_InferSent/SICK_unique_sent_test_InferSent_onlySkolems.txt");
+		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/HP_testsuite/HP_testsuite_shortened_active.txt");
 		//semConverter.processTestsuite("/home/kkalouli/Documents/diss/experiments/UD_corpus_cleaned.txt");
-		String sentence = "John believed that Mary was sick.";//"A family is watching a little boy who is hitting a baseball.";
+		String sentence = "Few people are listeners."; //A family is watching a little boy who is hitting a baseball.";
 		String context = "The kid faked the illness.";
 		semConverter.processSentence(sentence, sentence+" "+context);
 	}
