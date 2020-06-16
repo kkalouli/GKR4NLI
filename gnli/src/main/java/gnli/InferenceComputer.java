@@ -79,11 +79,11 @@ public class InferenceComputer {
 			e.printStackTrace();
 		}
 		// initialize the SUMO reader
-        this.sumoKB = props.getProperty("sumo_kb");
-		KBmanager.getMgr().initializeOnce(sumoKB);
+        //this.sumoKB = props.getProperty("sumo_kb");
+		//KBmanager.getMgr().initializeOnce(sumoKB);
 		//KBmanager.getMgr().initializeOnce("/Users/caldadmin/Documents/.sigmakee/KBs");
 		//KBmanager.getMgr().initializeOnce("/home/kkalouli/Documents/.sigmakee/KBs");
-		this.kb = KBmanager.getMgr().getKB("SUMO");
+		//this.kb = KBmanager.getMgr().getKB("SUMO");
 		//serializeKb();
 		String wnInstall = props.getProperty("wn_location");
 		String sumoInstall = props.getProperty("sumo_location");
@@ -544,15 +544,18 @@ public class InferenceComputer {
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli, kb);
 		initialTermMatcher.process();
 		//gnli.display();
-		gnli.matchGraph.display();
+		//gnli.matchGraph.display();
 		//graphT.displayLex();
 		//graphH.displayLex();
 		//gnli.getHypothesisGraph().displayContexts();
 		//gnli.getHypothesisGraph().displayDependencies();
 		//gnli.getTextGraph().displayDependencies();
 		//gnli.getHypothesisGraph().displayRoles();
-		gnli.getHypothesisGraph().displayRolesAndCtxs();
-		gnli.getTextGraph().displayRolesAndCtxs();
+		//gnli.getHypothesisGraph().displayRolesAndCtxs();
+		//gnli.getTextGraph().displayRolesAndCtxs();
+		//gnli.getHypothesisGraph().displayRolesCtxsAndProperties();
+		//gnli.getTextGraph().displayRolesCtxsAndProperties();
+		//gnli.getTextGraph().displayCoref();
 		//gnli.getHypothesisGraph().displayDependencies();
 		//gnli.getTextGraph().displayRoles();
 		/*gnli.getTextGraph().displayContexts();
@@ -571,11 +574,12 @@ public class InferenceComputer {
 		PathScorer scorer = new PathScorer(gnli,100f, 200f, learning, this);
 		final SpecificityUpdater su = new SpecificityUpdater(gnli,scorer, labelToLearn);
 		su.updateSpecifity();	
-		gnli.matchGraph.display();
+		//gnli.matchGraph.display();
 		// Now look at the updated matches and context veridicalities to
 		// determine entailment relations
 		final InferenceChecker infCh = new InferenceChecker(gnli, this, su, labelToLearn, pairID);
 		InferenceDecision decision =  infCh.getInferenceDecision();
+		//gnli.display();
 		return decision;
 	}
 	
@@ -771,8 +775,8 @@ public class InferenceComputer {
 		//long startTime = System.currentTimeMillis();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "The dog is eating a bone.";	
-		String hypothesis = "The dog is not eating a large bone.";
+		String premise = "Some great tenors are Swedish.";	
+		String hypothesis = "There are great tenors who are Swedish.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_a_and_Cb_and_Eb.txt";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
@@ -780,7 +784,7 @@ public class InferenceComputer {
 		//String file = "/home/kkalouli/Documents/diss/test_heidel.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/to_check.txt";
 		//String file = "/home/kkalouli/Desktop/test.txt";
-		String file = "/home/kkalouli/Documents/diss/experiments/SICK_unique_sent_sanity_check.txt";
+		String file = "/Users/kkalouli/Documents/Corpora/FraCaS/single_premise/fracas_sent_only_single_premise.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
 		//String file = "/Users/kkalouli/Documents/QuestionsAtTheInterfaces/P8/heidelberg_collaboration/test_heidel.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
@@ -790,8 +794,8 @@ public class InferenceComputer {
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK reannotation/Larry_and_Hai_collaboration/to_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/still_to_be_checked_only_NEUTRAL_low_jac_similarity_both_dirs.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
-		comp.computeInferenceOfPair(premise, hypothesis, "E", kb);
-		//comp.computeInferenceOfTestsuite(file, semGraph, kb);
+		//comp.computeInferenceOfPair(premise, hypothesis, "E", kb);
+		comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//long endTime = System.currentTimeMillis();
 		//System.out.println("The whole thing took " + (endTime - startTime) + " milliseconds");
 		//comp.investigateSerializedDecisions(file);
