@@ -74,6 +74,7 @@ public class SpecificityUpdater {
 			specifiers.add("several");
 			specifiers.add("all");
 			specifiers.add("every");
+			specifiers.add("bare");
 		}
 
 		
@@ -122,6 +123,7 @@ public class SpecificityUpdater {
 		
 
 		private boolean updateMatch(MatchEdge match) {
+			//gnliGraph.matchGraph.display();
 			boolean updateComplete = false;
 			HypoTextMatch hypoTextMatch = new HypoTextMatch(match);
 			if (doesNotNeedUpdating(hypoTextMatch)){
@@ -220,6 +222,7 @@ public class SpecificityUpdater {
 				modifiers = hypoTextMatch.textModifiers;
 			boolean complete = true;
 			for (SkolemNode restr : modifiers){
+				//gnliGraph.matchGraph.display();
 				// make sure no specifiers are considered as modifiers
 				if (specifiers.contains(restr.getStem()))
 						continue;

@@ -740,7 +740,7 @@ public class InferenceChecker {
 				
 				if (tCtx == Polarity.AVERIDICAL) {
 					tAveridical = true;
-					System.out.println("test1");
+					//System.out.println("test1");
 				} 
 				if (tCtx == Polarity.ANTIVERIDICAL) {
 					tAntiveridical = true;
@@ -825,7 +825,7 @@ public class InferenceChecker {
 				}
 				// if there is subclass relation but the score is higher than maxCost*2, then there is no entail but contradiction
 				if ( (matchSpecificity == Specificity.SUBCLASS && costInContraBounds(cost) )
-						|| ( matchSpecificity == Specificity.SUBCLASS)){ // && costInNeutralBounds(cost) ) ){
+						|| ( matchSpecificity == Specificity.SUBCLASS && costInNeutralBounds(cost)) ) {
 					entail = false;
 					this.ruleUsed = 10;
 				}
