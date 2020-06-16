@@ -785,9 +785,14 @@ public class InferenceComputer {
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/to_check.txt";
 		//String file = "/home/kkalouli/Desktop/test.txt";
 		String file = "/Users/kkalouli/Documents/Corpora/FraCaS/single_premise/fracas_sent_only_single_premise.txt";
+		//String file = "/home/kkalouli/Desktop/fracas_sent_only_single_premise.txt";
+		//String file = "/home/kkalouli/Documents/diss/experiments/SICK_unique_sent_sanity_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
 		//String file = "/Users/kkalouli/Documents/QuestionsAtTheInterfaces/P8/heidelberg_collaboration/test_heidel.txt";
 		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
+		//String file = "/home/kkalouli/Documents/diss/experiments/still_to_be_checked_only_NEUTRAL_low_jac_similarity_both_dirs.txt";
+		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
+		//comp.computeInferenceOfPair(premise, hypothesis, "E", kb);
 		//comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//String file = "/home/kkalouli/Desktop/not_run_through_gnli_yet_both_dirs.txt";
 		//String file = "/Users/kkalouli/Desktop/test.txt";
