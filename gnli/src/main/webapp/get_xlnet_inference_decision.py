@@ -14,8 +14,8 @@ from keras.preprocessing.sequence import pad_sequences
 from sklearn.model_selection import train_test_split
 
 
-from pytorch_transformers import XLNetModel, XLNetTokenizer, XLNetForSequenceClassification
-from pytorch_transformers import AdamW
+from transformers import XLNetModel, XLNetTokenizer, XLNetForSequenceClassification
+from transformers import AdamW
 
 from tqdm import tqdm, trange
 import pandas as pd

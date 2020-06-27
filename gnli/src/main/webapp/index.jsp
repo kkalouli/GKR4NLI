@@ -107,7 +107,7 @@ At the moment, we are using
     <svg style="width: 100%; height: 100%;"></svg>
 </div>
 
-<!-- 
+
 <div id="additionalInfo">
 	<h3 class="tab" id="publications">Publications</h3>
     	<ul>
@@ -129,9 +129,9 @@ At the moment, we are using
     			Language and Computer Science @FLoC 2018
     	</ul>
     	
-  -->
+ 
 
-    <h3 class="tab" id="contact">Contact</h3>
+     <h3 class="tab" id="contact">Contact</h3>
     	<ul>
     		<li>aikaterini (dash) lida (dot) kalouli (at) uni (dash) konstanz(dot) de
     		<li>dick (dot) crouch (at) gmail (dot)com
@@ -140,7 +140,7 @@ At the moment, we are using
     		<li>mennatallah (dot) el-assady (at) uni (dash) konstanz(dot) de
     	</ul>
     	<br>
-    	<br>
+    	<br> 
 </div>
 </div>
 

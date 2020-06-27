@@ -11,6 +11,30 @@ var featureWidth = 30;
 var featureSize = 10;
 var featureBoundingBox = 50;
 
+// Define the div for the tooltip
+var div = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+var mapWithExplanations = {
+    "FEATURE RECTANGLE EXPLANATION": "PUT THE EXPLANATION HERE", // those are the rectangles with the feature circles on top
+    "CLASS RECTANGLE EXPLANATION": "PUT THE EXPLANATION HERE", // those are the rectangles with the three circles aligned vertically
+    "CLASS EXPLANATION": "PUT THE EXPLANATION HERE", //those are the class labels (buttons)
+    "VERIDICAL Context": "PUT THE EXPLANATION HERE",
+    "ANTIVERIDICAL Context": "PUT THE EXPLANATION HERE",
+    "AVERIDICAL Context": "PUT THE EXPLANATION HERE",
+    "EQUALS Match": "PUT THE EXPLANATION HERE",
+    "SUPERCLASS Match": "PUT THE EXPLANATION HERE",
+    "SUBCLASS Match": "PUT THE EXPLANATION HERE",
+    "DISJOINT Match": "PUT THE EXPLANATION HERE",
+    "CONTRADICTION Flag": "PUT THE EXPLANATION HERE",
+    "Negation": "PUT THE EXPLANATION HERE",
+    "Lexical Overlap": "PUT THE EXPLANATION HERE",
+    "Length Mismatch": "PUT THE EXPLANATION HERE",
+    "Word Heuristics Entailment": "PUT THE EXPLANATION HERE",
+    "Word Heuristics Contradiction": "PUT THE EXPLANATION HERE",
+    "Word Heuristics Neutral": "PUT THE EXPLANATION HERE"};
+
 function getData() {
     d3.select("#visualization").select('svg').selectAll("*").remove();
     showClasses();
@@ -46,8 +70,24 @@ function showVis() {
         return color;
     });
 
-    svg.append("rect").attr("width", featureBoundingBox * 8 - 10).attr("height", featureBoundingBox + 10).attr("x", 250).attr("y", featuresY + 35).style("fill", "white").style("stroke", "black").attr("rx", 3);
-    svg.append("rect").attr("width", featureBoundingBox * 6 - 10).attr("height", featureBoundingBox + 10).attr("x", 650).attr("y", featuresY + 35).style("fill", "white").style("stroke", "black").attr("rx", 3);
+    svg.append("rect").attr("width", featureBoundingBox * 8 - 10).attr("height", featureBoundingBox + 10).attr("x", 250).attr("y", featuresY + 35).style("fill", "white").style("stroke", "black").attr("rx", 3)
+        .on("mouseover", function(d) {
+            div.style("opacity", .9);
+            div.html(mapWithExplanations["FEATURE RECTANGLE EXPLANATION"])
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY - 28) + "px");
+        })
+        .on("mouseout", function(d) {
+            div.style("opacity", 0);
+    svg.append("rect").attr("width", featureBoundingBox * 6 - 10).attr("height", featureBoundingBox + 10).attr("x", 650).attr("y", featuresY + 35).style("fill", "white").style("stroke", "black").attr("rx", 3)
+        .on("mouseover", function(d) {
+            div.style("opacity", .9);
+            div.html(mapWithExplanations["FEATURE RECTANGLE EXPLANATION"])
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY - 28) + "px");
+        })
+        .on("mouseout", function(d) {
+            div.style("opacity", 0);
 
     // show features
     var g = svg.selectAll(".feature")
@@ -57,7 +97,15 @@ function showVis() {
         .attr("transform", function (d, i) {
             showAttributes(d3.select(this), d.attributes);
             return "translate(" + (300 + i * featureBoundingBox) + "," + featureBoundingBox + ")"
-        });
+        })
+        .on("mouseover", function(d) {
+            div.style("opacity", .9);
+            div.html(mapWithExplanations[d.name])
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY - 28) + "px");
+        })
+        .on("mouseout", function(d) {
+            div.style("opacity", 0);
 
     // show feature names
     g.append("text")
@@ -106,7 +154,14 @@ function showClasses() {
           "click": function(d) {
         	  svg.append("text").text("Thanks for your feedback!").attr("x", -30).attr("y", labelX+80).style("font-size", 28).style('fill', '#9bd3cb');
           }
-        });
+        }).on("mouseover", function(d) {
+        div.style("opacity", .9);
+        div.html(mapWithExplanations["CLASS EXPLANATION"])
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY - 28) + "px");
+    })
+        .on("mouseout", function(d) {
+            div.style("opacity", 0);
 
     g.append("line").attr("x1", -25).attr("x2", 0).attr("y1", 15).attr("y2", 15).style("stroke", function (d) {
         var color = "none";
@@ -183,8 +238,24 @@ function showClassificationResults() {
     
     
 
-    svg.append("rect").attr("width", 50).attr("height", 140).attr("x", -105).attr("y", 85).style("fill", "none").style("stroke", "black").attr("rx", 3);
-    svg.append("rect").attr("width", 50).attr("height", 140).attr("x", 145).attr("y", 85).style("fill", "none").style("stroke", "black").attr("rx", 3);
+    svg.append("rect").attr("width", 50).attr("height", 140).attr("x", -105).attr("y", 85).style("fill", "white").style("fill-opacity", 0).style("stroke", "black").attr("rx", 3)
+        .on("mouseover", function(d) {
+            div.style("opacity", .9);
+            div.html(mapWithExplanations["CLASS RECTANGLE EXPLANATION"])
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY - 28) + "px");
+        })
+        .on("mouseout", function(d) {
+            div.style("opacity", 0);
+    svg.append("rect").attr("width", 50).attr("height", 140).attr("x", 145).attr("y", 85).style("fill", "white").style("fill-opacity", 0).style("stroke", "black").attr("rx", 3)
+        .on("mouseover", function(d) {
+            div.style("opacity", .9);
+            div.html(mapWithExplanations["CLASS RECTANGLE EXPLANATION"])
+                .style("left", (d3.event.pageX) + "px")
+                .style("top", (d3.event.pageY - 28) + "px");
+        })
+        .on("mouseout", function(d) {
+            div.style("opacity", 0);
 }
 
 function showAttributes(obj, d) {

@@ -329,6 +329,8 @@ public class RolesMapper implements Serializable {
 			ArrayList<SemanticNode<?>> combNode = new ArrayList<SemanticNode<?>>();
 			combNode.add(begin); 
 			combNode.add(end);
+			if (specifiers.contains(finish.getLabel().substring(0,finish.getLabel().indexOf("_"))))
+				continue;
 			// only integrate the basic roles if the list does not contain the current list and the begin node is not the same as the end node
 			if (!begin.equals(end) && !addedComb.contains(combNode)){
 				integrateBasicRoles(begin,end,edge.getLabel());
