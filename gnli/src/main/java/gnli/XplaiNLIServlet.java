@@ -831,7 +831,7 @@ public class XplaiNLIServlet extends HttpServlet {
 	    		jsonFinal.put("match", "R");
 	    	
 	    	finalJson = jsonFinal.toString();
-	    	System.out.println(jsonFinal.toString());
+	    	//System.out.println(jsonFinal.toString());
 
 	    }
 

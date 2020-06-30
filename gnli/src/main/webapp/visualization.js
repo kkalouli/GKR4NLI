@@ -17,23 +17,23 @@ var div = d3.select("body").append("div")
     .style("opacity", 0);
 
 var mapWithExplanations = {
-    "FEATURE RECTANGLE EXPLANATION": "PUT THE EXPLANATION HERE", // those are the rectangles with the feature circles on top
-    "CLASS RECTANGLE EXPLANATION": "PUT THE EXPLANATION HERE", // those are the rectangles with the three circles aligned vertically
-    "CLASS EXPLANATION": "PUT THE EXPLANATION HERE", //those are the class labels (buttons)
-    "VERIDICAL Context": "PUT THE EXPLANATION HERE",
-    "ANTIVERIDICAL Context": "PUT THE EXPLANATION HERE",
-    "AVERIDICAL Context": "PUT THE EXPLANATION HERE",
-    "EQUALS Match": "PUT THE EXPLANATION HERE",
-    "SUPERCLASS Match": "PUT THE EXPLANATION HERE",
-    "SUBCLASS Match": "PUT THE EXPLANATION HERE",
-    "DISJOINT Match": "PUT THE EXPLANATION HERE",
-    "CONTRADICTION Flag": "PUT THE EXPLANATION HERE",
-    "Negation": "PUT THE EXPLANATION HERE",
-    "Lexical Overlap": "PUT THE EXPLANATION HERE",
-    "Length Mismatch": "PUT THE EXPLANATION HERE",
-    "Word Heuristics Entailment": "PUT THE EXPLANATION HERE",
-    "Word Heuristics Contradiction": "PUT THE EXPLANATION HERE",
-    "Word Heuristics Neutral": "PUT THE EXPLANATION HERE"};
+    "FEATURE RECTANGLE EXPLANATION": "The explainable features used by each of the components: on the left side are the features of the symbolic component and on the right side, the possible features of the deep-learning component.  The features that are relevant for this pair are colored and contain a checkmark, if the feature's value is true or do not contain  a checkmark, if the value is false. The color of the features encodes the inference relation that each approach predicted: green is for E, red for C and grey for N. DL features with lower opacity mean that these features should --according to the litearure -- lead to a different inference label than the one actually predicted by the model. Symbolic features marked with an 'H' were used for the decision of the hybrid engine (the darker the grey, the more weight this feature had for the decision)", // those are the rectangles with the feature circles on top
+    "CLASS RECTANGLE EXPLANATION": "The colored features above are linked here with the corresponding inference label which is again encoded by color.", // those are the rectangles with the three circles aligned vertically
+    "CLASS EXPLANATION": "The bold label is the final label chosen by the hybrid system. All three labels are clickable buttons to provide your annotation of the pair. Thanks for the feedback!", //those are the class labels (buttons)
+    "VERIDICAL Context": "Some concept of the GKR concept graph of the sentence is instantiated in the world of the speaker, i.e., the concept exists in this world (e.g., The dog is eating: eating takes places in this world).",
+    "ANTIVERIDICAL Context": "Some concept of the GKR concept graph of the sentence is not instantiated in the top, actual world, i.e., the concept does not exist in this world (e.g., The dog is not eating: eating does not take place in this world).  ",
+    "AVERIDICAL Context": "Some concept of the GKR concept graph of the sentence might be instantiated in the top, actual world, i.e., the concept might exist in this world (e.g., The dog might be eating: eating might take place or not in this world). ",
+    "EQUALS Match": "At least one of the matched terms has the specificity 'equals'.",
+    "SUPERCLASS Match": "At least one of the matched terms has the specificity 'superclass'.",
+    "SUBCLASS Match": "At least one of the matched terms has the specificity 'subclass'.",
+    "DISJOINT Match": "At least one of the matched terms has the specificity 'disjoint'.",
+    "CONTRADICTION Flag": "The semantic roles of the matched terms are mostly found in contradictions.",
+    "Negation": "The sentence contains a negation of some sort (for now: not, no, never, nothing, nobody, n't)",
+    "Lexical Overlap": "P and H contain the same words (max. difference of 1 word).",
+    "Length Mismatch": "H is at least three words longer than P.",
+    "Word Heuristics Entailment": "The pair contains at least one word associated with entailments according to the literature (for now: outdoors, instrument, outside, animal, something, sometimes, some, various). Feel free to test your own heuristics in the fields provided at the top of this demo. ",
+    "Word Heuristics Contradiction": "The pair contains at least one word associated with contradictions according to the literature (for now: sleeping, tv, cat, any). Feel free to test your own heuristics in the fields provided at the top of this demo.  ",
+    "Word Heuristics Neutral": "The pair contains at least one word associated with neutral  pairs according to the literature (for now: tall, first, competition, sad, favorite, also, because, popular, many, most). Feel free to test your own heuristics in the fields provided at the top of this demo. "};
 
 function getData() {
     d3.select("#visualization").select('svg').selectAll("*").remove();
@@ -79,6 +79,7 @@ function showVis() {
         })
         .on("mouseout", function(d) {
             div.style("opacity", 0);
+        })
     svg.append("rect").attr("width", featureBoundingBox * 6 - 10).attr("height", featureBoundingBox + 10).attr("x", 650).attr("y", featuresY + 35).style("fill", "white").style("stroke", "black").attr("rx", 3)
         .on("mouseover", function(d) {
             div.style("opacity", .9);
@@ -88,6 +89,7 @@ function showVis() {
         })
         .on("mouseout", function(d) {
             div.style("opacity", 0);
+        })
 
     // show features
     var g = svg.selectAll(".feature")
@@ -106,6 +108,7 @@ function showVis() {
         })
         .on("mouseout", function(d) {
             div.style("opacity", 0);
+        })
 
     // show feature names
     g.append("text")
@@ -162,6 +165,7 @@ function showClasses() {
     })
         .on("mouseout", function(d) {
             div.style("opacity", 0);
+        })
 
     g.append("line").attr("x1", -25).attr("x2", 0).attr("y1", 15).attr("y2", 15).style("stroke", function (d) {
         var color = "none";
@@ -247,6 +251,7 @@ function showClassificationResults() {
         })
         .on("mouseout", function(d) {
             div.style("opacity", 0);
+        })
     svg.append("rect").attr("width", 50).attr("height", 140).attr("x", 145).attr("y", 85).style("fill", "white").style("fill-opacity", 0).style("stroke", "black").attr("rx", 3)
         .on("mouseover", function(d) {
             div.style("opacity", .9);
@@ -256,6 +261,7 @@ function showClassificationResults() {
         })
         .on("mouseout", function(d) {
             div.style("opacity", 0);
+        })
 }
 
 function showAttributes(obj, d) {

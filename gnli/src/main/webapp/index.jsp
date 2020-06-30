@@ -68,7 +68,7 @@ z-index: 10000;
 <br>
 <p><b>Specify heuristic keywords (optional): </b> <span class="glyphicon glyphicon-info-sign" title="You can define your own heuristics here. Input the words in the corresponding field, depending on whether they should appear in the premise or hypothesis and depending on the label that they are expected to deliver (E, C, N). You can input more than one words separated by semicolon. 
 At the moment, we are using 
-- for C: (N/n)ot, (n/N)ever, (N/n)obody, (N/n)othing, n't, (n/N)o, sleeping, tv, car, any
+- for C: (N/n)ot, (n/N)ever, (N/n)obody, (N/n)othing, n't, (n/N)o, sleeping, tv, cat, any
 - for E: outdoors, instrument, outside, animal, (S/s)ome, (S/s)omething, (S/s)ometimes, (V/v)arious
 - for N: tall, first, competition, sad, favorite, also, because, popular, (M/m)any, (M/m)ost"></span><br>
     <form id='submitForm' action='xplainli' method='POST' target='_self' class='tab'>
@@ -103,10 +103,13 @@ At the moment, we are using
 <div id="hypothesisSent" style="display: none;">${hypothesis}</div> 
 <div id="visualization" >
 	<h3 class="tab">Explanation</h3> 
-	<p class="tab"> After exploring the visualization, click on the inference label that you think is correct for this pair. Thanks for your feedback!</p><br>
+	<p class="tab"> After exploring the visualization, click on the inference label that you think is correct for this pair. Thanks for your feedback!</p>
+	<p class="tab"> WARNING: The visualization has only been tested on Safari, Firefox and Chrome. </p> <br>
     <svg style="width: 100%; height: 100%;"></svg>
 </div>
 
+
+<br><br><br>
 
 <div id="additionalInfo">
 	<h3 class="tab" id="publications">Publications</h3>
@@ -129,7 +132,7 @@ At the moment, we are using
     			Language and Computer Science @FLoC 2018
     	</ul>
     	
- 
+  
 
      <h3 class="tab" id="contact">Contact</h3>
     	<ul>
@@ -140,7 +143,7 @@ At the moment, we are using
     		<li>mennatallah (dot) el-assady (at) uni (dash) konstanz(dot) de
     	</ul>
     	<br>
-    	<br> 
+    	<br>
 </div>
 </div>
 
