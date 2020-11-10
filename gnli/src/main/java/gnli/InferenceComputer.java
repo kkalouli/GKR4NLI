@@ -79,11 +79,11 @@ public class InferenceComputer {
 			e.printStackTrace();
 		}
 		// initialize the SUMO reader
-        //this.sumoKB = props.getProperty("sumo_kb");
-		//KBmanager.getMgr().initializeOnce(sumoKB);
+        this.sumoKB = props.getProperty("sumo_kb");
+		KBmanager.getMgr().initializeOnce(sumoKB);
 		//KBmanager.getMgr().initializeOnce("/Users/caldadmin/Documents/.sigmakee/KBs");
 		//KBmanager.getMgr().initializeOnce("/home/kkalouli/Documents/.sigmakee/KBs");
-		//this.kb = KBmanager.getMgr().getKB("SUMO");
+		this.kb = KBmanager.getMgr().getKB("SUMO");
 		//serializeKb();
 		String wnInstall = props.getProperty("wn_location");
 		String sumoInstall = props.getProperty("sumo_location");
@@ -775,8 +775,8 @@ public class InferenceComputer {
 		//long startTime = System.currentTimeMillis();
 		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		// TODO: change label for embed match
-		String premise = "Some great tenors are Swedish.";	
-		String hypothesis = "There are great tenors who are Swedish.";
+		String premise = "The writer is less pleasant than the girl.";	
+		String hypothesis = "The girl is not less pleasant than the writer.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_a_and_Cb_and_Eb.txt";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
@@ -784,8 +784,8 @@ public class InferenceComputer {
 		//String file = "/home/kkalouli/Documents/diss/test_heidel.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/to_check.txt";
 		//String file = "/home/kkalouli/Desktop/test.txt";
-		String file = "/Users/kkalouli/Documents/Corpora/FraCaS/single_premise/fracas_sent_only_single_premise.txt";
-		//String file = "/home/kkalouli/Desktop/fracas_sent_only_single_premise.txt";
+		//String file = "/Users/kkalouli/Documents/Corpora/FraCaS/single_premise/fracas_sent_only_single_premise.txt";
+		String file = "/home/kkalouli/Desktop/SICK_trial_and_train_both_dirs_corrected_only_a_and_Cb_and_Eb.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/SICK_unique_sent_sanity_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
 		//String file = "/Users/kkalouli/Documents/QuestionsAtTheInterfaces/P8/heidelberg_collaboration/test_heidel.txt";
