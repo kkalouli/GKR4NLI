@@ -442,8 +442,8 @@ public class SemJGraphT implements  SemGraph, Serializable{
 				component.getGraph().setCellStyles(mxConstants.STYLE_FILLCOLOR, "#B2B2B2", new Object[]{node});
 				component.getGraph().setCellStyles(mxConstants.STYLE_STROKECOLOR, "#B2B2B2", new Object[]{node});
 			} else if (((mxCell) node).getValue() instanceof ValueNode){
-				component.getGraph().setCellStyles(mxConstants.STYLE_FILLCOLOR, "#B2B2FF", new Object[]{node});
-				component.getGraph().setCellStyles(mxConstants.STYLE_STROKECOLOR, "#B2B2FF", new Object[]{node});
+				component.getGraph().setCellStyles(mxConstants.STYLE_FILLCOLOR, "#32CD32", new Object[]{node});
+				component.getGraph().setCellStyles(mxConstants.STYLE_STROKECOLOR, "#32CD32", new Object[]{node}); // B2B2FF
 			} else if (((mxCell) node).getValue() instanceof TermNode){
 				component.getGraph().setCellStyles(mxConstants.STYLE_FILLCOLOR, "#FFA500", new Object[]{node});
 				component.getGraph().setCellStyles(mxConstants.STYLE_STROKECOLOR, "#FFA500", new Object[]{node});

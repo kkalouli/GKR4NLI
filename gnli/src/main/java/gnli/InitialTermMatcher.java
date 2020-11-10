@@ -188,7 +188,7 @@ public class InitialTermMatcher {
 					}
 				}
 			}
-		}*/
+		}
 		
 		updatePendingMatches();
 		/*for (CheckedTermNode hTerm : hypothesisTerms) {
@@ -636,7 +636,7 @@ public class InitialTermMatcher {
 		for (MatchEdge matchEdge : gnliGraph.getMatches()){
 			SemanticNode<?> hTerm = gnliGraph.getStartNode(matchEdge);
 			SemanticNode<?> tTerm = gnliGraph.getFinishNode(matchEdge);
-			for (SemanticEdge linkEdge : gnliGraph.getHypothesisGraph().getLinks(hTerm)){
+		for (SemanticEdge linkEdge : gnliGraph.getHypothesisGraph().getLinks(hTerm)){
 				SemanticNode<?> finish = gnliGraph.getHypothesisGraph().getFinishNode(linkEdge);
 				MatchEdge corefMatch = new MatchEdge(matchEdge);
 				corefMatch.setLabel("coref+" + matchEdge.getLabel());

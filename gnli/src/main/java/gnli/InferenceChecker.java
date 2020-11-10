@@ -121,7 +121,7 @@ public class InferenceChecker {
 			// get all separate root nodes		
 			if (gnliGraph.getHypothesisGraph().getRoleGraph().getInEdges(hTerm).isEmpty()){
 				for (SemanticNode<?> inReach : gnliGraph.getTextGraph().getRoleGraph().getInReach(tTerm)){
-					if (inReach.getLabel().contains("be"))
+					if (inReach.getLabel().startsWith("be_"))
 						expletive = true;
 				}
 				//gnliGraph.getHypothesisGraph().displayRoles();

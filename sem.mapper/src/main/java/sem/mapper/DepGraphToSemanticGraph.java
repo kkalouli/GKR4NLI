@@ -458,8 +458,13 @@ public class DepGraphToSemanticGraph implements Serializable {
 				// going through the out edges of this node to see if there are any specifiers
 				for (SemanticEdge edge: graph.getDependencyGraph().getOutEdges(node)){
 					// depending on the case, define the specifier
-					String depOfDependent = edge.getLabel();			
-					String determiner = ((SkolemNodeContent) graph.getFinishNode(edge).getContent()).getStem(); //edge.getDestVertexId().substring(0,edge.getDestVertexId().indexOf("_"));
+					String depOfDependent = edge.getLabel();
+					String determiner = "";
+					// need to check whether the finish node is not empty: in the case of negation or modals, the finish node will
+					// be empty because it is not added as a normal concept node. But in these cases, the node also does not need to
+					// be a determiner
+					if (graph.getFinishNode(edge) != null)
+						determiner = ((SkolemNodeContent) graph.getFinishNode(edge).getContent()).getStem(); //edge.getDestVertexId().substring(0,edge.getDestVertexId().indexOf("_"));
 					if (depOfDependent.equals("det") && existsQMod == false) {					
 						specifier = determiner; 
 						// only if there is no quantification with of, assign this determiner as the cardinatlity
@@ -1081,7 +1086,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
 		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/HP_testsuite/HP_testsuite_shortened_active.txt");
 		//semConverter.processTestsuite("/home/kkalouli/Documents/diss/experiments/UD_corpus_cleaned.txt");
-		String sentence = "Few people are listeners."; //A family is watching a little boy who is hitting a baseball.";
+		String sentence = "Mary must not go to the cinema."; //A family is watching a little boy who is hitting a baseball.";
 		String context = "The kid faked the illness.";
 		semConverter.processSentence(sentence, sentence+" "+context);
 	}
