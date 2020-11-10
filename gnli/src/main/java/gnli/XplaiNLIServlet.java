@@ -47,7 +47,7 @@ import sem.mapper.GKRServlet.getMxGraphConcurrentTask;
 
 
 // uncomment to use through Gretty plugin
-//@WebServlet(name = "GNLIServlet", urlPatterns = {"gnli"}, loadOnStartup = 1) 
+//@WebServlet(name = "XplaiNLIServlet", urlPatterns = {"xplainli"}, loadOnStartup = 1) 
 public class XplaiNLIServlet extends HttpServlet {
 		
 		/**
@@ -271,7 +271,7 @@ public class XplaiNLIServlet extends HttpServlet {
 			}
 	        //System.out.println(dlDecision);
 	        this.hyDecision = getHybridOutput(dlDecision, inferenceDecision);
-	        Timestamp timestamp2 = new Timestamp(System.currentTimeMillis());
+	        //Timestamp timestamp2 = new Timestamp(System.currentTimeMillis());
 	        //System.out.println(timestamp2);
 	        //System.out.println(hyDecision);
 	        if (this.inferenceDecision == null) this.inferenceDecision = new InferenceDecision(EntailmentRelation.UNKNOWN, 0.0, 0.0, 0, false, false, false, false, false, false, false, false,
@@ -325,7 +325,13 @@ public class XplaiNLIServlet extends HttpServlet {
 	        	}
 	        } 
 	        
-	        
+			this.HNegation = false;
+			this.PNegation = false;
+			this.lexOverlap = false;
+			this.lengMatch = false;
+			this.wordHeurE = false;
+			this.wordHeurC = false;
+			this.wordHeurN = false;
 	        checkForBertFeatures();
 	        featuresValues.clear();
 	        fillMapOfFeaturesValues();
@@ -386,6 +392,7 @@ public class XplaiNLIServlet extends HttpServlet {
 		 
 		    public getDlDecisionConcurrentTask(String premise, String hypothesis) {
 		    	this.dlDecision = getDLOutput(premise, hypothesis);
+		    	//System.out.println(dlDecision);
 		    }
 		 
 		    public String call() {
@@ -396,18 +403,21 @@ public class XplaiNLIServlet extends HttpServlet {
 	    protected String getDLOutput(String premise, String hypothesis){
 	    	String dlDecision = "";
 	    	String s = null;
+	    	//System.out.println(premise);
+	    	//System.out.println(hypothesis);
 	    	try {
 	                Process p = Runtime.getRuntime().exec(new String[]{"/home/kkalouli/Documents/virtEnv1/bin/python", "/home/kkalouli/Documents/project/semantic_processing/gnli/src/main/webapp/get_xlnet_inference_decision.py", premise, hypothesis});
-	                
+	                //System.out.println(p);
 	                BufferedReader stdInput = new BufferedReader(new 
 	                     InputStreamReader(p.getInputStream()));
-
+	                //System.out.println(stdInput.toString());
 	                BufferedReader stdError = new BufferedReader(new 
 	                     InputStreamReader(p.getErrorStream()));
 
 	                // read the output from the command
 	                //System.out.println("Here is the standard output of the command:\n");
 	                while ((s = stdInput.readLine()) != null) {
+	                	//System.out.println("ok");
 	                	dlDecision = s;
 	                	//System.out.println(s);
 	                }
@@ -571,6 +581,7 @@ public class XplaiNLIServlet extends HttpServlet {
 	    		}
 	    		if (hypothesis.contains(word)) {
 	    			HNegation = true;
+	    			//System.out.println("found");
 	    		}
 	    	}
 	    	
@@ -628,8 +639,8 @@ public class XplaiNLIServlet extends HttpServlet {
 	    	}
 	    	
 	    	// lexical Overlap
-	    	List<String> premiseList = new ArrayList<String>(Arrays.asList(premise.split(" ")));
-	    	List<String> hypothesisList = new ArrayList<String>(Arrays.asList(hypothesis.split(" ")));
+	    	List<String> premiseList = new ArrayList<String>(Arrays.asList(premise.replace(".", "").split(" ")));
+	    	List<String> hypothesisList = new ArrayList<String>(Arrays.asList(hypothesis.replace(".", "").split(" ")));
 	    	List<String> difference = new ArrayList<>(premiseList);
 	    	difference.removeAll(hypothesisList);
 	    	if (premiseList.containsAll(hypothesisList))
@@ -766,6 +777,7 @@ public class XplaiNLIServlet extends HttpServlet {
 		    	rulesDLArray.add(relationObj);
 	    	}
 	    	if (PNegation == true) {
+	    		//System.out.println("pnegation");
 	    		Integer id = featuresIds.get("Pneg");
 	    		JSONObject relationObj = new JSONObject();
 	    		relationObj.put("id",id);
@@ -776,6 +788,7 @@ public class XplaiNLIServlet extends HttpServlet {
 		    	rulesDLArray.add(relationObj);
 	    	}
 	    	if (HNegation == true) {
+	    		//System.out.println("hnegation");
 	    		Integer id = featuresIds.get("Hneg");
 	    		JSONObject relationObj = new JSONObject();
 	    		relationObj.put("id",id);

@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -23,6 +24,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
 
 import sem.graph.SemGraph;
 
@@ -37,6 +39,7 @@ public class GKRServlet extends HttpServlet {
 	private static final long serialVersionUID = -2259876163739962321L;
 	private DepGraphToSemanticGraph semConverter;
 	private sem.graph.SemanticGraph graph;
+	private String outputFile;
 	private HashMap<String,String> examples;
 	
 	public GKRServlet(){
@@ -95,8 +98,31 @@ public class GKRServlet extends HttpServlet {
         		return;
         	}
         }
-        String sentence = request.getParameter("sentence");
-        if (sentence.equals("")) {
+        // submitting a whole file
+        if ( request.getPart("file") != null){
+            Part filePart = request.getPart("file");
+            InputStream fileInputStream = filePart.getInputStream();
+            //System.out.println("fileinput");
+        	
+            if (filePart.getSubmittedFileName().equals("")) {
+            	System.out.println("found nothing");
+            	 request.getRequestDispatcher("index.jsp").forward(request, response); 
+            	 return;
+            }
+            if(!filePart.getSubmittedFileName().matches("(\\w*(_)*)*.csv")){
+    			request.setAttribute("error", "Please enter a valid file name (the file name may contain only letters and underscores, and end at csv");
+    			request.getRequestDispatcher("response.jsp").forward(request,response);
+    			return;
+    		}
+            this.outputFile = semConverter.processDemoTestsuite(fileInputStream);
+            //System.out.println(outputFile.toString());
+    	    request.setAttribute("outputFile", outputFile);
+    		request.getRequestDispatcher("response_demo.jsp").forward(request, response); 
+    		return;
+
+        }
+        // submitting one sentence
+        if (request.getParameter("sentence") == null || request.getParameter("sentence").equals("")) {
         	System.out.println("found nothing");
         	 request.getRequestDispatcher("index.jsp").forward(request, response); 
         	 return;
@@ -106,6 +132,7 @@ public class GKRServlet extends HttpServlet {
 			request.getRequestDispatcher("response.jsp").forward(request,response);
 			return;
 		}
+        String sentence = request.getParameter("sentence");
         if (!sentence.endsWith(".") && !sentence.endsWith("?") && !sentence.endsWith("!")){
         	sentence = sentence+".";
         }
