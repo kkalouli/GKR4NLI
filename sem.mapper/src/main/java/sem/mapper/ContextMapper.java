@@ -43,6 +43,7 @@ public class ContextMapper implements Serializable {
 	private ArrayList<String> verbalForms;
 	private ArrayList<SemanticNode<?>> traversedNeighbors;
 	private ArrayList<String> modals;
+	private ArrayList<String> negs;
 	private boolean interrogative;
 	
 	public ContextMapper(sem.graph.SemanticGraph graph, ArrayList<String> verbalForms, boolean interrogative){
@@ -58,6 +59,7 @@ public class ContextMapper implements Serializable {
 		this.traversedNeighbors = new ArrayList<SemanticNode<?>>();
 		this.interrogative = interrogative;
 		this.modals = new ArrayList<String>();
+		this.negs = new ArrayList<String>();
 		modals.add("might");
 		modals.add("should");
 		modals.add("must");
@@ -67,6 +69,12 @@ public class ContextMapper implements Serializable {
 		modals.add("ought");
 		modals.add("need");
 		modals.add("would");
+		negs.add("not");
+		negs.add("no");
+		negs.add("n't");
+		negs.add("none");
+		negs.add("never");
+		negs.add("neither");
 
 		
 		// read the file with the implicative/factive signatures
@@ -139,7 +147,7 @@ public class ContextMapper implements Serializable {
 				}
 				// if it doesnt, add it now to the contxex graph
 				if (foundNode == false)
-					addSelfContextNodeAndEdgeToGraph(node);
+					addSelfContextNodeAndEdgeToGraph(node, true);
 			// if there are no "root" nodes at all (all nodes have incoming edges), then there is probably a copula verb with a relative clause 
 			} else{
 				for (SemanticEdge ed : graph.getRoleGraph().getInEdges(node)){
@@ -155,7 +163,7 @@ public class ContextMapper implements Serializable {
 		}		
 		// if the conGraph does not have any nodes up until now, add the predNode as ctx
 		if (conGraph.getNodes().isEmpty() && predNode != null){
-			addSelfContextNodeAndEdgeToGraph(predNode);
+			addSelfContextNodeAndEdgeToGraph(predNode, true);
 		}
 		
 		integrateImperativeContexts();
@@ -246,28 +254,31 @@ public class ContextMapper implements Serializable {
 						mapWithNegations.put(ctx, edgeAndFinishNode);
 						continue;
 					}
-					SemanticNode<?> ctxHead = null;
-					// get the head of the context they belong
-					for (SemanticEdge out : graph.getContextGraph().getOutEdges(ctx)){
-						if (out.getLabel().equals("ctx_hd"))
-							ctxHead = graph.getFinishNode(out);
-					}	
+					// get the head of the context the "same" node has as parent (probably the negation node)
+					SemanticNode<?> ctxHead = getHeadOfContext(ctx);
+					// get the head of the context the "same" node belongs itself (the same node is a context node)
+					SemanticNode<?> nodeHead = getHeadOfContext(node);
+					
+	
 					/* for case 1: if this head is implicative, then this is the head to be taken as the top context (and the other one will be embedded into that)
-					/ for case 2: if this head is the "not_" node and the current node is not an implicative, then this is the head to be taken as the top context 
-					(it is not enough that the head is the "not_" node because "not_" is also the node when the embedded verb of the implicative is negated, so
+					/ for case 2: if this head is a negation node and the head of the current ctx node is an implicative, then this is the head to be taken as the top context 
+					(it is not enough that the head is the negation node because negation is also the node when the embedded verb of the implicative is negated, so
 					we have to make sure that this is case 2, where the implicative itself is negated)
+					( for negs and modals we have to do string comparison because these contexts have no head concept to extract)
 					*/
-					if (implCtxs.containsKey(ctxHead)  || (implCtxs.containsKey(graph.getContextGraph().getOutNeighbors(node).iterator().next()) && ctxHead.getLabel().contains("not_"))
-							|| (ctxHead instanceof SkolemNode && modals.contains(((SkolemNodeContent) ctxHead.getContent()).getStem())  )){
+					if (implCtxs.containsKey(ctxHead)  || (implCtxs.containsKey(nodeHead) && negs.contains(ctx.getLabel().substring(4,ctx.getLabel().indexOf("_"))) ) 
+							|| (modals.contains(ctx.getLabel().substring(4,ctx.getLabel().indexOf("_"))) )  ){
 						top = ctx;
 						connector = graph.getContextGraph().getEdges(ctx,node).iterator().next();
 						// do not put the head node of this node to the nodesToRemove
 						for (SemanticEdge out : graph.getContextGraph().getOutEdges(node)){
 							if (out.getLabel().equals("ctx_hd"))
 								continue;
+							//else if (graph.getFinishNode(out) instanceof SkolemNode)
+							//	continue;
 							else
 								nodesToRemove.add(graph.getFinishNode(out));
-						}			
+						}		
 						edgesToRemove.addAll(graph.getContextGraph().getOutEdges(node));
 						nodesToRemove.add(node);
 						edgesToRemove.add(connector);
@@ -391,11 +402,11 @@ public class ContextMapper implements Serializable {
 				}
 				// add the self ctx of the child only if it doesnt already exist
 				if (!conGraph.getNodes().contains(child))
-					ctxFinish = addSelfContextNodeAndEdgeToGraph(child);
+					ctxFinish = addSelfContextNodeAndEdgeToGraph(child, true);
 				else
 					ctxFinish = conGraph.getInNeighbors(child).iterator().next(); // othwerise, get the existing one
 				// add the self node of the start
-				ctxStart = addSelfContextNodeAndEdgeToGraph(rNode);
+				ctxStart = addSelfContextNodeAndEdgeToGraph(rNode, true);
 				this.interrogative = true;
 			}
 		}
@@ -426,7 +437,7 @@ public class ContextMapper implements Serializable {
 		for (SemanticNode<?> node : nodes){	
 			if (modals.contains(((SkolemNodeContent) node.getContent()).getStem())){
 				// create the self node of the modal
-				SemanticNode<?> modalNode = addSelfContextNodeAndEdgeToGraph(node);
+				SemanticNode<?> modalNode = addSelfContextNodeAndEdgeToGraph(node, false);
 				// get the head of the modal
 				SemanticNode<?> head = depGraph.getInNeighbors(node).iterator().next();
 				//System.out.println(head);
@@ -445,7 +456,7 @@ public class ContextMapper implements Serializable {
 				// or if there is no negation of the modal but of another word
 				if (negCtxs.isEmpty() || negModalNode == null){
 					// create the self node of the head
-					headNode = addSelfContextNodeAndEdgeToGraph(head);
+					headNode = addSelfContextNodeAndEdgeToGraph(head, true);
 					String label = ((SkolemNodeContent) node.getContent()).getStem();
 					ContextHeadEdge labelEdgeHead = new ContextHeadEdge(label, new  RoleEdgeContent());
 					graph.addContextEdge(labelEdgeHead, modalNode, headNode);
@@ -517,7 +528,7 @@ public class ContextMapper implements Serializable {
 	 * b. Not many people came.
 	 * In a. the head of the negation is a predicate and all arguments exist in top. In b. the head of the negation is
 	 * the head of the noun that the negation is modifying. All arguments exist in top.
-	 * None is always depending on a noun phras, e.g. none of the students, but again the predicate is begin negated.
+	 * None is always depending on a noun phrase, e.g. none of the students, but again the predicate is begin negated.
 	 * Neither is negating both parts of the coordination; the predicate is being negated.
 	 * Never is negating the predicate.
 	 * @param node
@@ -549,7 +560,7 @@ public class ContextMapper implements Serializable {
 			// if the negated node doesnt already exist (in cases of combined predicates), then add the self node of the negation
 			if (!graph.getContextGraph().containsNode(previousNegNode)){
 				// create the self node of the negation
-				negNode = addSelfContextNodeAndEdgeToGraph(node);
+				negNode = addSelfContextNodeAndEdgeToGraph(node, false);
 			}
 			// set the previousNegNode to the current one.
 			previousNegNode = negNode;
@@ -588,7 +599,7 @@ public class ContextMapper implements Serializable {
 			 */
 			if (disjunction == true && coordCtxs.containsKey(depHead) && coordCtxs.get(depHead).equals("clausal")){
 				// create the self node of the negation
-				negNode = addSelfContextNodeAndEdgeToGraph(node);
+				negNode = addSelfContextNodeAndEdgeToGraph(node, false);
 				ctxHead = graph.getContextGraph().getInNeighbors(depHead).iterator().next();
 				SemanticEdge orEdge = graph.getContextGraph().getInEdges(ctxHead).iterator().next();
 				SemanticNode<?> top = graph.getStartNode(orEdge);
@@ -598,7 +609,7 @@ public class ContextMapper implements Serializable {
 				// if no disjunction, then just create the self neg node and get the parent of the current node	
 			} else {
 				// create the self node of the negation
-				negNode = addSelfContextNodeAndEdgeToGraph(node);
+				negNode = addSelfContextNodeAndEdgeToGraph(node, false);
 				if (!verbalForms.contains(((SkolemNodeContent) depHead.getContent()).getPosTag()) && negOnCopula == false ){
 					SemanticNode<?> headOfHead = depGraph.getInNeighbors(depHead).iterator().next();
 					head = headOfHead;
@@ -606,12 +617,12 @@ public class ContextMapper implements Serializable {
 					head = depGraph.getInNeighbors(node).iterator().next();
 				}
 				// create the self node of the head of the negation
-				ctxHead = addSelfContextNodeAndEdgeToGraph(head);
+				ctxHead = addSelfContextNodeAndEdgeToGraph(head, true);
 			}
 			//If there is no coordination but simple negation.
 		} else {
 			// create the self node of the negation
-			negNode = addSelfContextNodeAndEdgeToGraph(node);
+			negNode = addSelfContextNodeAndEdgeToGraph(node, false);
 			// first if to deal with none negation
 			if (!verbalForms.contains(((SkolemNodeContent) depHead.getContent()).getPosTag()) && negOnCopula == false){
 				SemanticNode<?> headOfHead = depGraph.getInNeighbors(depHead).iterator().next();
@@ -620,7 +631,7 @@ public class ContextMapper implements Serializable {
 				head = depHead;
 			}
 			// create the self node of the head of the negation
-			ctxHead = addSelfContextNodeAndEdgeToGraph(head);
+			ctxHead = addSelfContextNodeAndEdgeToGraph(head, true);
 		}
 
 		// create and add the edge between the negation and its head 
@@ -654,7 +665,7 @@ public class ContextMapper implements Serializable {
 		if (coordCtxs.containsKey(headOfHead) && coordCtxs.get(headOfHead).equals("verbal")){
 			if (!graph.getContextGraph().containsNode(previousNegNode)){
 				// create the self node of the negation
-				negNode = addSelfContextNodeAndEdgeToGraph(node);
+				negNode = addSelfContextNodeAndEdgeToGraph(node, false);
 			}
 			previousNegNode = negNode;
 			/* if there is disjunction in the sentence (and not only conjunction), then we have to first find the context of the
@@ -698,7 +709,7 @@ public class ContextMapper implements Serializable {
 			 */
 			if (disjunction == true && coordCtxs.containsKey(headOfHead) && coordCtxs.get(headOfHead).equals("clausal")){
 				// create the self node of the negation
-				negNode = addSelfContextNodeAndEdgeToGraph(node);
+				negNode = addSelfContextNodeAndEdgeToGraph(node, false);
 				ctxHead = graph.getContextGraph().getInNeighbors(headOfHead).iterator().next();
 				SemanticEdge orEdge = graph.getContextGraph().getInEdges(ctxHead).iterator().next();
 				SemanticNode<?> top = graph.getStartNode(orEdge);
@@ -708,18 +719,18 @@ public class ContextMapper implements Serializable {
 				// if no disjunction, then just create the self neg node and get the parent of the current node	
 			} else {
 				// create the self node of the negation
-				negNode = addSelfContextNodeAndEdgeToGraph(node);
+				negNode = addSelfContextNodeAndEdgeToGraph(node, false);
 				head = depGraph.getInNeighbors(node).iterator().next();
 				// create the self node of the head of the negation
-				ctxHead = addSelfContextNodeAndEdgeToGraph(headOfHead);
+				ctxHead = addSelfContextNodeAndEdgeToGraph(headOfHead, true);
 			}
 			//If there is no coordination but simple negation.
 		} else {
 			// create the self node of the negation
-			negNode = addSelfContextNodeAndEdgeToGraph(node);
+			negNode = addSelfContextNodeAndEdgeToGraph(node, false);
 			head = depGraph.getInNeighbors(node).iterator().next();
 			// create the self node of the head of the negation
-			ctxHead = addSelfContextNodeAndEdgeToGraph(headOfHead);
+			ctxHead = addSelfContextNodeAndEdgeToGraph(headOfHead, true);
 		}
 
 		// create and add the edge between the negation and the head of its head 
@@ -778,7 +789,7 @@ public class ContextMapper implements Serializable {
 			head = graph.getRoleGraph().getInNeighbors(depHead).iterator().next();
 			if (!graph.getContextGraph().containsNode(previousNegNode)){
 				// create the self node of the negation
-				negNode = addSelfContextNodeAndEdgeToGraph(node);
+				negNode = addSelfContextNodeAndEdgeToGraph(node, false);
 			}
 			previousNegNode = negNode;
 			/* if there is disjunction in the sentence (and not only conjunction), then we have to first find the context of the
@@ -816,7 +827,7 @@ public class ContextMapper implements Serializable {
 			 */
 			if (disjunction == true && coordCtxs.containsKey(depHead) && coordCtxs.get(depHead).equals("clausal")){
 				// create the self node of the negation
-				negNode = addSelfContextNodeAndEdgeToGraph(node);
+				negNode = addSelfContextNodeAndEdgeToGraph(node, false);
 				ctxHead = graph.getContextGraph().getInNeighbors(depHead).iterator().next();
 				SemanticEdge orEdge = graph.getContextGraph().getInEdges(ctxHead).iterator().next();
 				SemanticNode<?> top = graph.getStartNode(orEdge);
@@ -826,18 +837,18 @@ public class ContextMapper implements Serializable {
 			// if no disjunction, then just create the self neg node and get the parent of the current node	
 			} else {
 				// create the self node of the negation
-				negNode = addSelfContextNodeAndEdgeToGraph(node);
+				negNode = addSelfContextNodeAndEdgeToGraph(node, false);
 				head = depGraph.getInNeighbors(node).iterator().next();
 				// create the self node of the head of the negation
-				ctxHead = addSelfContextNodeAndEdgeToGraph(head);
+				ctxHead = addSelfContextNodeAndEdgeToGraph(head, true);
 			}			
 		} //If there is no coordination but simple negation.
 		else {
 		// create the self node of the negation
-		negNode = addSelfContextNodeAndEdgeToGraph(node);
+		negNode = addSelfContextNodeAndEdgeToGraph(node, false);
 		head = depGraph.getInNeighbors(node).iterator().next();
 		// create the self node of the head of the negation
-		ctxHead = addSelfContextNodeAndEdgeToGraph(head);
+		ctxHead = addSelfContextNodeAndEdgeToGraph(head, true);
 	}
 
 		// create and add the edge between the negation and the head of its head 
@@ -938,10 +949,12 @@ public class ContextMapper implements Serializable {
 
 	/***
 	 * Adds a context edge to the big graph. The context edge has the label "head" and starts from the ctx of the word
-	 * and finishes at the word itself. 
+	 * and finishes at the word itself.
+	 * The edge is only added if the isConcept is set to true to account for negation, modals and disjunction which do not map
+	 * to a concept but just introduce contexts (still, in disjunction the boolean is set to true because no ctx_hd had been added anyway 
 	 * @param node
 	 */
-	private SemanticNode<?> addSelfContextNodeAndEdgeToGraph(SemanticNode<?> node){
+	private SemanticNode<?> addSelfContextNodeAndEdgeToGraph(SemanticNode<?> node, boolean isConcept){
 		ContextHeadEdge cHEdge = new ContextHeadEdge(GraphLabels.CONTEXT_HEAD, new  RoleEdgeContent());
 		SemanticNode<?> start = new ContextNode("ctx("+node.getLabel()+")", new ContextNodeContent());
 		for (SemanticNode<?> contextN : graph.getContextGraph().getNodes()){
@@ -949,7 +962,8 @@ public class ContextMapper implements Serializable {
 				start = contextN;
 			}
 		}
-		graph.addContextEdge(cHEdge, start, node);
+		if (isConcept == true)
+			graph.addContextEdge(cHEdge, start, node);
 		return start;
 	}
 
@@ -988,14 +1002,14 @@ public class ContextMapper implements Serializable {
 		SemanticNode<?> start = depGraph.getStartNode(edge);
 		SemanticNode<?> finish = depGraph.getEndNode(edge);
 		// create the contexts of the two nodes and get them back
-		SemanticNode<?> ctxOfStart = this.addSelfContextNodeAndEdgeToGraph(start);
-		SemanticNode<?> ctxOfFinish = this.addSelfContextNodeAndEdgeToGraph(finish);
+		SemanticNode<?> ctxOfStart = this.addSelfContextNodeAndEdgeToGraph(start, true);
+		SemanticNode<?> ctxOfFinish = this.addSelfContextNodeAndEdgeToGraph(finish, true);
 		/* check if the parents of the start node are not empty. if they are not empty, then there is no predicate coordination.*/
 		if (!depGraph.getInNeighbors(start).isEmpty()){
 			//get the parent of the coord
 			SemanticNode<?> parentOfStart = depGraph.getInNeighbors(start).iterator().next();
 			// get the context of the parent
-			SemanticNode<?> ctxOfParent = this.addSelfContextNodeAndEdgeToGraph(parentOfStart);
+			SemanticNode<?> ctxOfParent = this.addSelfContextNodeAndEdgeToGraph(parentOfStart, true);
 			// create contexts from the parent to the coordinated children
 			ContextHeadEdge labelStart = new ContextHeadEdge(GraphLabels.OR, new  RoleEdgeContent());
 			// create the edges between the parent of the coord and the two coordinating nodes
@@ -1150,8 +1164,8 @@ public class ContextMapper implements Serializable {
 				SemanticNode<?> start = graph.getStartNode(edge);
 				SemanticNode<?> finish = graph.getFinishNode(edge);
 				if (!implCtxs.containsKey(start)){
-					SemanticNode<?> ctxOfStart = this.addSelfContextNodeAndEdgeToGraph(start);
-					SemanticNode<?> ctxOfFinish = this.addSelfContextNodeAndEdgeToGraph(finish);
+					SemanticNode<?> ctxOfStart = this.addSelfContextNodeAndEdgeToGraph(start, true);
+					SemanticNode<?> ctxOfFinish = this.addSelfContextNodeAndEdgeToGraph(finish, true);
 					String label = start.getLabel().substring(0,start.getLabel().indexOf("_"));
 					ContextHeadEdge labelEdge = new ContextHeadEdge(label, new  RoleEdgeContent());
 					graph.addContextEdge(labelEdge,ctxOfStart, ctxOfFinish);
@@ -1229,7 +1243,7 @@ public class ContextMapper implements Serializable {
 			implCtxs.put(node, "impl");
 			ContextHeadEdge labelEdge = getEdgeLabelAccordingToTruthCondition(truth);
 			// add the edge and the nodes to the context graph
-			SemanticNode<?> ctxOfImpl = addSelfContextNodeAndEdgeToGraph(node);
+			SemanticNode<?> ctxOfImpl = addSelfContextNodeAndEdgeToGraph(node, true);
 			Set<SemanticNode<?>>children = graph.getRoleGraph().getOutNeighbors(node);
 			boolean foundComplAsChild = false;
 			for (SemanticNode<?> child : children ){
@@ -1237,7 +1251,7 @@ public class ContextMapper implements Serializable {
 				if (child instanceof SkolemNode|| child instanceof TermNode){
 					SemanticEdge edgeToChild = graph.getRoleGraph().getEdges(node, child).iterator().next();
 					if (edgeToChild.getLabel().equals("sem_comp") || edgeToChild.getLabel().equals("sem_xcomp") ){
-						SemanticNode<?> ctxOfChild = addSelfContextNodeAndEdgeToGraph(child);
+						SemanticNode<?> ctxOfChild = addSelfContextNodeAndEdgeToGraph(child, true);
 						graph.addContextEdge(labelEdge,ctxOfImpl, ctxOfChild);
 						if (child instanceof SkolemNode){
 							((SkolemNodeContent) child.getContent()).setContext(ctxOfImpl.getLabel());
@@ -1264,7 +1278,7 @@ public class ContextMapper implements Serializable {
 					// also include termNodes (merged nodes of coordinated  tokens)
 					if (child instanceof SkolemNode || child instanceof TermNode){
 						if (graph.getRoleGraph().getEdges(node, child).iterator().next().getLabel().equals("sem_obj")){
-							SemanticNode<?> ctxOfChild = addSelfContextNodeAndEdgeToGraph(child);
+							SemanticNode<?> ctxOfChild = addSelfContextNodeAndEdgeToGraph(child, true);
 							graph.addContextEdge(labelEdge,ctxOfImpl, ctxOfChild);
 							if (child instanceof SkolemNode)
 								((SkolemNodeContent) child.getContent()).setContext(ctxOfImpl.getLabel());
@@ -1307,11 +1321,11 @@ public class ContextMapper implements Serializable {
 					}
 				}
 				if (ctxOfStartNode == null){
-					ctxOfStartNode = addSelfContextNodeAndEdgeToGraph(startNode);
+					ctxOfStartNode = addSelfContextNodeAndEdgeToGraph(startNode, true);
 					
 				}
 				if (ctxOfFinishNode == null){
-					ctxOfFinishNode = addSelfContextNodeAndEdgeToGraph(finishNode);
+					ctxOfFinishNode = addSelfContextNodeAndEdgeToGraph(finishNode, true);
 					
 				}
 				ContextHeadEdge verEdge = new ContextHeadEdge(GraphLabels.VER, new  RoleEdgeContent());
@@ -1339,5 +1353,15 @@ public class ContextMapper implements Serializable {
 			labelEdge = new ContextHeadEdge(GraphLabels.AVER, new  RoleEdgeContent());
 		}
 		return labelEdge;
+	}
+	
+	// get the head of the context a node belongs
+	private SemanticNode<?> getHeadOfContext(SemanticNode<?> ctxNode){		
+		SemanticNode<?> ctxHead = null;
+		for (SemanticEdge out : graph.getContextGraph().getOutEdges(ctxNode)){
+			if (out.getLabel().equals("ctx_hd"))
+				ctxHead = graph.getFinishNode(out);
+		}
+		return ctxHead;
 	}
 }
