@@ -21,6 +21,14 @@ import sem.graph.vetypes.SkolemNode;
 import sem.graph.vetypes.TermNode;
 import sem.mapper.DepGraphToSemanticGraph;
 
+
+/**
+ * The GNLI graph is the merged graph of the textGraph (the premise graph), the hypothesisGraph
+ * and the matchGraph between the two graphs. Instead of "premise", we use the term "text"
+ * for the whole implementation.
+ * @author Katerina Kalouli, 2019
+ *
+ */
 public class GNLIGraph implements Serializable {
 	private static final long serialVersionUID = 7867467000348756256L;
 	protected SemanticGraph gnliGraph;
@@ -30,7 +38,7 @@ public class GNLIGraph implements Serializable {
 	
 	
 	/**
-	 * Create a gnli graph from a list of premise and conclusion graphs
+	 * Create a gnli graph from a list of premise and hypothesis graphs
 	 * @param text
 	 * @param hypothesis
 	 */
@@ -60,7 +68,7 @@ public class GNLIGraph implements Serializable {
 	}
 	
 	/**
-	 * 	Create a new semantic graph from a semantic analysis, and add it to the
+	 * 	Create a new semantic graph from another semantic graph, and add it to the
 	 *  current graph
 	 * @param graph
 	 * @param mainGraph
@@ -105,7 +113,7 @@ public class GNLIGraph implements Serializable {
 	}
 
 	/**
-	 * Get the graph matching premise to conclusion terms
+	 * Get the graph matching premise to hypothesis terms
 	 * 
 	 * @return
 	 */
@@ -119,7 +127,7 @@ public class GNLIGraph implements Serializable {
 	 * 
 	 * @param edge
 	 * @param premiseTerm
-	 * @param conclusionTerm
+	 * @param hypothesisTerm
 	 */
 	public void addMatchEdge(SemanticEdge edge, SemanticNode<?> textTerm,
 			SemanticNode<?> hypothesisTerm) {
@@ -161,7 +169,7 @@ public class GNLIGraph implements Serializable {
 	}
 
 	/**
-	 * Get all the matches between premise and conclusion nodes
+	 * Get all the matches between premise and hypothesis nodes
 	 * 
 	 * @return
 	 */
@@ -176,7 +184,7 @@ public class GNLIGraph implements Serializable {
 	}
 
 	/**
-	 * Get all the match edges for the conclusion node
+	 * Get all the match edges for the hypothesis node
 	 * 
 	 * @param node
 	 * @return
@@ -207,6 +215,13 @@ public class GNLIGraph implements Serializable {
 		return retval;
 	}
 	
+	/**
+	 * Get all the match edges for a given node, depending on whether the node
+	 * is a premise or hypothesis node
+	 * @param node
+	 * @param mode
+	 * @return
+	 */
 	public List<MatchEdge> getMatches(SemanticNode<?> node, String mode) {
 		if (mode.equals("hyp"))
 			return getOutMatches(node);
@@ -234,19 +249,39 @@ public class GNLIGraph implements Serializable {
 		return gnliGraph.getFinishNode(edge);
 	}
 	
+	/**
+	 * Get the finish node of a match edge, which is the premise node of that match.
+	 * @param match
+	 * @return
+	 */
 	public SemanticNode<?> getMatchedTextTerm(SemanticEdge match) {
 		return this.getFinishNode(match);
 	}
 
+	/**
+	 * Get the start node of a match edge, which is the hypothesis node of that match.
+	 * @param match
+	 * @return
+	 */
 	public SemanticNode<?> getMatchedHypothesisTerm(SemanticEdge match) {
 		return this.getStartNode(match);
 	}
 	
+	/**
+	 * Get all the modifiers of the hypothesis node of the given match edge.
+	 * @param match
+	 * @return
+	 */
 	public List<SkolemNode> getAllHModifiers(SemanticEdge match){	
 		List<SkolemNode> dHMod = this.getHypothesisGraph().getAllModifiers((SkolemNode) this.getMatchedHypothesisTerm(match));
 		return dHMod;
 	}
 	
+	/**
+	 * Get all the modifiers of the premise node of the given match edge.
+	 * @param match
+	 * @return
+	 */
 	public List<SkolemNode> getAllTModifiers(SemanticEdge match){	
 		List<SkolemNode> dTMod = this.getTextGraph().getAllModifiers((SkolemNode) this.getMatchedTextTerm(match));
 		return dTMod;
@@ -273,10 +308,14 @@ public class GNLIGraph implements Serializable {
 		mergedEdges.addAll(this.getMatches());
 		
 		SemGraph subgraph = this.gnliGraph.getSubGraph(mergedNodes, mergedEdges);
-		subgraph.display();
+		subgraph.display("Matched Concept and Context Graphs");
 	}
 	
-	
+	/**
+	 * Low-level main method to check whether the creation of the GNLI graph works fine.
+	 * @param args
+	 * @throws IOException
+	 */
 	public static void main(String args[]) throws IOException {
 		DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
 		List<SemanticGraph> texts = new ArrayList<SemanticGraph>();

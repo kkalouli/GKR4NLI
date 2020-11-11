@@ -30,8 +30,8 @@ import sem.graph.vetypes.TermNode;
 
 
 /**
- * Performs initial term matching on an {@link EcdGraph}. 
- * Will add {@link MatchEdge}s to the graph
+ * This class performs initial term matching on an GNLI Graph. 
+ * It adds match edges to the graph. Recall that "text" is used for the "premise".
  *
  */
 public class InitialTermMatcher {
@@ -48,7 +48,6 @@ public class InitialTermMatcher {
 		YES, NO, PENDING
 	}
 	
-
 	/**
 	 * Keep track of the match status of node
 	 *
@@ -81,12 +80,12 @@ public class InitialTermMatcher {
 		}
 	}
 
-	
-
 	/**
-	 * Create an InitialTermMatcher for the gnliGraph
+	 * Create an InitialTermMatcher for the gnliGraph. Only the skolem, non-coreferent
+	 * nodes should be considered for the matching. 
 	 * 
-	 * @param ecdGraph
+	 * @param gnliGraph
+	 * @param kb
 	 */
 	public InitialTermMatcher(GNLIGraph gnliGraph, KB kb) {
 		this.gnliGraph = gnliGraph;
@@ -115,43 +114,43 @@ public class InitialTermMatcher {
 		this.POSToExclude.add("WDT");
 	}
 	
-	
-
-
 	/**
 	 * Apply initial term matches
 	 */
 	public void process() {
 		matchExplicitTerms();
 		//gnliGraph.display();
-		//matchDerivedTerms();
 		matchCoreferences();
 	}
 
 	/**
-	 * Perform matches on explicit terms, i.e. terms that have
-	 * not been introduced by lexical / naive semantics
+	 * Perform the different kinds of matches.
 	 */
 	public void matchExplicitTerms() {
+		// STEM
 		for (CheckedTermNode hTerm : hypothesisTerms) {
 			for (TermNode tTerm : textTerms) {
 				checkStemMatch(hTerm, tTerm);
 			}
 		}
 		updatePendingMatches();
+		
+		// SURFACE
 		for (CheckedTermNode hTerm : hypothesisTerms) {
 			for (TermNode tTerm : textTerms) {
 				checkSurfaceMatch(hTerm, tTerm);
 			}
 		}
 		updatePendingMatches();
+		
+		// SENSE
 		for (CheckedTermNode hTerm : hypothesisTerms) {
 			HashMap<MatchContent, TermNode> senseContents = new HashMap<MatchContent,TermNode>();
 			for (TermNode tTerm : textTerms) {
 				HashMap<MatchContent, TermNode>  contents = checkSenseMatch(hTerm, tTerm, senseContents);
 				senseContents.putAll(contents);
 			}
-
+			// keep match with the lowest penalty
 			if (!senseContents.isEmpty()){
 				List<MatchContent> keys = new ArrayList<MatchContent>(senseContents.keySet());
 				Collections.sort(keys);
@@ -165,15 +164,16 @@ public class InitialTermMatcher {
 				}
 			}
 		}
-
 		updatePendingMatches();
-		/*for (CheckedTermNode hTerm : hypothesisTerms) {
+		
+		//CONCEPT
+		for (CheckedTermNode hTerm : hypothesisTerms) {
 			HashMap<MatchContent, TermNode> conceptContents = new HashMap<MatchContent,TermNode>();
 			for (TermNode tTerm : textTerms) {
 				HashMap<MatchContent, TermNode>  contents = checkConceptMatch(hTerm, tTerm, conceptContents);
 				conceptContents.putAll(contents);
 			}
-
+			// keep match with the lowest penalty
 			if (!conceptContents.isEmpty()){
 				List<MatchContent> keys = new ArrayList<MatchContent>(conceptContents.keySet());
 				Collections.sort(keys);
@@ -188,10 +188,11 @@ public class InitialTermMatcher {
 					}
 				}
 			}
-		}
-		
+		}	
 		updatePendingMatches();
-		/*for (CheckedTermNode hTerm : hypothesisTerms) {
+		
+		// EMBEDS
+		for (CheckedTermNode hTerm : hypothesisTerms) {
 			TermNode similHTerm = null;
 			TermNode similTTerm = null;
 			for (TermNode tTerm : textTerms) {
@@ -203,20 +204,20 @@ public class InitialTermMatcher {
 			}
 			checkEmbedMatch(hTerm, similHTerm, similTTerm);
 		}
-		updatePendingMatches();*/
-		
-	
+		updatePendingMatches();	
 	}
 
 
 	/**
-	 * Generate further matches on basis of previous ones
-	 * and coreference links
+	 * Generate further matches based on coreference links.
 	 */
 	public void matchCoreferences() {
 		addCoRefMatches();
 	}
 
+	/**
+	 * Update a match that is still pending.
+	 */
 	private void updatePendingMatches() {
 		for (CheckedTermNode cTerm : this.hypothesisTerms) {
 			cTerm.updateMatch();
@@ -229,7 +230,6 @@ public class InitialTermMatcher {
 	 * @param chTerm
 	 * @param tTerm
 	 * @return
-	 * 		A list of {@link MatchEdge}s (typically one or none)
 	 */
 	protected List<MatchEdge> checkStemMatch(CheckedTermNode cHTerm, TermNode tTerm) {
 		List<MatchEdge> retval = new ArrayList<MatchEdge>();
@@ -253,13 +253,12 @@ public class InitialTermMatcher {
 	}
 
 	/**
-	 * Hypothesis and text terms have the same surface form (normally pre-empted
-	 * by stem match)
+	 * Hypothesis and text terms have the same surface form (in case the lemma
+	 * match has not worked)
 	 * 
 	 * @param chTerm
 	 * @param tTerm
 	 * @return
-	 * 		A list of {@link MatchEdge}s (typically one or none)
 	 */
 	protected List<MatchEdge> checkSurfaceMatch(CheckedTermNode cHTerm,TermNode tTerm) {
 		List<MatchEdge> retval = new ArrayList<MatchEdge>();
@@ -286,13 +285,12 @@ public class InitialTermMatcher {
 	}
 
 	/**
-	 * Check that hypothesis term has sense that matches that of derived/lexical
-	 * text term
-	 * 
-	 * @param chTerm
+	 * Check whether one of the senses of the hypothesis term has some connection
+	 * with a sense of a premise term.
+	 * @param cHTerm
 	 * @param tTerm
+	 * @param contents
 	 * @return
-	 * 		A list of {@link MatchEdge}s (typically one or none)
 	 */
 	protected HashMap<MatchContent,TermNode> checkSenseMatch(CheckedTermNode cHTerm,TermNode tTerm, HashMap<MatchContent, TermNode> contents) {
 		if (cHTerm.isMatched()) {
@@ -395,7 +393,12 @@ public class InitialTermMatcher {
 		return contents;
 	}
 	
-	
+	/**
+	 * Check whether the given term is part of any formula in SUMO. 
+	 * @param kb
+	 * @param term
+	 * @return
+	 */
 	public Set<Formula> allTermsInFormulas(KB kb, String term) {
 		HashSet<Formula> result = new HashSet<>();
 		Pattern pattern = Pattern.compile("(\\s|\\()" + term + "(\\s|\\))");
@@ -408,6 +411,14 @@ public class InitialTermMatcher {
 		return result;
 	}
 
+	/**
+	 * Check whether one of the concepts of the hypothesis term has some connection
+	 * with a sense of a premise term.
+	 * @param cHTerm
+	 * @param tTerm
+	 * @param contents
+	 * @return
+	 */
 	protected HashMap<MatchContent, TermNode> checkConceptMatch(CheckedTermNode cHTerm,TermNode tTerm, HashMap<MatchContent, TermNode> contents) {
 		if (cHTerm.isMatched()) {
 			return new HashMap<MatchContent,TermNode>();
@@ -565,7 +576,14 @@ public class InitialTermMatcher {
 		return contents;
 	}
 	
-
+	/**
+	 * 	Check whether one of the embeddings of the hypothesis term has high similarity
+	 * with the embedding of a premise term.
+	 * @param cHTerm
+	 * @param similHTerm
+	 * @param similTTerm
+	 * @return
+	 */
 	protected List<TermNode> getBestEmbedMatches(CheckedTermNode cHTerm,TermNode tTerm, TermNode bestSimilHTerm,TermNode bestSimilTTerm) {
 		List<TermNode> bestMatches = new ArrayList<TermNode>();
 		if (cHTerm.isMatched() ) {
@@ -596,6 +614,13 @@ public class InitialTermMatcher {
 		return bestMatches;
 	}
 	
+	/**
+	 * Check the similarity between the embeddings of a hypothesis and a premise term.
+	 * @param cHTerm
+	 * @param similHTerm
+	 * @param similTTerm
+	 * @return
+	 */
 	protected  List<MatchEdge> checkEmbedMatch(CheckedTermNode cHTerm, TermNode similHTerm,TermNode similTTerm ) {
 		List<MatchEdge> retval = new ArrayList<MatchEdge>();
 		// avoid matching if the tTerm is already matched to another hTerm, to avoid overmatching
@@ -612,6 +637,12 @@ public class InitialTermMatcher {
 		return retval;
 	}
 	
+	/**
+	 * Compute plain cosine similarity.
+	 * @param vectorA
+	 * @param vectorB
+	 * @return
+	 */
 	private double computeCosineSimilarity(float[] vectorA, float[] vectorB) {
 	    float dotProduct = 0;
 	    float normA = 0;
@@ -648,13 +679,16 @@ public class InitialTermMatcher {
 				corefMatch.setLabel("coref+" + matchEdge.getLabel());
 				gnliGraph.addMatchEdge(corefMatch, hTerm, finish);
 			}
-		}
-		
-			
-				
+		}				
 	}
 	
-	// accrding to MacCartney diss
+	/**
+	 * Computation of the string edit distance according to MacCartney, 2007.
+	 * It is not used currently.
+	 * @param tSeq
+	 * @param hSeq
+	 * @return
+	 */
 	public float stringEditDistance (CharSequence tSeq, CharSequence hSeq) {                          
 	    int tLen = tSeq.length() + 1;                                                     
 	    int hLen = hSeq.length() + 1;                                                     

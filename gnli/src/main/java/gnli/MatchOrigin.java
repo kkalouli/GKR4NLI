@@ -2,9 +2,14 @@ package gnli;
 
 import java.io.Serializable;
 
+/**
+ * Get the origin of the match between a premise and a hypothesis. 
+ * @author Katerina Kalouli, 2019
+ *
+ */
 public class MatchOrigin implements Serializable { 
 	private static final long serialVersionUID = 5464834181048581205L;
-	public static enum MatchType {LEMMA, SURFACE, SENSE, EMBED, CONCEPT, DERIVED, NONE, SENSE_CMP}
+	public static enum MatchType {LEMMA, SURFACE, SENSE, EMBED, CONCEPT, SENSE_CMP}
 	private MatchType matchType;
 	private String hSense = null;
 	private String tSense = null;
@@ -46,29 +51,5 @@ public class MatchOrigin implements Serializable {
 	protected void setConceptOfMatchedSenses(String concept) {
 		this.concept = concept;
 	}
-	
-	
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(this.matchType).append("\t");
-		switch (matchType) {
-		case CONCEPT:
-			sb.append(hSense).append("\t").append(tSense).append("\t").append(concept);
-			break;
-		case DERIVED:
-			break;
-		case SENSE:
-			sb.append(hSense).append("\t").append(tSense);
-			break;
-		case LEMMA:
-			break;
-		case SURFACE:
-			break;
-		default:
-			break;
-		
-		}
-		return sb.toString();
-	}
+
 }

@@ -25,6 +25,11 @@ import sem.graph.vetypes.TermNode;
 
 
 
+/**
+ * This class assigns and holds the final inference label for a given pair.
+ * @author Katerina Kalouli, 2019
+ *
+ */
 public class InferenceChecker {
 
 	public enum EntailmentRelation {ENTAILMENT, CONTRADICTION, NEUTRAL, UNKNOWN}
@@ -43,7 +48,6 @@ public class InferenceChecker {
 	private SpecificityUpdater updater;
 	private String labelToLearn;
 	private String pairID;
-	private EntailmentRelation alternativeEntailmentRelation;
 	private HashMap<String,String> vnToPWNMap;
 	private boolean rootsWasEmpty;
 	private boolean tHasComplexCtxs;
@@ -63,11 +67,17 @@ public class InferenceChecker {
 	
 	enum Polarity {VERIDICAL, ANTIVERIDICAL, AVERIDICAL}
 
-	
+	/**
+	 * Constuctor of the class. Most parameters are passed from the {@link InferenceComputer}.
+	 * @param gnliGraph
+	 * @param infComputer
+	 * @param updater
+	 * @param labelToLearn
+	 * @param pairID
+	 */
 	public InferenceChecker(GNLIGraph gnliGraph, InferenceComputer infComputer, SpecificityUpdater updater, String labelToLearn, String pairID) {
 		this.gnliGraph = gnliGraph;
 		this.entailmentRelation = EntailmentRelation.UNKNOWN; 
-		this.alternativeEntailmentRelation = EntailmentRelation.UNKNOWN; 
 		looseContra = false;
 		looseEntail = false;
 		matchStrength = 0;
@@ -94,7 +104,11 @@ public class InferenceChecker {
 
 	}
 	
-	
+	/** 
+	 * Return the inference decision, along with additional features (some of them are used by the
+	 * hybrid classifier as features)  
+	 * @return
+	 */
 	public InferenceDecision getInferenceDecision() {	
 		if (this.hypothesisContexts == null) {
 			initialize();
@@ -105,11 +119,14 @@ public class InferenceChecker {
 						
 		return new InferenceDecision(entailmentRelation,matchStrength, matchConfidence, ruleUsed, tHasComplexCtxs, hHasComplexCtxs, contraFlag,
 				tVeridical, tAntiveridical,  tAveridical, hVeridical, hAntiveridical, hAveridical,
-				equalsRel, superRel, subRel, disjointRel,
-				alternativeEntailmentRelation, justifications, looseContra, looseEntail, gnliGraph);
+				equalsRel, superRel, subRel, disjointRel, justifications, looseContra, looseEntail, gnliGraph);
 	}
 	
-	
+	/**
+	 * Main method for the computation of the inference relation. The method determines the root node match
+	 * on which the inference should be computed. If no root node match can be found, we fall-back
+	 * to the next highest (in terms of graph) match.  
+	 */
 	private void computeInferenceRelation() {
 		HashMap<SemanticNode<?>,MatchEdge> rootNodeMatches = new HashMap<SemanticNode<?>,MatchEdge>();
 		//gnliGraph.getMatchGraph().display();
@@ -158,16 +175,18 @@ public class InferenceChecker {
 				tTermCtxs = fillEmptyContexts((SkolemNode) tTerm, "txt");
 			}			
 			// comment out following lines in order to always reach the extractItemsSetsForAssociationRuleMining method
-			// in order to get all paths and their contexts (for training)
-			
+			// in order to get all paths and their contexts (for training)		
 			//if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, true)) {
 			//	return;
 			//}
+			
+			//check whether there is a contradiction
 			contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, true);
 
-			/*if (contradiction(hTerm, tTerm, matchEdge, hTermCtxs, tTermCtxs, false)) {
-				looseContra = true;
-			}*/
+			
+			/* This is needed to extract the feature "hasCOmplexCtxs" for the hybrid classifier.
+			There is a complex ctxs if there are not only "ctx_hd" edges but also other embedded edges,
+			like veridical/antiveridical/averidical. */
 			for (SemanticNode<?> key: hTermCtxs.keySet()) {
 				if (key.getLabel().contains("top")) {
 					hHasComplexCtxs = false;
@@ -187,6 +206,7 @@ public class InferenceChecker {
 			
 		}
 		
+		// if no root node match can be found, then fall-back to the next highest match, i.e. match with the most modifiers.
 		if (rootNodeMatches.isEmpty()){
 			if (updater.getMatchAgendaStable() != null && !updater.getMatchAgendaStable().isEmpty()) {
 				MatchEdge matchWithTheMostModifiers = updater.getMatchAgendaStable().get(updater.getMatchAgendaStable().size()-1).match;
@@ -201,6 +221,9 @@ public class InferenceChecker {
 		//if (!rootNodeMatches.isEmpty() && entailmentOrDisjoint(rootNodeMatches, true)){
 		//	return;
 		//}
+		
+		/* if root node matches are found, then extract the features for the hybrid system
+		and decide on final inference label (after investigating entailment and disjointess). */
 		if (!rootNodeMatches.isEmpty()) { 
 			try {
 				//extractItemsSetsForAssociationRuleMining(rootNodeMatches);
@@ -215,33 +238,15 @@ public class InferenceChecker {
 			} else if (this.entailmentRelation != EntailmentRelation.UNKNOWN)
 				return;
 		
-		} else {
+		} 
+		/* if no root node matches can be found (even after considering the highest match),
+		there are no features to be extracted for the hybrid classifier and thus just output
+		some text message. */
+		else {
 			infComputer.getPathsAndCtxs().add(pairID+"\tnothing_found\t"+labelToLearn);
 		}
-		/*if (entailment(rootNodeMatch, hypRootNode, false)) {
-			looseEntail = true;
-		}*/
-		
-		// include following lines in order to extract the paths and their contexts (for training and for testing)
-		/*if (rootNodeMatches.isEmpty()){
-			MatchEdge matchWithTheMostModifiers = updater.getMatchAgendaStable().get(updater.getMatchAgendaStable().size()-1).match;
-			SemanticNode<?> hTerm = gnliGraph.getMatchGraph().getStartNode(matchWithTheMostModifiers);			
-			rootNodeMatches.put(hTerm,matchWithTheMostModifiers);
-		}
-		try {
-			// for training:
-			extractItemsSetsForAssociationRuleMining(rootNodeMatches);
-			// for testing:
-			//String encodedPathAndCtx = extractAllPathsAndContext(rootNodeMatches);
-			//String relation = computeDecisionOfAssociationMining(encodedPathAndCtx);
-			//if (!relation.equals(""))
-			//	this.alternativeEntailmentRelation = EntailmentRelation.valueOf(relation);
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
-		//this.entailmentRelation == EntailmentRelation.UNKNOWN &&
+				
+		// if no entailment or contradiction, then neutral
 		if (looseContra == false && looseEntail == false){
 			this.entailmentRelation = EntailmentRelation.NEUTRAL;
 			this.ruleUsed = 25;
@@ -249,7 +254,17 @@ public class InferenceChecker {
 		
 	}
 	
-	
+	/**
+	 * 	In case one of the nodes is not in the context graph but we still need to find out its context, 
+	 * we get the ctx of that node from its SkolemNodeContent, find this context within the hypothesisContexts 
+	 * (whatever ctx is in the SkolemContent will necessarily be one of the ctxs of the contetx graph), and put
+	 * the ctx found as the key of the hash and the veridical as the value and the root node as another key and
+	 * and veridicality of the mother ctx as the value
+
+	 * @param term
+	 * @param mode
+	 * @return
+	 */
 	private HashMap<SemanticNode<?>,Polarity> fillEmptyContexts(TermNode term, String mode){
 		HashMap<SemanticNode<?>,Polarity> termCtxs = new HashMap<SemanticNode<?>,Polarity>();
 		 HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>> ctxs = null;
@@ -293,6 +308,19 @@ public class InferenceChecker {
 		return termCtxs;
 	}
 	
+	/**
+	 * Check whether the given match is contradictory or not. This concerns contradictions
+	 * coming from opposite contexts/instantiabilities. Note that within this method, there
+	 * are also cases of opposite context/instantiabilities that lead to entailment and not
+	 * contradiction.
+	 * @param hTerm
+	 * @param tTerm
+	 * @param matchEdge
+	 * @param hTermCtxs
+	 * @param tTermCtxs
+	 * @param strict
+	 * @return
+	 */
 	private boolean contradiction(SemanticNode<?> hTerm, SemanticNode<?> tTerm, MatchEdge matchEdge, HashMap<SemanticNode<?>,Polarity> hTermCtxs,
 			HashMap<SemanticNode<?>,Polarity> tTermCtxs, boolean strict){
 		Specificity matchSpecificity = null;
@@ -305,15 +333,13 @@ public class InferenceChecker {
 		double cost = matchEdge.getFeatureScore("cost");
 		if (matchSpecificity!= Specificity.NONE) {
 			if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.VERIDICAL) {
-				// following if added on 24.10 for snetences like: the man is more happy than the woman
-				// the man is not less happy than the woman
-				// specificity disjoint added on 4.11 to account for sentences like: he didnt disagree.. - he agreed...
-				if ( matchSpecificity == Specificity.DISJOINT) {
+					if ( matchSpecificity == Specificity.DISJOINT) {
 					this.entailmentRelation = EntailmentRelation.ENTAILMENT;
 					penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
 					this.ruleUsed = 1;
 					return true;
 				}
+				// if there is a contraFlag
 				if (costInContraBounds(cost) ) {
 					this.entailmentRelation = EntailmentRelation.ENTAILMENT;
 					penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
@@ -339,6 +365,7 @@ public class InferenceChecker {
 					this.ruleUsed = 5;
 					return true;
 				}
+				// if there is a contraFlag
 				if (costInContraBounds(cost)) {
 					this.entailmentRelation = EntailmentRelation.ENTAILMENT;
 					penalizeLooseMatching(EntailmentRelation.ENTAILMENT, strict, matchEdge);
@@ -362,49 +389,13 @@ public class InferenceChecker {
 		return false;
 	}
 	
-	
-	private boolean contradiction(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches, boolean strict){
-		for (SemanticNode<?> key : rootNodeMatches.keySet()){
-			Specificity matchSpecificity = null;
-			if (strict == true)
-				matchSpecificity = rootNodeMatches.get(key).getSpecificity();
-			else 
-				matchSpecificity = rootNodeMatches.get(key).getOriginalSpecificity();
-			SemanticNode<?> tTerm = gnliGraph.getFinishNode(rootNodeMatches.get(key));
-			HashMap<SemanticNode<?>,Polarity> hTermCtxs = hypothesisContexts.get(key);
-			HashMap<SemanticNode<?>,Polarity> tTermCtxs = textContexts.get(tTerm);
-			// in case one of the nodes is not in the context graph but we still need to find out its context
-			// we get the ctx of that node from its SkolemNodeContent, find this context within the hypothesisContexts
-			// (whatever ctx is in the SkolemContent will necessarily be one of the ctxs of the contetx graph), and put
-			// the ctx found as the key of the hash and the veridical as the value and the root node as another key and
-			// and veridicality of the mother ctx as the value
-			if (hTermCtxs == null){
-				hTermCtxs = fillEmptyContexts((SkolemNode) key, "hyp");
-			}
-			if (tTermCtxs == null){
-				tTermCtxs = fillEmptyContexts((SkolemNode) tTerm, "txt");
-			}	
-			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
-			Polarity tPolarity = tTermCtxs.get(textRootCtx);
-			if (matchSpecificity!= Specificity.NONE && matchSpecificity != Specificity.DISJOINT) {
-				if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.VERIDICAL) {
-					if (matchSpecificity == Specificity.EQUALS || matchSpecificity == Specificity.SUBCLASS) {
-						this.entailmentRelation = EntailmentRelation.CONTRADICTION;
-						penalizeLooseMatching(EntailmentRelation.CONTRADICTION, strict, rootNodeMatches.get(key));
-						return true;
-					}
-				} else if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
-					if (matchSpecificity == Specificity.EQUALS || matchSpecificity == Specificity.SUPERCLASS) {
-						this.entailmentRelation = EntailmentRelation.CONTRADICTION;
-						penalizeLooseMatching(EntailmentRelation.CONTRADICTION, strict, rootNodeMatches.get(key));
-						return true;
-					}
-				}
-			} 
-		}
-		return false;
-	}
-	
+	/**
+	 * Extract for all root nodes matches, the paths and contexts of these matches. This was needed
+	 * for experimenting with classifiers on this data. It is not used in the current version of the system.
+	 * @param rootNodeMatches
+	 * @return
+	 * @throws IOException
+	 */
 	private String extractAllPathsAndContext(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches) throws IOException{
 		String toWrite = "";
 		for (SemanticNode<?> key : rootNodeMatches.keySet()){		
@@ -432,7 +423,7 @@ public class InferenceChecker {
 				if (just.getModifiersPair() != null)
 					encodedCtxAndPath = ((MatchEdge) just.getModifiersPair()).getSpecificity().toString()+":";	
 				List<SemanticEdge> tPath = just.getPremisePath();
-				List<SemanticEdge> hPath = just.getConclusionPath();
+				List<SemanticEdge> hPath = just.getHypothesisPath();
 				if (tPath != null){
 					// for each path, get the concept to which the path ends
 					for (SemanticEdge e: tPath){
@@ -462,6 +453,13 @@ public class InferenceChecker {
 		return toWrite;
 	}
 	
+	/**
+	 * Experimenting with weighting the rules of the association rule mining algorithm
+	 * because some path combinations are found in more than one inference relations.
+	 * This method is currently not used within the system: no differences in performance. 
+	 * @param encodedCtxAndPath
+	 * @return
+	 */
 	private String computeDecisionOfAssociationMining(String encodedCtxAndPath){
 		String relation = "";
 		// split the path into its elements
@@ -547,6 +545,15 @@ public class InferenceChecker {
 		return relation;	
 	}
 	
+	/** 
+	 * Extract the path combinations that are used for the training of the association
+	 * rule mining algorithm. It extracts more features than the ones actually used for the
+	 * association rule mining algorithm. This method is not called every time the pipeline runs.
+	 * It was run once to extract the combinations on which the association rule mining could
+	 * be applied and was then commented out. 
+	 * @param rootNodeMatches
+	 * @throws IOException
+	 */
 	private void extractItemsSetsForAssociationRuleMining(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches) throws IOException{
 		String toWrite = pairID+"\t";
 		// keep track of whether there was a real root (verb) matchign or whether one of the other
@@ -612,7 +619,7 @@ public class InferenceChecker {
 				if (just.getModifiersPair() != null)
 					encodedCtxAndPath = ((MatchEdge) just.getModifiersPair()).getOriginalSpecificity().toString()+":";	
 				List<SemanticEdge> tPath = just.getPremisePath();
-				List<SemanticEdge> hPath = just.getConclusionPath();
+				List<SemanticEdge> hPath = just.getHypothesisPath();
 				if (tPath != null){
 					// for each path, get the concept to which the path ends
 					for (SemanticEdge e: tPath){
@@ -642,6 +649,12 @@ public class InferenceChecker {
 		infComputer.getPathsAndCtxs().add(toWrite+labelToLearn);
 	}
 	
+	/**
+	 * Extracts features for the training of the hybrid classifier. The features are added to the
+	 * InferenceDecision output. 
+	 * @param rootNodeMatches
+	 * @throws IOException
+	 */
 	private void extractFeaturesForInferenceDecision(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches) throws IOException{
 		for (SemanticNode<?> key : rootNodeMatches.keySet()){		
 			double cost = rootNodeMatches.get(key).getFeatureScore("cost");
@@ -707,7 +720,7 @@ public class InferenceChecker {
 				if (just.getModifiersPair() != null)
 					justSpec = ((MatchEdge) just.getModifiersPair()).getSpecificity().toString();	
 				List<SemanticEdge> tPath = just.getPremisePath();
-				List<SemanticEdge> hPath = just.getConclusionPath();
+				List<SemanticEdge> hPath = just.getHypothesisPath();
 				Polarity tCtx = null;
 				Polarity hCtx = null;
 				if (tPath != null){
@@ -769,7 +782,13 @@ public class InferenceChecker {
 			
 	}
 
-	
+	/**
+	 * Check whether there is an entailment or disjointness between the terms of a match. This method
+	 * considers the cases where the two terms have the same contexts/instantiabilities. 
+	 * @param rootNodeMatches
+	 * @param strict
+	 * @return
+	 */
 	private boolean entailmentOrDisjoint(HashMap<SemanticNode<?>, MatchEdge> rootNodeMatches , boolean strict){
 		boolean entail = true;
 		boolean disjoint = true;
@@ -813,17 +832,18 @@ public class InferenceChecker {
 			Polarity hPolarity = hTermCtxs.get(hypRootCtx);
 			Polarity tPolarity = tTermCtxs.get(textRootCtx);
 			double cost = rootNodeMatches.get(key).getFeatureScore("cost");
+			// both terms are instantiated:
 			if (hPolarity == Polarity.VERIDICAL && tPolarity == Polarity.VERIDICAL) {
-				// it is not a contradiction if there is no disjoint relation and the score is below maxCost*2
+				// it is not a contradiction if there is no disjoint relation and there is no contraFlag
 				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost))
 					disjoint = false;
-				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
+				// if there is equals relation but there is a contraFlag or neutralFlag, then there is no entail but contradiction
 				if ( (matchSpecificity == Specificity.EQUALS && costInContraBounds(cost) )
 						|| ( matchSpecificity == Specificity.EQUALS && costInNeutralBounds(cost) )){
 					entail = false;
 					this.ruleUsed = 9;
 				}
-				// if there is subclass relation but the score is higher than maxCost*2, then there is no entail but contradiction
+				// if there is subclass relation but there is a contraFlag or neutralFlag, then there is no entail but contradiction
 				if ( (matchSpecificity == Specificity.SUBCLASS && costInContraBounds(cost) )
 						|| ( matchSpecificity == Specificity.SUBCLASS && costInNeutralBounds(cost)) ) {
 					entail = false;
@@ -855,17 +875,18 @@ public class InferenceChecker {
 				}
 				
 			}
+			// both terms are uninstantiated
 			else if (hPolarity == Polarity.ANTIVERIDICAL && tPolarity == Polarity.ANTIVERIDICAL) {
 				if (matchSpecificity != Specificity.DISJOINT && !costInContraBounds(cost) ){
 					disjoint = false;
 				}
-				// if there is equals relation but the score is higher than maxCost*2, then there is no entail but contradiction
+				// if there is equals relation but there is a contraFlag or neutralFlag, then there is no entail but contradiction
 				if ( (matchSpecificity == Specificity.EQUALS && costInContraBounds(cost) )
 						|| ( matchSpecificity == Specificity.EQUALS && costInNeutralBounds(cost) )){
 					entail = false;
 					this.ruleUsed = 17;
 				}
-				// if there is superclass relation but the score is higher than maxCost*2, then there is no entail but contradiction
+				// if there is superclass relation but there is a contraFlag or neutralFlag, then there is no entail but contradiction
 				if ( (matchSpecificity == Specificity.SUPERCLASS && costInContraBounds(cost) )
 						|| ( matchSpecificity == Specificity.SUPERCLASS && costInNeutralBounds(cost) ) ){
 					entail = false;
@@ -921,6 +942,7 @@ public class InferenceChecker {
 		return false;
 	}
 	
+	// Define whether a cost is within the bounds for a contradiction, i.e. has a contra_flag
 	private boolean costInContraBounds(double cost){
 		if (cost >= 175.0)  //if (cost <= 225.0 && cost >= 175.0)
 			return true;
@@ -928,6 +950,7 @@ public class InferenceChecker {
 			return false;
 	}
 	
+	// Define whether a cost is within the bounds for a neutral, i.e. has a neutral_flag
 	private boolean costInNeutralBounds(double cost){
 		if (cost <= 125.0 && cost >= 75.0)
 			return true;
@@ -935,7 +958,12 @@ public class InferenceChecker {
 			return false;
 	}
 	
-	
+	/**
+	 * Calculate the penalty of a match based on its depth and distance penalty. 
+	 * @param relation
+	 * @param strict
+	 * @param matchEdge
+	 */
 	private void penalizeLooseMatching(EntailmentRelation relation, boolean strict, MatchEdge matchEdge){
 		this.matchStrength = 0;
 		this.matchConfidence = 0;
@@ -948,13 +976,21 @@ public class InferenceChecker {
 		}
 	}
 	
-	
+	/**
+	 * Initialize the process by retrieving the hypothesis and premise contexts.
+	 */
 	private void initialize() {
 		this.hypothesisContexts = getContextHeads(gnliGraph.getHypothesisGraph());
 		this.textContexts = getContextHeads(gnliGraph.getTextGraph());
 	}
 	
-	
+	/**
+	 * Get the veridicality of a node within a certain context. Return a hashmap with a semantic node
+	 * as the key and a hashmap as the value; this hashmap contains the contexts as keys and the 
+	 * instantiability of that node within these contexts as values.    
+	 * @param semGraph
+	 * @return
+	 */
 	private HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>> getContextHeads(SemanticGraph semGraph){
 		HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>> ctxHeadsWithVerid = new HashMap<SemanticNode<?>,HashMap<SemanticNode<?>,Polarity>>();
 		for (SemanticNode<?> ctxNode : semGraph.getContextGraph().getNodes()){
@@ -998,7 +1034,16 @@ public class InferenceChecker {
 		return ctxHeadsWithVerid;
 	}
 	
-	
+	/**
+	 * Compute the veridicality/polarity of a node based on a sequence of embedded polarities/veridicalities.
+	 * Note that this method does not efficiently deal with the relative polarity of
+	 * factive/implicative verbs that have been embedded more than twice. For this computation,
+	 * we need to take into account the exact signature of the factive/implicative, which is 
+	 * not done currently.   
+	 * @param shortestPath
+	 * @return
+	 * TODO: improve relative polarity computation
+	 */
 	private Polarity computeEdgePolarity(List<SemanticEdge> shortestPath){
 		Polarity polar = null;
 		for (SemanticEdge verEdge : shortestPath){

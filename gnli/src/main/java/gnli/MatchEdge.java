@@ -10,14 +10,12 @@ import sem.graph.vetypes.LinkEdge;
 
 
 /**
- * Records the match information on the link between a premise and a conclusion
- * node in an {@link EcdGraph}.
- * <p>
- * This includes
- * The original (term only) specificity of the match
- * The revised specificity of the match after considering modifiers
- * The justifications for the revised specificity: A collection of {@link HeadModifierPathPair}s
- * showing the paths by which the premise and conclusion terms connect to matched modifiers
+ * Records the match information between a premise and a hypothesis node.
+ * This includes:
+ * 	- the original specificity of the match
+ * 	- the updated specificity of the match after considering modifiers
+ * 	- the justifications for the updated specificity: A collection of HeadModifierPathPairs
+ * showing the paths by which the premise and hypothesis terms connect to matched modifiers
  *
  */
 public class MatchEdge extends LinkEdge implements Serializable {
@@ -34,13 +32,17 @@ public class MatchEdge extends LinkEdge implements Serializable {
 		this.destVertexId = match.destVertexId;
 	}
 
+	/**
+	 * Set that an edge has been completely updated and is finalized.
+	 * @param b
+	 */
 	public void setComplete(boolean b) {
 		((MatchContent) this.content).setFinalized(b);
 		
 	}
 
 	/**
-	 * Is the specificity revision on this match complete
+	 * Check whether a match update is complete.
 	 * @return
 	 */
 	public boolean isComplete() {
@@ -48,58 +50,86 @@ public class MatchEdge extends LinkEdge implements Serializable {
 	}
 
 	/**
-	 * The specificity of the match
+	 * Get the current specificity of the match.
 	 * @return
 	 */
 	public Specificity getSpecificity() {
 		return ((MatchContent) this.content).getSpecificity();
 	}
 	
-	/**
-	 * The match specificity before any consideration of modifiers
-	 * @return
-	 */
-	public Specificity getOriginalSpecificity() {
-		return ((MatchContent) this.content).getOriginalSpecificity();
-	}
 	public void setSpecificity(Specificity specificity) {
 		((MatchContent) this.content).setSpecificity(specificity);		
 	}
 	
 	/**
-	 * How the premise and conclusion terms connect to the corresponding modifiers
+	 *  Get the original specificity of the match before any updates were done.
+	 * @return
+	 */
+	public Specificity getOriginalSpecificity() {
+		return ((MatchContent) this.content).getOriginalSpecificity();
+	}
+	
+	/**
+	 * Get how the premise and hypothesis terms connect to their corresponding modifiers.
 	 * @return
 	 */
 	public List<HeadModifierPathPair> getJustification() {
 		return ((MatchContent) this.content).getJustification();
 	}
 
+	/**
+	 * Add how the premise and hypothesis terms connect to their corresponding modifiers.
+	 * @return
+	 */
 	public void addJustification(HeadModifierPathPair justification) {
 		((MatchContent) this.content).getJustification().add(justification);
 	}
 
 	/** 
-	 * The cost of the match
+	 * Get the entire cost of the match.
 	 * @return
 	 */
 	public double getScore() {
 		return ((MatchContent) this.content).getScore();
 	}
 	
+	/** 
+	 * Get the cost of the match correspnding to a specific feature, e.g. depth, distance.
+	 * @return
+	 */
 	public double getFeatureScore(String feature) {
 		return ((MatchContent) this.content).getFeatureScore(feature);
 	}
 	
+	/**
+	 * Get the different components that make up the score.
+	 * @return
+	 */
 	public HashMap<String, Double> getScoreComponents() {
 		return ((MatchContent) this.content).getScoreComponents();
 	}
 
-
+	/**
+	 * Increment the score corresponding to a specific feature.
+	 * @param feature
+	 * @param cost
+	 */
 	public void incrementScore(String feature, float cost) {
 		((MatchContent) this.content).addScore(feature, cost);
 		
 	}
 	
+	public void incrementScore(HashMap<String, Double> map) {
+		for (String key :map.keySet()){
+			((MatchContent) this.content).addScore(key, map.get(key));
+		}		
+	}
+	
+	/**
+	 * Add a cost to the costList, i.e. add a "flag" for whether the match is mostly
+	 * associated with an entailment/contradiciton/neutral.
+	 * @param cost
+	 */
 	public void addCost(float cost) {
 		((MatchContent) this.content).getCostList().add(cost);
 		
@@ -107,12 +137,6 @@ public class MatchEdge extends LinkEdge implements Serializable {
 	
 	public ArrayList<Float> getCostList() {
 		return	((MatchContent) this.content).getCostList();		
-	}
-	
-	public void incrementScore(HashMap<String, Double> map) {
-		for (String key :map.keySet()){
-			((MatchContent) this.content).addScore(key, map.get(key));
-		}		
 	}
 	
 	@Override

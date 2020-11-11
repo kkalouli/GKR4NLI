@@ -12,8 +12,9 @@ import sem.graph.vetypes.SkolemNode;
 
 
 /**
- * Compute cost of equating text and hypothesis role paths.
- * Currently a stub.
+ * Compute cost of matching premise and hypothesis role paths.
+ * The cost ends up assigning the so-called contra_Flag, entail_Flag and neutral_Flag. 
+ * The contra and neutral costs are assigned in the {@link InferenceComputer}.
  * 
  *
  */
@@ -27,7 +28,14 @@ public class PathScorer implements Serializable {
 	
 	
 	
-	
+/**
+ * Constructor.	
+ * @param gnliGraph
+ * @param neuCost
+ * @param contraCost
+ * @param learning
+ * @param infComputer
+ */
 	public PathScorer(GNLIGraph gnliGraph, float neuCost, float contraCost, boolean learning, InferenceComputer infComputer) {
 		super();
 		this.gnliGraph = gnliGraph;
@@ -38,47 +46,76 @@ public class PathScorer implements Serializable {
 	}
 	
 	
-	
+	/**
+	 * Constructor.
+	 * @param neuCost
+	 * @param contraCost
+	 */
 	public PathScorer(float neuCost, float contraCost) {
 		this.gnliGraph = null;
 		this.neuCost = neuCost;
 		this.contraCost = contraCost;
 	}
 	
-
+	/**
+	 * Getter for the neutral cost. 
+	 * @return
+	 */
 	public float getNeuCost() {
 		return neuCost;
 	}
 
-
+	/**
+	 * Setter for the neutral cost.
+	 * @param neuCost
+	 */
 	public void setNeuCost(float neuCost) {
 		this.neuCost = neuCost;
 	}
 	
+	/**
+	 * Getter for the contra cost.
+	 * @return
+	 */
 	public float getContraCost() {
 		return contraCost;
 	}
 
-
+	/**
+	 * Setter for the contra cost.
+	 * @param contraCost
+	 */
 	public void setContraCost(float contraCost) {
 		this.contraCost = contraCost;
 	}
 
-
+	/**
+	 * Getter for the {@link GNLIGraph}.
+	 * @return
+	 */
 	public GNLIGraph getGNLIGraph() {
 		return gnliGraph;
 	}
 
+	/**
+	 * Setter for the {@link GNLIGraph}.
+	 * @return
+	 */
 	public void setGNLIGraph(GNLIGraph gnliGraph) {
 		this.gnliGraph = gnliGraph;
 	}
 	
-
+	/**
+	 * Adds a role path that is found in entailments (practically, attempt at a manual
+	 * implementation of association rule mining). Used for experimentation, not
+	 * used in the current version of the system.
+	 * @param pathToAdd
+	 */
 	public void addEntailRolePath(HeadModifierPathPair pathToAdd){
 		if (pathsAreIdentical(pathToAdd) == true)
 			return;
-		if (pathToAdd.getConclusionPath() != null && pathToAdd.getPremisePath() != null){
-			String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();		
+		if (pathToAdd.getHypothesisPath() != null && pathToAdd.getPremisePath() != null){
+			String key = pathToAdd.getHypothesisPath().toString()+"/"+pathToAdd.getPremisePath().toString();		
 			// 1st learning: only add it to the entail paths if it is not already contained in the contraPaths (contraPaths are more dominant) 
 			/*if (infComputer.getContraRolePaths().containsKey(key) )
 				return;*/
@@ -93,18 +130,29 @@ public class PathScorer implements Serializable {
 		}
 	}
 	
-	
+	/**
+	 * Remove a role path that is found in entailments (practically, attempt at a manual
+	 * implementation of association rule mining). Used for experimentation, not
+	 * used in the current version of the system.
+	 * @param pathToAdd
+	 */
 	public void removeEntailRolePath(String key){
 		if (infComputer.getEntailRolePaths().keySet().contains(key)){
 			infComputer.getEntailRolePaths().remove(key);
 		}
 	}
 	
+	/**
+	 * Adds a role path that is found in contradictions (practically, attempt at a manual
+	 * implementation of association rule mining). Used for experimentation, not
+	 * used in the current version of the system.
+	 * @param pathToAdd
+	 */
 	public void addContraRolePath(HeadModifierPathPair pathToAdd){
 		if (pathsAreIdentical(pathToAdd) == true)
 			return;
-		if (pathToAdd.getConclusionPath() != null && pathToAdd.getPremisePath() != null){
-			String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();		
+		if (pathToAdd.getHypothesisPath() != null && pathToAdd.getPremisePath() != null){
+			String key = pathToAdd.getHypothesisPath().toString()+"/"+pathToAdd.getPremisePath().toString();		
 			if (!infComputer.getContraRolePaths().containsKey(key)){
 				infComputer.getContraRolePaths().put(key, new ArrayList<HeadModifierPathPair>());
 			}
@@ -117,16 +165,27 @@ public class PathScorer implements Serializable {
 		}
 	}
 	
-	
+	/**
+	 * Remove a role path that is found in contradictions (practically, attempt at a manual
+	 * implementation of association rule mining). Used for experimentation, not
+	 * used in the current version of the system.
+	 * @param pathToAdd
+	 */
 	public void removeContraRolePath(String key){
 		if (infComputer.getContraRolePaths().keySet().contains(key)){
 			infComputer.getContraRolePaths().remove(key);
 		}
 	}
 	
+	/**
+	 * Check whether the premise and the hypothesis paths are identical.
+	 * If so, there is no cost. 
+	 * @param path
+	 * @return
+	 */
 	private boolean pathsAreIdentical(HeadModifierPathPair path){
-		if (path.getConclusionPath() != null && path.getPremisePath() != null){
-			String hypPath = path.getConclusionPath().toString();
+		if (path.getHypothesisPath() != null && path.getPremisePath() != null){
+			String hypPath = path.getHypothesisPath().toString();
 			String txtPath = path.getPremisePath().toString();
 			if (hypPath.equals(txtPath))
 				return true;
@@ -135,12 +194,17 @@ public class PathScorer implements Serializable {
 		return false;
 	}
 	
-	
+	/**
+	 * Add a role path that is found in neutrals (practically, attempt at a manual
+	 * implementation of association rule mining). Used for experimentation, not
+	 * used in the current version of the system.
+	 * @param pathToAdd
+	 */
 	public void addNeutralRolePath(HeadModifierPathPair pathToAdd){
 		if (pathsAreIdentical(pathToAdd) == true)
 			return;
-		if (pathToAdd.getConclusionPath() != null && pathToAdd.getPremisePath() != null){
-			String key = pathToAdd.getConclusionPath().toString()+"/"+pathToAdd.getPremisePath().toString();
+		if (pathToAdd.getHypothesisPath() != null && pathToAdd.getPremisePath() != null){
+			String key = pathToAdd.getHypothesisPath().toString()+"/"+pathToAdd.getPremisePath().toString();
 			// 1st learning: only add it to the neutral paths if it is not already contained in the entailPaths (entailPaths are more dominant) 
 			//if (infComputer.getEntailRolePaths().containsKey(key) || infComputer.getContraRolePaths().containsKey(key) )
 			//	return;
@@ -152,6 +216,12 @@ public class PathScorer implements Serializable {
 		}
 	}
 	
+	/**
+	 * Remove a role path that is found in neutrals (practically, attempt at a manual
+	 * implementation of association rule mining). Used for experimentation, not
+	 * used in the current version of the system.
+	 * @param pathToAdd
+	 */
 	public void removeNeutralRolePath(String key){
 		if (infComputer.getNeutralRolePaths().keySet().contains(key)){
 			infComputer.getNeutralRolePaths().remove(key);
@@ -159,15 +229,13 @@ public class PathScorer implements Serializable {
 	}
 	
 	/**
-	 * Cost is difference in the path lengths plus any further
-	 * penalties on the premise path. The conclusion path will typically
-	 * be length 1
-	 * @param mcp
+	 * Cost is the path penalty for now.
+	 * @param hMPath
 	 * @return
 	 */
 	public float pathCost(HeadModifierPathPair hMPath) {
 		List<SemanticEdge> tPath = hMPath.getPremisePath();
-		List<SemanticEdge> hPath = hMPath.getConclusionPath();
+		List<SemanticEdge> hPath = hMPath.getHypothesisPath();
 		int tLen = 0;
 		int hLen = 0;
 		float cost = 0 ;
@@ -189,15 +257,19 @@ public class PathScorer implements Serializable {
 	}
 	
 	/**
-	* 3 penalties:
-	* kind of path (roles)
-	* score of match (embed is already penalized in the match score)
-	* not the same sense across matches
+	* Computes 2 penalties:
+	* 1. kind of path combination, learned during the association rule mining stage and added here
+	* 2. the match is based on different senses of the same word
 	 */
 	public float pathPenalty(HeadModifierPathPair hMPath, List<SemanticEdge> tPath, List<SemanticEdge> hPath) {
 		float cost = 0;	
-		/*
-		if (pathsAreIdentical(hMPath) == false && learning == false){
+		
+		/* During experimentation, the next code was used to weight the paths that were
+		 * found in pairs with one of the inference relations (practically, manual implementation
+		 * of association rule mining) This code is not used in the current system, it has been
+		 * replaced by the rules learned from the association rule mining stage. 
+		 */
+		/*if (pathsAreIdentical(hMPath) == false && learning == false){
 			String key = hPath.toString()+"/"+tPath.toString();
 			// following costs after 1st learning
 			/*if (infComputer.getNeutralRolePaths().containsKey(key))
@@ -338,6 +410,10 @@ public class PathScorer implements Serializable {
 			//} 
 				
 		//}
+		/* 1. Rules learned through the association rule mining. The process was done offline and the
+		verified rules were added here. The training data for the algorithm was gathered in {@link InferenceChecker}
+		through the method {@link extractItemsSetsForAssociationRuleMining}. 
+		*/
 		if (tPath.size() == hPath.size() && hPath.size() == 1){
 			// if the match is based on opposing roles, it should be neglected
 			if ( (tPath.get(0).getLabel().equals("sem_subj") && hPath.get(0).getLabel().equals("sem_obj")) ||
@@ -384,10 +460,13 @@ public class PathScorer implements Serializable {
 			if ( hPath.get(0).getLabel().equals("sem_comp") && hPath.get(1).getLabel().equals("sem_subj") && tPath.get(0).getLabel().equals("sem_obj"))
 				cost += contraCost;
 		}
-
+		
+		/* For now, the score of the match (distance and depth) is not added to the penalty
+		of the match, it is considered seperately. */
 		//cost += ((MatchContent) hMPath.getModifiersPair().getContent()).getScore();
 		
-		// if the match is based on different senses of the same word, the match should be neglected
+		
+		// 2. If the match is based on different senses of the same word, the match should be neglected.
 		if ( gnliGraph.getStartNode(hMPath.getModifiersPair()) instanceof SkolemNode && !hMPath.getModifiersPair().getLabel().equals("sense")
 				&& !hMPath.getModifiersPair().getLabel().equals("concept") && !hMPath.getModifiersPair().getLabel().equals("embed")){
 			SkolemNode startNode = (SkolemNode) gnliGraph.getStartNode(hMPath.getModifiersPair());
@@ -416,20 +495,20 @@ public class PathScorer implements Serializable {
 				}
 				if (hasSense == true)
 					cost += neuCost;
-			}
-			
-			
+			}		
 		}	
 		return cost;
 	}
 	
-
+	/**
+	 * Check whether a given cost is within the threshold for neutrals.
+	 * Not used for now; defaults to false.
+	 * @param cost
+	 * @return
+	 */
 	public boolean pathAtNeutralThreshold(float cost) {
-		// always return false for now ==> do not remove anz matches for now
+		// always return false for now ==> do not remove any matches for now
 		//return cost == neuCost;
 		return false;
 	}
-	
-
-
 }

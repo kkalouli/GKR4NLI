@@ -57,7 +57,11 @@ import sem.graph.SemanticGraph;
 import sem.graph.vetypes.SkolemNode;
 
 
-
+/**
+ * Map nodes to their senses for the lexical graph. 
+ * @author Katerina Kalouli, 2017
+ *
+ */
 public class SenseMappingsRetriever implements Serializable {
 	
 	/**

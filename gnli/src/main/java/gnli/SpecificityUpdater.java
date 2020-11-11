@@ -27,8 +27,14 @@ import java.io.Serializable;
 import static java.util.Map.Entry.*;
 
 
+/**
+ * Update the initial term matches with the modifiers of each node. Different
+ * rules apply, depending on the number of modifiers. 
+ * @author Katerina Kalouli
+ *
+ */
 public class SpecificityUpdater {
-	// matchAgenda orders matches: we want to update specificities starting from 
+		// matchAgenda orders matches: we want to update specificities starting from 
 		// lower nodes in the graphs (fewest modifiers) and working up
 		private List<MatchAgendaItem> matchAgenda;
 		private List<MatchAgendaItem> matchAgendaStable;
@@ -40,6 +46,13 @@ public class SpecificityUpdater {
 		private String correctLabel;
 		private ArrayList<String> specifiers;
 		
+		/** 
+		 * Constructor. Initialiaze everything and put things into the agenda to be
+		 * updated.
+		 * @param gnliGraph
+		 * @param pathScorer
+		 * @param correctLabel
+		 */
 		public SpecificityUpdater(GNLIGraph gnliGraph, PathScorer pathScorer, String correctLabel) {
 			this.gnliGraph = gnliGraph;
 			this.pathScorer = pathScorer;
@@ -83,16 +96,19 @@ public class SpecificityUpdater {
 		}
 		
 		
-
 		/**
-		 * Updates specificity relations on matches until no more updates can be made
+		 * Update specificity relations on matches until no more updates can be made.
 		 */
 		public void updateSpecifity() {
 			while (update());
 			//gnliGraph.getMatchGraph().display();
 		}
 		
-
+		/**
+		 * Do the main updating of the matches. Checks whether the update is complete
+		 * and forwards it for updating otherwise.
+		 * @return
+		 */
 		private boolean update() {
 			int initialSize = this.matchAgenda.size();
 			if (initialSize == 0 || initialSize > MAX_AGENDA_SIZE) {
@@ -104,7 +120,7 @@ public class SpecificityUpdater {
 			// Take each item of agenda in turn.
 			// Agenda is ordered to have matches with fewest text and hypothesis modifiers first.
 			// This increases the chances of the early matches being updated to completion, and
-			// minimizes the number of full rounds taken
+			// minimizes the number of full rounds taken.
 			for (MatchAgendaItem item : this.matchAgenda) {
 				boolean updateComplete = updateMatch(item.match);
 				//gnliGraph.getMatchGraph().display();
@@ -121,7 +137,14 @@ public class SpecificityUpdater {
 		}
 		
 		
-
+		/**
+		 * Update a specific match based on whether:
+		 * - the match does not need further updating (no modifiers on either side)
+		 * - either the premise or the hypothesis have a modifier
+		 * - both the premise and the hypothesis have a modifier
+		 * @param match
+		 * @return
+		 */
 		private boolean updateMatch(MatchEdge match) {
 			//gnliGraph.matchGraph.display();
 			boolean updateComplete = false;
@@ -142,6 +165,13 @@ public class SpecificityUpdater {
 			return updateComplete;
 		}
 		
+		/**
+		 * Check whether a match does not need updating, either because there are no
+		 * modifiers on either side, or because it already has specificity none or because
+		 * it is a coreference match (those are considered separately.
+		 * @param hypoTextMatch
+		 * @return
+		 */
 		private boolean doesNotNeedUpdating(HypoTextMatch hypoTextMatch){
 			 // If it's a coreference link, it's always going to stay identical
 			if (hypoTextMatch.match.getSpecificity() == Specificity.NONE // || hypoTextMatch.match.getSpecificity() == Specificity.DISJOINT 
@@ -152,6 +182,11 @@ public class SpecificityUpdater {
 				return false;
 		}
 		
+		/**
+		 * Check whether only one of the sides has a modifier and update accordingly. 
+		 * @param hypoTextMatch
+		 * @return
+		 */
 		private boolean hypOrTextHasMods(HypoTextMatch hypoTextMatch){
 			MatchEdge m = hypoTextMatch.match;
 			if (hypoTextMatch.textModifiers.isEmpty()){
@@ -186,6 +221,13 @@ public class SpecificityUpdater {
 			return false;
 		}
 		
+		/**
+		 * Check whether there is some undirected path between a head and a modifier.
+		 * @param hypoTextMatch
+		 * @param mode
+		 * @param modifier
+		 * @return
+		 */
 		private boolean existsUndirectedMatch(HypoTextMatch hypoTextMatch, String mode, SemanticNode<?> modifier){
 			if (mode.equals("hyp")){
 				// get only direct and indirect modifiers
@@ -213,6 +255,13 @@ public class SpecificityUpdater {
 			return true;
 		}
 		
+		/** 
+		 * Check whether both the premise and the hypothesis have modifiers and update
+		 * accordingly.
+		 * @param hypoTextMatch
+		 * @param mode
+		 * @return
+		 */
 		private boolean hypAndTextHaveMods(HypoTextMatch hypoTextMatch, String mode){			
 			List<SkolemNode> modifiers = null;
 			if (mode.equals("hyp")){
@@ -230,6 +279,7 @@ public class SpecificityUpdater {
 				if (modAlreadyProcessed(restr,hypoTextMatch.match)) {
 					continue;
 				}
+				// check whether the modifier has none, one or multiple matches and update accordingly
 				switch (tOutMatches.size()){
 				 case 0:
 					updateWithUnmatchedModifier(hypoTextMatch, mode, restr);
@@ -257,7 +307,12 @@ public class SpecificityUpdater {
 			return complete;
 		}
 		
-		// hypothesis modifier has no corresponding match in the text graph
+		/**
+		 * The modifier has no corresponding match in the "other" graph.
+		 * @param hypoTextMatch
+		 * @param mode
+		 * @param restr
+		 */
 		private void updateWithUnmatchedModifier(HypoTextMatch hypoTextMatch, String mode, SkolemNode restr){
 			if (mode.equals("hyp")){
 				// H more specific
@@ -270,9 +325,14 @@ public class SpecificityUpdater {
 			}
 		}
 		
-		// // hypothesis modifier has exactly one corresponding match in the text graph: 
-		// the match can be to a text modifier which is not dominated from the text match term
-		// or the match can be to a text modifier which is dominated by the text match term
+		/**
+		 * The modifier has exactly one corresponding match in the "other" graph: the match can
+		 *  be to a modifier which is not dominated from the matching head term or the match 
+		 *  can be to a modifier which is dominated by the matching head term
+		 * @param hypoTextMatch
+		 * @param outEdge
+		 * @param mode
+		 */
 		private void updateWithOneMatchedModifier(HypoTextMatch hypoTextMatch, MatchEdge outEdge, String mode){
 			SkolemNode finishRestr = (SkolemNode) gnliGraph.getFinishNode(outEdge);
 			SemanticNode<?> startRestr = gnliGraph.getStartNode(outEdge);
@@ -307,21 +367,18 @@ public class SpecificityUpdater {
 			}
 		}
 		
+		/**
+		 * Check whether there are multiple matches for a modifier. In this case, choose the 
+		 * one with the lowest score (depth and distance). If more than ones have the same 
+		 * lowest score, then choose one randomly. 
+		 * TODO: improve this process, it will not always be correct to randomly choose one of them
+		 * @param hypoTextMatch
+		 * @param tOutMatches
+		 * @param mode
+		 * @return
+		 */
 		private boolean updateWithMultipleMatchedModifiers(HypoTextMatch hypoTextMatch, List<MatchEdge> tOutMatches, String mode){
 			boolean complete = true;
-			MatchEdge match = hypoTextMatch.match;
-			List<HypoTextMatch> newMatches = new ArrayList<HypoTextMatch>();
-			/*for (MatchEdge edg : tOutMatches){
-				// make a new copy of the match and update it
-				HypoTextMatch newMatch = new HypoTextMatch(match);
-				updateWithOneMatchedModifier(newMatch, edg, mode);
-				newMatches.add(newMatch);
-			}
-			
-			//Collections.sort(newMatches);
-			keepBestMatch(match, newMatches);
-			*/
-
 			double minCost = findMinCost(tOutMatches);
 			for (MatchEdge edg : tOutMatches){
 				double cost = edg.getScore();
@@ -332,9 +389,10 @@ public class SpecificityUpdater {
 			return complete;
 		}
 		
-		// set the content of the main match to the content of the best match (the one with the lowest cost)
-		// newMatches are the corresponding matches with modifier terms of the main match
-		private double findMinCost(List<MatchEdge> tOutMatches){ //MatchEdge match, List<HypoTextMatch> newMatches) {
+		/**
+		 * Find what is the minimum cost among the costs of all matches for a specific modifier.
+		 */
+		private double findMinCost(List<MatchEdge> tOutMatches){
 			double minCost = 1000;
 			for (MatchEdge edge : tOutMatches){
 				double cost = edge.getScore();
@@ -344,37 +402,16 @@ public class SpecificityUpdater {
 				}
 			return minCost;
 		}
-			
-			/*double maxCost = 1000;
-			HypoTextMatch bestMatch = null;
-			for (HypoTextMatch newMatch : newMatches){
-				if (newMatch.match.getJustification() != null){
-					double cost =  newMatch.match.getScore();
-					if (cost <= maxCost){
-						maxCost = cost;
-						bestMatch = newMatch;
-					}
-				}
-			}
-			match.setContent(bestMatch.match.getContent());
-			
-			/*for (HypoTextMatch newMatch : newMatches){
-				if (!newMatch.equals(newMatches.get(0))){
-					gnliGraph.removeMatchEdge(newMatch.match);
-					matchAgenda.remove(newMatch);
-				}
-			}*/
-		
-		
+				
 		/**
-		 * This modifier has already been taken into account while recalculating the match specificity
+		 * This modifier has already been taken into account while recalculating the match specificity.
 		 * @param mod
 		 * @param match
 		 * @return
 		 */
 		private boolean modAlreadyProcessed(SemanticNode<?> mod, MatchEdge match) {	
 			for (HeadModifierPathPair just : match.getJustification()) {
-				List<SemanticEdge> hPath = just.getConclusionPath();
+				List<SemanticEdge> hPath = just.getHypothesisPath();
 				if (hPath != null && !hPath.isEmpty()) {
 					SemanticEdge edge = hPath.get(hPath.size()-1);
 					if (edge.getDestVertexId().equals(mod.getLabel())) {
@@ -392,8 +429,13 @@ public class SpecificityUpdater {
 			return false;
 		}
 
-
-			
+		/**
+		 * Finalize the match by applying the restrictions coming from relative clauses and determiners/specifiers.
+		 * Also, add the cost of the match (contra/neutral/entail Flag/Cost) to the rest of the scores of the
+		 * match (depth and distance). For the cost of the match, we calculate the average but for the current
+		 * version of the system, there is only one entry in the CostList and thus this is also the average. 
+		 * @param match
+		 */
 		private void finalizeMatch(MatchEdge match) {
 			applyRestrictions(match);
 			applyProperties(match);
@@ -407,7 +449,10 @@ public class SpecificityUpdater {
 			match.incrementScore("cost", average);
 		}
 		
-		
+		/**
+		 * Update the specificity with any relative clauses that the matches have. 
+		 * @param match
+		 */
 		private void applyRestrictions(MatchEdge match){
 			SemanticNode<?> hypTerm = gnliGraph.getMatchGraph().getStartNode(match);
 			SemanticNode<?> textTerm = gnliGraph.getMatchGraph().getFinishNode(match);
@@ -456,6 +501,10 @@ public class SpecificityUpdater {
 			}
 		}
 		
+		/**
+		 * Update the specificity with the restrictions coming from determiners and quantifiers.
+		 * @param match
+		 */
 		private void applyProperties(MatchEdge match) {
 			// get hyp and text terms of the match
 			TermNode hypTerm = (TermNode) gnliGraph.getMatchGraph().getStartNode(match);
@@ -494,7 +543,12 @@ public class SpecificityUpdater {
 			match.setSpecificity(newSpecificity);
 		}
 		
-		
+		/**
+		 * Get the cardinality and the specifier of a term.
+		 * @param term
+		 * @param graph
+		 * @return
+		 */
 		private ArrayList<String> getProperties(TermNode term, SemanticGraph graph) {
 			String cardinality = "";
 			String specifier = "";
@@ -517,39 +571,36 @@ public class SpecificityUpdater {
 
 		}
 		
-		
-		
+	
 		/**
-		 * Given a conclusionTerm and its modifier, conclusionMod, and a premiseTerm matched with conclusionTerm, and another
-		 * premise term (premiseMod) that is matched with conclusionMod, look for an acceptable path linking premiseTerm and premiseMod.
-		 * Or vice versa
-		 * @param conclusionTerm 
-		 * 	A conclusion term that is matched with premiseTerm
-		 * @param conclusionMod
-		 * 	Either a direct modifier of conclusionTerm, or a term matched with the premiseMod
-		 * @param premiseTerm
-		 *  A premise term that is matched with conclusionTerm
-		 * @param premiseMod
-		 * 	Either a direct modifier of premiseTerm, or a term matched with conclusionMod
-		 * @param modlink
-		 * 	The match between conclusionMod and premiseMod
+		 * Given a hypothesisTerm and its modifier, hypothesisMod, and a premiseTerm matched 
+		 * with hypothesisTerm, and another premise term (premiseMod) that is matched with
+		 * hypothesisMod, look for a path linking premiseTerm and premiseMod, or vice versa.
+		 * @param hypothesisTerm
+		 * @param hypothesisMod
+		 * @param textTerm
+		 * @param textMod
+		 * @param hTTermsMatch
+		 * @param hTModifiersMatch
 		 * @return
-		 *  The paired head-modifier paths that justify a modifier specificity update, or null if it is unjustifiable
 		 */
 		private HeadModifierPathPair justificationOfSpecificityUpdate(SemanticNode<?> hypothesisTerm, SemanticNode<?> hypothesisMod,
 				SemanticNode<?> textTerm, SemanticNode<?> textMod, MatchEdge hTTermsMatch, MatchEdge hTModifiersMatch) {
 			HeadModifierPathPair mcp = new HeadModifierPathPair();
 			mcp.setBasePair(hTTermsMatch);
 			mcp.setModifiersPair(hTModifiersMatch);
-			mcp.setConclusionPath(findModPath(hypothesisTerm, hypothesisMod, gnliGraph.getHypothesisGraph()));
+			mcp.setHypothesisPath(findModPath(hypothesisTerm, hypothesisMod, gnliGraph.getHypothesisGraph()));
 			mcp.setPremisePath(findModPath(textTerm, textMod, gnliGraph.getTextGraph()));
 			mcp.setCost(this.pathScorer.pathCost(mcp));
+			/* following code is not utilized in the current version of the system; was
+			used during experimentation of manual association rule mining
 			if (!correctLabel.equals("") && correctLabel.equals("E"))
 				this.pathScorer.addEntailRolePath(mcp);
 			else if (!correctLabel.equals("") && correctLabel.equals("N"))
 				this.pathScorer.addNeutralRolePath(mcp);
 			else if (!correctLabel.equals("") && correctLabel.equals("C"))
 				this.pathScorer.addContraRolePath(mcp);
+			*/
 			if (!this.pathScorer.pathAtNeutralThreshold(mcp.getCost())) {
 				return mcp;
 			} else {
@@ -557,31 +608,49 @@ public class SpecificityUpdater {
 			}
 		}
 		
-		
+		/**
+		 * Set justification when there is no matching hypothesis term.
+		 * @param textTerm
+		 * @param textMod
+		 * @param hTTermsMatch
+		 * @return
+		 */
 		private HeadModifierPathPair justificationOfSpecificityUpdateNoHypothesis(SemanticNode<?> textTerm, SemanticNode<?> textMod, MatchEdge hTTermsMatch) {
 			HeadModifierPathPair mcp = new HeadModifierPathPair();
 			mcp.setBasePair(hTTermsMatch);
 			mcp.setModifiersPair(null);
-			mcp.setConclusionPath(null);
+			mcp.setHypothesisPath(null);
 			mcp.setPremisePath(findModPath(textTerm, textMod, gnliGraph.getTextGraph()));
 			mcp.setCost(this.pathScorer.pathCost(mcp));
 			return mcp;
 		}
 
-		
+		/**
+		 * Set justification when there is no matching premise term.
+		 * @param hypothesisTerm
+		 * @param hypothesisMod
+		 * @param hTTermsMatch
+		 * @return
+		 */
 		private HeadModifierPathPair justificationOfSpecificityUpdateNoText(SemanticNode<?> hypothesisTerm, SemanticNode<?> hypothesisMod, MatchEdge hTTermsMatch) {
 			HeadModifierPathPair mcp = new HeadModifierPathPair();
 			mcp.setBasePair(hTTermsMatch);
 			mcp.setModifiersPair(null);
-			mcp.setConclusionPath(findModPath(hypothesisTerm, hypothesisMod, gnliGraph.getHypothesisGraph()));
+			mcp.setHypothesisPath(findModPath(hypothesisTerm, hypothesisMod, gnliGraph.getHypothesisGraph()));
 			mcp.setPremisePath(null);
 			mcp.setCost(this.pathScorer.pathCost(mcp));
 			return mcp;
 		}
 		
 		
-		// Find the shortest directed path form start to finish node.
-		// Failing that, find the shortest undirected path
+		/**
+		 * Find the shortest directed path form start to finish node. 
+		 * Failing that, find the shortest undirected path.
+		 * @param startNode
+		 * @param finishNode
+		 * @param graph
+		 * @return
+		 */
 		private List<SemanticEdge> findModPath(SemanticNode<?> startNode, SemanticNode<?> finishNode, SemanticGraph graph) {
 			if (!graph.getGraph().containsNode(startNode) || !graph.getGraph().containsNode(finishNode)) {
 				return new ArrayList<SemanticEdge>(0);
@@ -593,7 +662,12 @@ public class SpecificityUpdater {
 			return retval;
 		}
 		
-		
+		/**
+		 * Algorithm for specificity updating. 
+		 * @param current
+		 * @param specificityFactor
+		 * @return
+		 */
 		private Specificity switchSpecificity(Specificity current, Specificity specificityFactor) {
 			Specificity updated = current;
 			switch (current) {
@@ -672,8 +746,24 @@ public class SpecificityUpdater {
 			return updated;
 		}
 		
+		/**
+		 * Get the numbers of modifiers of the premise and hypothesis in order to
+		 * create the agenda.
+		 * @param match
+		 * @return
+		 */
+		private int getNoOfHypAndTextMods(SemanticEdge match) {
+			// Agenda is sorted to prioritize matches for terms with the fewest modifiers
+			int hMods = gnliGraph.getAllHModifiers(match).size();
+			int tMods = gnliGraph.getAllTModifiers(match).size();
+			return hMods + tMods;
+		}
 		
-		
+		/**
+		 * Create an agenda item to be able to compare which item should have priority.
+		 * @author Katerina Kalouli, 2019
+		 *
+		 */
 		class MatchAgendaItem implements Comparable<MatchAgendaItem>, Serializable{
 			/**
 			 * 
@@ -687,17 +777,13 @@ public class SpecificityUpdater {
 				return this.noOfMods - o.noOfMods;
 			}
 		}
-		private int getNoOfHypAndTextMods(SemanticEdge match) {
-			// Agenda is sorted to prioritize matches for terms with the fewest modifiers
-			int hMods = gnliGraph.getAllHModifiers(match).size();
-			int tMods = gnliGraph.getAllTModifiers(match).size();
-			return hMods + tMods;
-		}
-		
+
+		/**
+		 * Create the hypothesis-premise match. 
+		 * @author kkalouli
+		 *
+		 */
 		class HypoTextMatch implements Serializable, Comparable {
-			/**
-			 * 
-			 */
 			private static final long serialVersionUID = 1282367049260447154L;
 			MatchEdge match;
 			SkolemNode textTerm;
@@ -735,8 +821,10 @@ public class SpecificityUpdater {
 				
 			}
 
-			// Sort a collection of (hypothesis) skolems by order of which
-			// have fewest text term matches:
+			/**
+			 * Sort a collection of (premise) skolems by order of which have fewest hypothesis term matches.
+			 * @param hypoMods
+			 */
 			private void sortByNumberOfTextMatches(List<SkolemNode> hypoMods) {
 				HashMap<SkolemNode,Integer> sortedHypoMods = new HashMap<SkolemNode,Integer>();
 				for (SkolemNode mod : hypoMods){
@@ -750,8 +838,10 @@ public class SpecificityUpdater {
 				}			
 			}
 			
-			// Sort a collection of (hypothesis) skolems by order of which
-			// have fewest text term matches:
+			/**
+			 * Sort a collection of (hypothesis) skolems by order of which have fewest text term matches.
+			 * @param texMods
+			 */
 			private void sortByNumberOfHypothesisMatches(List<SkolemNode> texMods) {
 				HashMap<SkolemNode,Integer> sortedTexMods = new HashMap<SkolemNode,Integer>();
 				for (SkolemNode mod : texMods){

@@ -5,11 +5,17 @@ import java.util.ArrayList;
 
 import gnli.InferenceChecker.EntailmentRelation;
 
+
+/**
+ * The inference decision for a given pair, along with the features of this pair
+ * for the hybrid classifier and the scores of the penalties. 
+ * @author Katerina Kalouli, 2019
+ *
+ */
 public class InferenceDecision implements Serializable {
 
 	private static final long serialVersionUID = 5461367650157213499L;
 	private EntailmentRelation relation;
-	private EntailmentRelation alternativeRelation;
 	private double matchStrength;
 	private double matchConfidence;
 	private	ArrayList<MatchEdge> justifications;
@@ -30,12 +36,35 @@ public class InferenceDecision implements Serializable {
 	private boolean subRel;
 	private boolean disjointRel;
 	private Integer ruleUsed;
-			
+		
+	/**
+	 * Constructor.
+	 * @param relation
+	 * @param matchStrength
+	 * @param matchConfidence
+	 * @param ruleUsed
+	 * @param tHasComplexCtxs
+	 * @param hHasComplexCtxs
+	 * @param contraFlag
+	 * @param tVeridical
+	 * @param tAntiveridical
+	 * @param tAveridical
+	 * @param hVeridical
+	 * @param hAntiveridical
+	 * @param hAveridical
+	 * @param equalsRel
+	 * @param superRel
+	 * @param subRel
+	 * @param disjointRel
+	 * @param justifications
+	 * @param looseContra
+	 * @param looseEntail
+	 * @param gnliGraph
+	 */
 		InferenceDecision(EntailmentRelation relation, double matchStrength,double matchConfidence, Integer ruleUsed, boolean tHasComplexCtxs, boolean hHasComplexCtxs, boolean contraFlag,
 				boolean tVeridical, boolean tAntiveridical, boolean tAveridical, boolean hVeridical, boolean hAntiveridical, boolean hAveridical,
-				boolean equalsRel, boolean superRel, boolean subRel, boolean disjointRel, EntailmentRelation alternativeRelation, ArrayList<MatchEdge> justifications, boolean looseContra, boolean looseEntail, GNLIGraph gnliGraph){
+				boolean equalsRel, boolean superRel, boolean subRel, boolean disjointRel, ArrayList<MatchEdge> justifications, boolean looseContra, boolean looseEntail, GNLIGraph gnliGraph){
 			this.relation = relation;
-			this.alternativeRelation = alternativeRelation;
 			this.matchStrength = matchStrength;
 			this.matchConfidence = matchConfidence;
 			this.justifications = justifications;
@@ -60,10 +89,6 @@ public class InferenceDecision implements Serializable {
 		
 		public EntailmentRelation getEntailmentRelation(){
 			return relation;
-		}
-		
-		public EntailmentRelation getAlternativeEntailmentRelation(){
-			return alternativeRelation;
 		}
 		
 		public Double getMatchStrength(){

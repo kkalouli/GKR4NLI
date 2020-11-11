@@ -47,8 +47,8 @@ import sem.graph.vetypes.ValueNode;
 
 /**
  * A semantic graph, built on top of an underlying graph data structure.
- * Comprises role, context, property, lexical, and link sub graph layer.
- * The class can be extended to include further graph layers
+ * Comprises concept, context, property, lexical, and link sub graph layer.
+ * The class can be extended to include further graph layers.
  *
  */
 public class SemanticGraph implements Serializable  {
@@ -226,12 +226,6 @@ public class SemanticGraph implements Serializable  {
 		this.name = "";
 	}
 	
-	private void addSpecifiedEdge(SemanticEdge edge,
-			Map<String, SemanticNode<?>> nodeMap, SemanticSubGraph subgraph) {
-		SemanticNode<?> start = nodeMap.get(edge.sourceVertexId);
-		SemanticNode<?> finish = nodeMap.get(edge.destVertexId);
-		addDirectedEdge(edge, start, finish, subgraph);		
-	}
 
 	/**
 	 * Get the java serialization of the SemanticGraph
@@ -263,9 +257,7 @@ public class SemanticGraph implements Serializable  {
 		this.graph.addNode(node);
 	}
 	
-	
-
-	
+		
 	/**
 	 * Add a directed  edge from start node to finish node in the role subgraph
 	 * <p> Will add nodes to the graph if they have not already been added.
@@ -535,44 +527,44 @@ public class SemanticGraph implements Serializable  {
 	
 	
 	public void displayRoles() {
-		 this.getRoleGraph().display();
+		 this.getRoleGraph().display("Concept Graph");
 	}
 	
 	public void displayDependencies() {
-		 this.getDependencyGraph().display();
+		 this.getDependencyGraph().display("Dependency Graph");
 	}
 	
 	public void displayContexts() {
-		 this.getContextGraph().display();
+		 this.getContextGraph().display("Context Graph");
 	}
 	
 	public void displayLex() {
-		this.getLexGraph().display();
+		this.getLexGraph().display("Lexical Graph");
 	}
 	
 	
 	public void displayProperties() {
-		 this.getPropertyGraph().display();
+		 this.getPropertyGraph().display("Property Graph");
 	}
 	
 	public void displayCoref() {
-		 this.getLinkGraph().display();
+		 this.getLinkGraph().display("Coreference Graph");
 	}
 	
 	public void display() {
-		 this.graph.display();
+		 this.graph.display("Entire Graph");
 	}
 	
 	public void displayRolesAndCtxs() {	
-		this.getRolesAndCtxGraph().display();
+		this.getRolesAndCtxGraph().display("Concept and Context Graph");
 	}
 	
 	public void displayRolesCtxsAndProperties() {	
-		this.getRolesCtxAndPropertiesGraph().display();
+		this.getRolesCtxAndPropertiesGraph().display("Concept, Context and Property Graph");
 	}
 	
 	public void displayRolesAndLinks() {	
-		this.getRolesAndCorefGraph().display();
+		this.getRolesAndCorefGraph().display("Concept and Coreference Graph");
 	}
 	
 	public void exportGraphAsJson(){

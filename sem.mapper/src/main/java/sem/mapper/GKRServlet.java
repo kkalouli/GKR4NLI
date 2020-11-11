@@ -29,6 +29,11 @@ import javax.servlet.http.Part;
 import sem.graph.SemGraph;
 
 
+/** 
+ * HttpServlet for the GKR demo. 
+ * @author Katerina Kalouli, 2019
+ *
+ */
 // uncomment to use through Gretty plugin
 //@WebServlet(name = "GKRServlet", urlPatterns = {"gkr"}, loadOnStartup = 1) 
 public class GKRServlet extends HttpServlet {

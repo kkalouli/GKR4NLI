@@ -29,6 +29,7 @@ public class DeterminerEntailments {
 		// second entry the specificity has to be flipped to superclass in order to account for the fact that all old men =/=> all men)
 		// in other words, superclass is always used when there is no entailment in this direction (but there is entailment in the opposite direction)
 		// none is used when there is no entailment in none of the directions
+		//TODO: some of the modifiers' monotonicites need checking
 
 		//************** a *****************
 		// a-a
@@ -977,6 +978,15 @@ public class DeterminerEntailments {
 
 	}
 
+	/**
+	 * Get the updated specificity of a specific combination of specifiers and cardinalities. 
+	 * @param hSpecifier
+	 * @param hCardinality
+	 * @param tSpecifier
+	 * @param tCardinality
+	 * @param originalSpecificity
+	 * @return
+	 */
 	public static Specificity newDeterminerSpecificity(String hSpecifier, String hCardinality, String tSpecifier, String tCardinality,Specificity originalSpecificity) {
 		StringBuilder sb = new StringBuilder(tSpecifier).append('_').append(tCardinality)
 				.append('_').append(hSpecifier).append('_').append(hCardinality)

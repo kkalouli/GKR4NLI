@@ -54,6 +54,11 @@ import sem.graph.vetypes.SkolemNodeContent;
 import sem.graph.vetypes.ValueNode;
 import sem.graph.vetypes.ValueNodeContent;
 
+/**
+ * Convert the Stanford graph to the whole GKR graph. 
+ * @author Katerina Kalouli, 2017
+ *
+ */
 public class DepGraphToSemanticGraph implements Serializable {
 
 	/**
@@ -74,7 +79,7 @@ public class DepGraphToSemanticGraph implements Serializable {
 
 
 	/**
-	 * Constructor to be used when DepGraphToSemanticGraph is called from the InferenceComputer.
+	 * Constructor to be used when DepGraphToSemanticGraph is called from the {@link InferenceComputer}.
 	 * In this case, bert, bertTokenizer, the PWN Dict and the SUMo content are passed as parameters
 	 * so that they are not called every time a new sentence is parsed
 	 * @param bert

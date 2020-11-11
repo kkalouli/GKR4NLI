@@ -7,22 +7,22 @@ import sem.graph.SemanticEdge;
 
 
 /**
- * Represents a pair of role chains / paths.
- * The first path is from a hypothesis/conclusion term to its modifier.
- * The second path is from a (matched) text/premise  term to its (matched) modifier.
+ * Represents a pair of role paths that have been matched with each other.
+ * The first path is from a hypothesis term to its modifier.
+ * The second path is from a (matched) text/premise term to its (matched) modifier.
  * A path is an ordered sequence of {@link SemanticEdge}s.
- *
+ * @author Katerina Kalouli, 2019
  */
 public class HeadModifierPathPair implements Serializable {
 	private static final long serialVersionUID = 7683317319590861558L;
 	private SemanticEdge basePair;
 	private SemanticEdge modifiersPair;
-	private List<SemanticEdge> conclusionPath;
+	private List<SemanticEdge> hypothesisPath;
 	private List<SemanticEdge> premisePath;
 	private float cost;
 	
 	/**
-	 * The {@link MatchEdge} linking the premise and conclusion terms
+	 * The {@link MatchEdge} linking the premise and  terms
 	 * @return
 	 */
 	public SemanticEdge getBasePair() {
@@ -34,7 +34,7 @@ public class HeadModifierPathPair implements Serializable {
 	
 	
 	/**
-	 * The {@link MatchEdge} linking the premise and conclusion modifiers
+	 * The {@link MatchEdge} linking the premise and hypothesis modifiers
 	 * @return
 	 */
 	public SemanticEdge getModifiersPair() {
@@ -45,19 +45,19 @@ public class HeadModifierPathPair implements Serializable {
 	}
 	
 	/**
-	 * The path from the conclusion term to its (matched) modifier
+	 * The path from the hypothesis term to its (matched) modifier
 	 * @return
 	 */
-	public List<SemanticEdge> getConclusionPath() {
-		return conclusionPath;
+	public List<SemanticEdge> getHypothesisPath() {
+		return hypothesisPath;
 	}
-	public void setConclusionPath(List<SemanticEdge> hPath) {
-		this.conclusionPath = hPath;
+	public void setHypothesisPath(List<SemanticEdge> hPath) {
+		this.hypothesisPath = hPath;
 	}
 	
 	
 	/**
-	 * The path from the conclusion term to its (matched) modifier
+	 * The path from the hypothesis term to its (matched) modifier
 	 * @return
 	 */
 	public List<SemanticEdge> getPremisePath() {

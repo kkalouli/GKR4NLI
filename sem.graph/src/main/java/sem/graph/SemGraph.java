@@ -19,7 +19,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 
 /**
- * Interface for basic graph structure for both JGraphT and Grph implementations
+ * Interface for basic graph structure for both SemJGraphT and SemGraph implementations
  *
  */
 public interface SemGraph  {
@@ -76,7 +76,7 @@ public interface SemGraph  {
 	
 	public SemGraph getSubGraph(Set<SemanticNode<?>> nodes, Set<SemanticEdge> edges);
 	
-	public JFrame display();
+	public JFrame display(String nameOfGraph);
 	
 	public void exportGraphAsJson();
 	

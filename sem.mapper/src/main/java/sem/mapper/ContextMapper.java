@@ -25,6 +25,11 @@ import sem.graph.vetypes.TermNode;
 
 import java.util.Set;
 
+/**
+ * Map a concept graph to its context graph.
+ * @author Katerina Kalouli, 2017
+ *
+ */
 public class ContextMapper implements Serializable {
 	/**
 	 * 
@@ -1303,6 +1308,9 @@ public class ContextMapper implements Serializable {
 		}
 	}
 	
+	/** 
+	 * Not integrated yet: for hypothetical contexts.
+	 */
 	private void integrateHypotheticalContexts(){
 		for (SemanticEdge edge : depGraph.getEdges()){
 			if (edge.getLabel().equals("advcl:if")){
@@ -1355,7 +1363,11 @@ public class ContextMapper implements Serializable {
 		return labelEdge;
 	}
 	
-	// get the head of the context a node belongs
+	/**
+	 * Get the head of the context a node belongs.
+	 * @param ctxNode
+	 * @return
+	 */
 	private SemanticNode<?> getHeadOfContext(SemanticNode<?> ctxNode){		
 		SemanticNode<?> ctxHead = null;
 		for (SemanticEdge out : graph.getContextGraph().getOutEdges(ctxNode)){

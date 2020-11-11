@@ -20,8 +20,8 @@ import sem.graph.vetypes.TermNodeContent;
 
 
 /**
- * This class maps the roles of the graph.
- * @author kkalouli
+ * Convert dependency graph to concept graph.
+ * @author Katerina Kalouli, 2017
  *
  */
 public class RolesMapper implements Serializable {

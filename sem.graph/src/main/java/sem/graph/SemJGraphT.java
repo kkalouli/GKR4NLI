@@ -417,7 +417,7 @@ public class SemJGraphT implements  SemGraph, Serializable{
 		return color;
 	}
 	
-	public JFrame display(){
+	public JFrame display(String nameOfGraph){
 		JGraphXAdapter<SemanticNode<?>, SemanticEdge> jgxAdapter = new JGraphXAdapter<SemanticNode<?>, SemanticEdge>(graph);
 		mxGraphComponent component = new mxGraphComponent(jgxAdapter);
 		component.setConnectable(false);
@@ -446,7 +446,7 @@ public class SemJGraphT implements  SemGraph, Serializable{
 				component.getGraph().setCellStyles(mxConstants.STYLE_STROKECOLOR, "#32CD32", new Object[]{node}); // B2B2FF
 			} else if (((mxCell) node).getValue() instanceof TermNode){
 				component.getGraph().setCellStyles(mxConstants.STYLE_FILLCOLOR, "#FFA500", new Object[]{node});
-				component.getGraph().setCellStyles(mxConstants.STYLE_STROKECOLOR, "#FFA500", new Object[]{node});
+				component.getGraph().setCellStyles(mxConstants.STYLE_STROKECOLOR, "#FFA500", new Object[]{node});		
 			} else if (((mxCell) node).getValue() instanceof LinkEdge) {
 				component.getGraph().setCellStyles(mxConstants.STYLE_FILLCOLOR, "#FF7F50", new Object[]{node});
 				component.getGraph().setCellStyles(mxConstants.STYLE_FONTCOLOR, "#FF7F50", new Object[]{node});
@@ -459,7 +459,7 @@ public class SemJGraphT implements  SemGraph, Serializable{
 		}
 		component.refresh();
 			
-		JFrame frame = new JFrame();
+		JFrame frame = new JFrame(nameOfGraph);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);	
 		frame.getContentPane().add(component);
 		//frame.setUndecorated(true);
@@ -485,7 +485,7 @@ public class SemJGraphT implements  SemGraph, Serializable{
 		if (this.graph.vertexSet().isEmpty())
 			return image;
 		// else if graph is full:		
-		JFrame frame = this.display();
+		JFrame frame = this.display("");
 		//frame.setSize(frame.getComponent(0).getSize());
 		// create buffered image and project jframe on it
 		try

@@ -10,8 +10,7 @@ import sem.graph.EdgeContent;
 
 
 /**
- * Implementation of {@link EdgeContent} to record Ecd match
- * information between two nodes.
+ * Implementation of {@link EdgeContent} to record match information between two nodes.
  *
  */
 public class MatchContent implements EdgeContent, Serializable, Comparable {
@@ -37,7 +36,7 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 	}
 	
 	/**
-	 * Create match content for given matchType (stem, surface, sense, concept)
+	 * Create match content for given matchType (stem, surface, sense, concept, embed)
 	 * @param matchType
 	 */
 	public MatchContent(MatchOrigin.MatchType matchType) {
@@ -59,7 +58,7 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 	}
 	
 	/**
-	 * 
+	 * Create match content for given:
 	 * @param matchType
 	 *   (stem, surface, sense, concept)
 	 * @param hSense
@@ -91,6 +90,17 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 		}		
 	}
 	
+	/**
+	 * Create match content for given:
+	 * @param matchType
+	 *   (stem, surface, sense, concept)
+	 @param specificity
+	 * 	The specificity of the match (sub, super, equal)
+	 * @param positionScore
+	 * 		the distance of the match in terms of JIGSAW disambiguation
+	 * @param depth
+	 * 		the sense/concept depth of the match
+	 */
 	public MatchContent(MatchOrigin.MatchType matchType, Specificity specificity,  double positionScore, double depth) {
 		this(matchType);
 		this.specificity = specificity;
@@ -100,6 +110,10 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 
 	}
 	
+	/**
+	 * Create match content for blank arguments. 
+	 * @param other
+	 */
 	public MatchContent(MatchContent other) {
 		this();
 		this.specificity = other.specificity;
@@ -110,6 +124,12 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 		this.justification = new ArrayList<HeadModifierPathPair>(other.justification);
 	}
 	
+	/**
+	 * The current costs of a match in respect to whether it is mostly associated
+	 * with an entailment/contradiction/neutral (approximation of the flags technique
+	 * analyzed in the paper)
+	 * @return
+	 */
 	public ArrayList<Float> getCostList(){
 		return costList;
 	}
@@ -119,7 +139,7 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 	}
 	
 	/**
-	 * The current specificity of the match
+	 * The current specificity of the match.
 	 * @return
 	 */
 	public Specificity getSpecificity() {
@@ -139,19 +159,7 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 	}
 	
 	/**
-	 * The origin of the match (stem, sense, concept, etc)
-	 * @return
-	 */
-	public MatchOrigin.MatchType getMatchType() {
-		if (this.matchOrigin.size() > 0) {
-			return this.matchOrigin.get(0).getMatchType();
-		} else {
-			return MatchOrigin.MatchType.NONE;
-		}
-	}
-	
-	/**
-	 * The penalty/score on the match
+	 * The whole penalty/score of the match.
 	 * @return
 	 */
 	public double getScore() {
@@ -162,15 +170,30 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 		return retval;
 	}
 	
+	/**
+	 * The penalty/score of the match concerning a certain feature (e.g. depth, distance, etc.)
+	 * @param feature
+	 * @return
+	 */
 	public double getFeatureScore(String feature) {
 		Double retval = this.scores.get(feature);
 		return retval == null ? 0.0 : retval;
 	}
 	
+	/** 
+	 * Get the available score features.
+	 * @return
+	 */
 	public HashMap<String, Double> getScoreComponents() {
 		return this.scores;
 	}
 	
+	/**
+	 * Add a score to the general score of the match and record from which feature this
+	 * score originates.
+	 * @param feature
+	 * @param score
+	 */
 	public void addScore(String feature, double score) {
 		Double currentScore = this.scores.get(feature);
 		if (currentScore == null) {
@@ -182,8 +205,8 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 
 	
 	/**
-	 * Have all restrictions on the term been considered in 
-	 * determining the final specificity
+	 * Checks whether the specificity of a match has been finalized,
+	 * after considering all the restrictions of the match.
 	 * @return
 	 */
 	public boolean isFinalized() {
@@ -192,6 +215,11 @@ public class MatchContent implements EdgeContent, Serializable, Comparable {
 	public void setFinalized(boolean finalized) {
 		this.finalized = finalized;
 	}
+	
+	/**
+	 * Get the origin of the match.
+	 * @return
+	 */
 	public List<MatchOrigin> getMatchOrigin() {
 		return matchOrigin;
 	}

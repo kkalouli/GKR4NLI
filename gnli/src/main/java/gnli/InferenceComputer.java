@@ -45,6 +45,12 @@ import sem.mapper.DepGraphToSemanticGraph;
 
 
 
+/**
+ * This is the main class of GKR4NLI. It runs the whole computation of inference, from
+ * the semantic preprocessing to the final inference label.
+ * @author Katerina Kalouli, 2019
+ *
+ */
 public class InferenceComputer {
 
 	private static KB kb;
@@ -66,6 +72,11 @@ public class InferenceComputer {
 	//private HashMap<String,String> assoRulesMap;
 
 
+	/** 
+	 * Instructor of the class. Calls all necessary external tools.
+	 * @throws FileNotFoundException
+	 * @throws UnsupportedEncodingException
+	 */
 	public InferenceComputer() throws FileNotFoundException, UnsupportedEncodingException {
 		// load the classloader to get the properties of the properties file
 		InputStream properties = getClass().getClassLoader().getResourceAsStream("gnli.properties");
@@ -81,8 +92,6 @@ public class InferenceComputer {
 		// initialize the SUMO reader
         this.sumoKB = props.getProperty("sumo_kb");
 		KBmanager.getMgr().initializeOnce(sumoKB);
-		//KBmanager.getMgr().initializeOnce("/Users/caldadmin/Documents/.sigmakee/KBs");
-		//KBmanager.getMgr().initializeOnce("/home/kkalouli/Documents/.sigmakee/KBs");
 		this.kb = KBmanager.getMgr().getKB("SUMO");
 		//serializeKb();
 		String wnInstall = props.getProperty("wn_location");
@@ -106,7 +115,13 @@ public class InferenceComputer {
 			e.printStackTrace();
 		}
 		
-		this.vnToPWNMap = new HashMap<String,String>();
+		/*
+		 * The below code is not used in the current version of the system. It was 
+		 * used for experimenting with lexicalized association rule mining. As explained
+		 * in the paper and the dissertation, this kind of association rule mining was
+		 * not successful.  
+		 */
+		/*this.vnToPWNMap = new HashMap<String,String>();
 		//this.assoRulesMap = new HashMap<String,String>();
 		BufferedReader br = null;
 		//BufferedReader brAssoRules = null;
@@ -141,12 +156,12 @@ public class InferenceComputer {
 				assoRulesMap.put(elems[0],elems[1]);	
 			}
 			brAssoRules.close();
-			inputReaderAssoRules.close();*/
+			inputReaderAssoRules.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+		
 		//for learning==true
 		//this.entailRolePaths = new HashMap<String, ArrayList<HeadModifierPathPair>>();
 		//this.neutralRolePaths =  new HashMap<String, ArrayList<HeadModifierPathPair>>();
@@ -257,7 +272,9 @@ public class InferenceComputer {
 		System.out.println("contra");
 		System.out.println(contra);
 		System.out.println("entail");
-		System.out.println(entail);*/
+		System.out.println(entail);
+		
+		*/
 		
 		// comment out due to multithreading; comment in if you do not want multithreading
 		this.semGraph = new DepGraphToSemanticGraph(bert, tokenizer, wnDict, sumoContent);
@@ -265,23 +282,17 @@ public class InferenceComputer {
 
 	}
 	
-	public DepGraphToSemanticGraph getDependencyGraphInstacne() {
-		return semGraph;
-	}
-	
-	public KB getKB() {
-		return kb;
-	}
-	
-	
+	// Low-level method, not used for now.
 	public HashMap<String,String> getVnToPWNMap(){
 		return vnToPWNMap;
 	}
 	
+	// Low-level method, not used for now.
 	public void setVnToPWNMap(HashMap<String,String> vnToPWNMap){
 		this.vnToPWNMap = vnToPWNMap;
 	}
 	
+	// Low-level methods, not used for now.
 	/*public HashMap<String,String> getAssoRulesMap(){
 		return assoRulesMap;
 	}
@@ -290,46 +301,67 @@ public class InferenceComputer {
 		this.assoRulesMap = assoRulesMap;
 	}*/
 	
+	// Low-level method, not used for now.
 	public HashMap<String,ArrayList<HeadModifierPathPair>> getNeutralRolePaths(){
 		return this.neutralRolePaths;
 	}
 	
+	// Low-level method, not used for now.
 	public HashMap<String,ArrayList<HeadModifierPathPair>> getEntailRolePaths(){
 		return this.entailRolePaths;
 	}
 	
+	// Low-level method, not used for now.
 	public HashMap<String,ArrayList<HeadModifierPathPair>> getContraRolePaths(){
 		return this.contraRolePaths;
 	}
 	
+	// Low-level method, not used for now.
 	public void setNeutralRolePaths(HashMap<String,ArrayList<HeadModifierPathPair>> neutralRolePaths){
 		this.neutralRolePaths = neutralRolePaths;
 	}
 	
+	// Low-level method, not used for now.
 	public void setEntailRolePaths(HashMap<String,ArrayList<HeadModifierPathPair>> entailRolePaths){
 		this.entailRolePaths = entailRolePaths;
 	}
 	
+	// Low-level method, not used for now.
 	public void setContraRolePaths(HashMap<String,ArrayList<HeadModifierPathPair>> contraRolePaths){
 		this.contraRolePaths = contraRolePaths;
 	}
 	
+	// Low-level method, not used for now.
 	public void setPathsAndCtxs(ArrayList<String> pathsAndCtxs) {
 		this.pathsAndCtxs = pathsAndCtxs;
 	}
 	
+	// Low-level method, not used for now.
 	public ArrayList<String> getPathsAndCtxs() {
 		return this.pathsAndCtxs;
 	}
 	
+	// Low-level method, not used for now.
 	public void setAssociationRules(HashMap<String,String> associationRules){
 		this.associationRules = associationRules;
 	}
 	
+	// Low-level method, not used for now.
 	public HashMap<String,String> getAssociationRules(){
 		return associationRules;
 	}
 	
+	// Low-level method.
+	public KB getKB() {
+		return kb;
+	}
+	
+	/**
+	 * Serialize the path combinations of the pairs and write them to files depending on 
+	 * what the gold label of each path combination is. Used for experimenting. Not used currently.
+	 * @param rolePaths
+	 * @param type
+	 */
 	private void serialize(HashMap<String,ArrayList<HeadModifierPathPair>> rolePaths, String type){	
 		FileOutputStream fileOut;
 		ObjectOutputStream out;
@@ -371,6 +403,12 @@ public class InferenceComputer {
 		}
 	}
 	
+	/**
+	 * Deserialize the path combinations of the matches. Used for experimenting. 
+	 * Not used currently.
+	 * @param rolePaths
+	 * @param type
+	 */
 	@SuppressWarnings("unchecked")
 	public HashMap<String,ArrayList<HeadModifierPathPair>> deserialize(String type){
 		HashMap<String,ArrayList<HeadModifierPathPair>> rolePaths = new HashMap<String,ArrayList<HeadModifierPathPair>>();
@@ -498,6 +536,17 @@ public class InferenceComputer {
 	}
 	
 
+	/**
+	 * Runs all stages of the GKR4NLI pipeline, from semantic preprocessing to inference decision.
+	 * @param sent1
+	 * @param sent2
+	 * @param correctLabel
+	 * @param kb
+	 * @param pairID
+	 * @return
+	 * @throws FileNotFoundException
+	 * @throws UnsupportedEncodingException
+	 */
 	public InferenceDecision computeInference(String sent1, String sent2, String correctLabel, KB kb, String pairID) throws FileNotFoundException, UnsupportedEncodingException {	
 		//long startTime = System.currentTimeMillis();
 		List<SemanticGraph> texts = new ArrayList<SemanticGraph>();
@@ -529,18 +578,19 @@ public class InferenceComputer {
 		//System.out.println("That took " + (endTime - startTime) + " milliseconds");
 		texts.add(graphT);	
 		hypotheses.add(graphH);
-		GNLIGraph gnli = new GNLIGraph(texts, hypotheses);
 		
+		// 1. Get semantic preprocessing done: convert sentences to their GKR graphs.
+		GNLIGraph gnli = new GNLIGraph(texts, hypotheses);	
 		//gnli.getHypothesisGraph().displayRolesAndCtxs();
 		//gnli.getTextGraph().displayRolesAndCtxs();
 		//gnli.getTextGraph().displayDependencies();
 		//gnli.getTextGraph().displayLex();
 		//gnli.getTextGraph().displayProperties();
 		
-		// Go through premise and hypothesis graphs making initial term matches.
+		// 2. Go through premise and hypothesis graphs making initial term matches.
 		// This only compares nodes in the graphs, and takes no account of the edges
 		// in the graphs.
-		// These matches will be recorded on the ecd graph as extra match edges
+		// These matches will be recorded on the match graph as extra match edges
 		final InitialTermMatcher initialTermMatcher = new InitialTermMatcher(gnli, kb);
 		initialTermMatcher.process();
 		//gnli.display();
@@ -563,10 +613,7 @@ public class InferenceComputer {
 		gnli.getTextGraph().displayRoles();*/
 		
 
-		
-		
-
-		// Now look at the arc structure of the premise and hypothesis graphs to
+		// 3. Now look at the arc structure of the premise and hypothesis graphs to
 		// update the specificity relations on the initial term matches
 		String labelToLearn = "";
 		if (learning == true)
@@ -575,7 +622,8 @@ public class InferenceComputer {
 		final SpecificityUpdater su = new SpecificityUpdater(gnli,scorer, labelToLearn);
 		su.updateSpecifity();	
 		//gnli.matchGraph.display();
-		// Now look at the updated matches and context veridicalities to
+		
+		// 4. Now look at the updated matches and context veridicalities to
 		// determine entailment relations
 		final InferenceChecker infCh = new InferenceChecker(gnli, this, su, labelToLearn, pairID);
 		InferenceDecision decision =  infCh.getInferenceDecision();
@@ -583,7 +631,13 @@ public class InferenceComputer {
 		return decision;
 	}
 	
-	
+	/**
+	 * Compute the inference relation for each sentence of a testsuite.  
+	 * @param file
+	 * @param semGraph
+	 * @param kb
+	 * @throws IOException
+	 */
 	public void computeInferenceOfTestsuite(String file, DepGraphToSemanticGraph semGraph, KB kb) throws IOException{
 		FileInputStream fileInput = new FileInputStream(file);
 		InputStreamReader inputReader = new InputStreamReader(fileInput, "UTF-8");
@@ -594,7 +648,7 @@ public class InferenceComputer {
 		//FileOutputStream fileSer = new FileOutputStream(file.substring(0,file.indexOf(".txt"))+"_serialized_results.ser"); 
         //ObjectOutputStream writerSer = new ObjectOutputStream(fileSer); 
 		
-		// read in the association rules if we want to use them; we also need to uncmment the initialization in the constructor
+		// read in the association rules if we want to use them; we also need to uncomment the initialization in the constructor
 		/*FileInputStream fileAssocRules = new FileInputStream("association_rules_fpgrowth.txt");
 		InputStreamReader inputAssocRules = new InputStreamReader(fileAssocRules, "UTF-8");
 		BufferedReader brAssocRules = new BufferedReader(inputAssocRules);
@@ -640,14 +694,14 @@ public class InferenceComputer {
 					if (decision.getJustifications() != null && !decision.getJustifications().isEmpty())
 						spec = decision.getJustifications().toString();	
 					writer.write(pair+"\t"+decision.getEntailmentRelation()+"\t"+decision.getMatchStrength()+"\t"+decision.getMatchConfidence()+"\t"+
-							decision.tHasComplexCtxs() + "\t" +decision.hHasComplexCtxs() + "\t" + decision.getAlternativeEntailmentRelation()+"\t"+decision.isLooseContr()+
+							decision.tHasComplexCtxs() + "\t" +decision.hHasComplexCtxs() + "\t" +"\t"+decision.isLooseContr()+
 							"\t"+decision.isLooseEntail()+"\t"+spec+"\n");
 					writer.flush();
 					System.out.println("Processed pair "+ id);
 				}
 				else
 					decisionGraphs.add(new InferenceDecision(EntailmentRelation.UNKNOWN, 0.0, 0.0, 0, false, false, false,false,false,
-							false, false, false, false, false, false, false, false, EntailmentRelation.UNKNOWN, null, false, false, null));
+							false, false, false, false, false, false, false, false, null, false, false, null));
 				
 			} catch (Exception e){
 				writer.write(pair+"\t"+"Exception found:"+e.getMessage()+"\n");
@@ -675,12 +729,17 @@ public class InferenceComputer {
 		//this.serialize(neutralRolePaths, "neutral");
 		//this.serialize(contraRolePaths, "contra");
            
-	}/*
+	}
 	
-	
-	/***
+	/**
 	 * Process a single pair to find the inference relation. 
 	 * Print the result on the console for now.
+	 * @param premise
+	 * @param hypothesis
+	 * @param correctLabel
+	 * @param kb
+	 * @throws FileNotFoundException
+	 * @throws UnsupportedEncodingException
 	 */
 	public void computeInferenceOfPair(String premise, String hypothesis, String correctLabel, KB kb) throws FileNotFoundException, UnsupportedEncodingException{
 		InferenceDecision decision = computeInference(premise, hypothesis, correctLabel, kb, "1");
@@ -702,7 +761,11 @@ public class InferenceComputer {
 	}
 	
 	
-	
+	/**
+	 * Deserialize the computed inference pairs, if they have been stored serialized.
+	 * @param file
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public ArrayList<InferenceDecision> deserializeFileWithComputedPairs(String file){
 		ArrayList<InferenceDecision> pairsToReturn = null;
@@ -725,28 +788,33 @@ public class InferenceComputer {
 			return pairsToReturn;
 	}
 	
+	/**
+	 * Investigate the inference labels given to pairs, after deserializing the 
+	 * file they were written. 
+	 * @param file
+	 */
 	public void investigateSerializedDecisions(String file){
 		ArrayList<InferenceDecision> decisions = deserializeFileWithComputedPairs(file);
 		for (InferenceDecision dec : decisions){
-		GNLIGraph gnliGraph = dec.getGNLIGraph();
-		gnliGraph.display();
-		SemanticGraph hGraph = gnliGraph.hypothesisGraph;
-		SemanticGraph tGraph = gnliGraph.textGraph;
-		SemanticGraph mGraph = gnliGraph.matchGraph;
-		hGraph.displayRolesAndCtxs();
-		tGraph.displayRolesAndCtxs();
-		mGraph.display();
-		String relation = dec.getEntailmentRelation().toString();
-		ArrayList<MatchEdge> justif = dec.getJustifications();
-		System.out.println(relation);
-		
-		
+			GNLIGraph gnliGraph = dec.getGNLIGraph();
+			gnliGraph.display();
+			SemanticGraph hGraph = gnliGraph.hypothesisGraph;
+			SemanticGraph tGraph = gnliGraph.textGraph;
+			SemanticGraph mGraph = gnliGraph.matchGraph;
+			hGraph.displayRolesAndCtxs();
+			tGraph.displayRolesAndCtxs();
+			mGraph.display();
+			String relation = dec.getEntailmentRelation().toString();
+			ArrayList<MatchEdge> justif = dec.getJustifications();
+			System.out.println(relation);	
 		}
-		
-		
-		
 	}
 	
+	/**
+	 * Needed for multi-threading. Not use for now. JIGSAW does not allow multi-threading.
+	 * @author Katerina Kalouli, 2019
+	 *
+	 */
 	public class GKRConcurrentTask implements Callable<SemanticGraph> {
 		 private String sent1;
 		 private String sent2;
@@ -766,15 +834,14 @@ public class InferenceComputer {
 	    }
 	}
 
-	
+	/**
+	 * Main method with which the inference relation for a pair or a testsuite can be computed.
+	 * Make sure to define the file or the pair you want to have computed. 
+	 * @param args
+	 * @throws IOException
+	 */
 	public static void main(String args[]) throws IOException {
-		//String configFile = "/Users/kkalouli/Documents/project/gnli/gnli.properties";
-		//String configFile = "/Users/caldadmin/Documents/diss/gnli.properties";
-		//String configFile = "/home/kkalouli/Documents/diss/gnli.properties";
 		InferenceComputer comp = new InferenceComputer();
-		//long startTime = System.currentTimeMillis();
-		//DepGraphToSemanticGraph semGraph = new DepGraphToSemanticGraph();
-		// TODO: change label for embed match
 		String premise = "The writer is less pleasant than the girl.";	
 		String hypothesis = "The girl is not less pleasant than the writer.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
@@ -789,24 +856,15 @@ public class InferenceComputer {
 		//String file = "/home/kkalouli/Documents/diss/experiments/SICK_unique_sent_sanity_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
 		//String file = "/Users/kkalouli/Documents/QuestionsAtTheInterfaces/P8/heidelberg_collaboration/test_heidel.txt";
-		//comp.computeInferenceOfPair(semGraph, premise, hypothesis, "E", kb);
 		//String file = "/home/kkalouli/Documents/diss/experiments/still_to_be_checked_only_NEUTRAL_low_jac_similarity_both_dirs.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
-		//comp.computeInferenceOfPair(premise, hypothesis, "E", kb);
-		//comp.computeInferenceOfTestsuite(file, semGraph, kb);
 		//String file = "/home/kkalouli/Desktop/not_run_through_gnli_yet_both_dirs.txt";
 		//String file = "/Users/kkalouli/Desktop/test.txt";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK reannotation/Larry_and_Hai_collaboration/to_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/still_to_be_checked_only_NEUTRAL_low_jac_similarity_both_dirs.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
+		
 		//comp.computeInferenceOfPair(premise, hypothesis, "E", kb);
-		comp.computeInferenceOfTestsuite(file, semGraph, kb);
-		//long endTime = System.currentTimeMillis();
-		//System.out.println("The whole thing took " + (endTime - startTime) + " milliseconds");
-		//comp.investigateSerializedDecisions(file);
-	
+		comp.computeInferenceOfTestsuite(file, semGraph, kb);	
 	}
-	
-	
-
 }

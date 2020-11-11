@@ -46,13 +46,15 @@ import sem.graph.SemGraph;
 import sem.mapper.GKRServlet.getMxGraphConcurrentTask;
 
 
+/**
+ * HttpServlet for running the demo. 
+ * @author Katerina Kalouli, 2019
+ *
+ */
 // uncomment to use through Gretty plugin
 //@WebServlet(name = "XplaiNLIServlet", urlPatterns = {"xplainli"}, loadOnStartup = 1) 
 public class XplaiNLIServlet extends HttpServlet {
 		
-		/**
-		 * 
-		 */
 		private static final long serialVersionUID = -2259876163739962321L;
 		private InferenceComputer inferenceComputer;
 		private InferenceDecision inferenceDecision;
@@ -110,6 +112,7 @@ public class XplaiNLIServlet extends HttpServlet {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			// default examples
 			this.examples = new HashMap<String,String>();
 			examples.put("-1", "The dog is walking.;;The animal is walking.");
 			examples.put("-2", "The judge advised the doctor.;;The doctor advised the judge.");
@@ -159,6 +162,7 @@ public class XplaiNLIServlet extends HttpServlet {
 			
 			this.featuresValues = new LinkedHashMap<String,Boolean>();
 			
+			// map of rules to know what to visualize
 			rulesMap = new HashMap<Integer,ArrayList<String>>();
 			// contradiction implementation with different contexts 1
 			rulesMap.put(1, new ArrayList<String>(Arrays.asList("Hantiver", "Pver", "dis")));
@@ -191,11 +195,10 @@ public class XplaiNLIServlet extends HttpServlet {
 			rulesMap.put(23, new ArrayList<String>(Arrays.asList("Hantiver", "Pantiver", "eq", "contraFlag")));
 			rulesMap.put(24, new ArrayList<String>(Arrays.asList("Hantiver", "Pantiver", "super", "contraFlag")));
 			// all neutral ones - all remaining
-			rulesMap.put(25, new ArrayList<String>(Arrays.asList()));
-			
-			
-		
+			rulesMap.put(25, new ArrayList<String>(Arrays.asList()));	
 		}
+		
+		
 	    protected void doGet(HttpServletRequest request, HttpServletResponse response)
 	        throws ServletException, IOException {
 	    	 String judgment = request.getParameter("judge");
@@ -217,6 +220,9 @@ public class XplaiNLIServlet extends HttpServlet {
 
 	    }
 
+	    /**
+	     * Handle the main request of the demo. 
+	     */
 	    protected void doPost(HttpServletRequest request, HttpServletResponse response)
 	        throws ServletException, IOException {
 	 
@@ -275,7 +281,7 @@ public class XplaiNLIServlet extends HttpServlet {
 	        //System.out.println(timestamp2);
 	        //System.out.println(hyDecision);
 	        if (this.inferenceDecision == null) this.inferenceDecision = new InferenceDecision(EntailmentRelation.UNKNOWN, 0.0, 0.0, 0, false, false, false, false, false, false, false, false,
-	        		false, false, false, false, false, EntailmentRelation.UNKNOWN, null, false, false, null);
+	        		false, false, false, false, false, null, false, false, null);
 
 	        try {
 				TimeUnit.SECONDS.sleep(3);
@@ -283,10 +289,12 @@ public class XplaiNLIServlet extends HttpServlet {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-	              
+	            
+	        // clear any previous heuristics tried
 	        this.heurWordsEntail.clear();
 	        this.heurWordsContra.clear();
 	        this.heurWordsNeu.clear();
+	        // add newly defined heuristics
 	        if (!request.getParameter("premiseEntailment").equals("")) {
 	        	String[] words = request.getParameter("premiseEntailment").split(";");
 	        	for (String w: words) {
@@ -338,27 +346,15 @@ public class XplaiNLIServlet extends HttpServlet {
 	        createJSONObject();
 	        request.setAttribute("premise", premise);
 	        request.setAttribute("hypothesis", hypothesis);
-	        /*request.setAttribute("relation", inferenceDecision.getEntailmentRelation());
-	        request.setAttribute("hVeridical", inferenceDecision.hHasVerCtx());
-	        request.setAttribute("hAveridical", inferenceDecision.hHasAverCtx());
-	        request.setAttribute("hAntiveridical", inferenceDecision.hHasAntiVerCtx());
-	        request.setAttribute("tVeridical", inferenceDecision.tHasVerCtx());
-	        request.setAttribute("tAveridical", inferenceDecision.tHasAverCtx());
-	        request.setAttribute("tAntiveridical", inferenceDecision.tHasAntiVerCtx());
-	        request.setAttribute("equalsRel", inferenceDecision.hasEqualsRel());
-	        request.setAttribute("superRel", inferenceDecision.hasSuperRel());
-	        request.setAttribute("subRel", inferenceDecision.hasSubRel());
-	        request.setAttribute("disjointRel", inferenceDecision.hasDisjointRel());
-	        request.setAttribute("hComplexCtxs", inferenceDecision.hHasComplexCtxs());
-	        request.setAttribute("tComplexCtxs", inferenceDecision.tHasComplexCtxs());
-	        request.setAttribute("contraFlag", inferenceDecision.hasContraFlag());
-	        request.setAttribute("dlDecision", dlDecision);
-	        request.setAttribute("hyDecision", hyDecision);	 */ 
 	        request.setAttribute("jsonFinal", finalJson);
 	        request.getRequestDispatcher("index.jsp").forward(request, response); 
 	    }
 	    
-	    
+	    /**
+	     * Get the json of the default examples so that they do not need to be run every time again. 
+	     * @param id
+	     * @return
+	     */
 	    protected String getStoredJson(String id) {
 	    	BufferedReader br;
 	    	String toAdd = "";
@@ -386,7 +382,11 @@ public class XplaiNLIServlet extends HttpServlet {
 	    }
 	    
 
-	    
+	    /**
+	     * Get the decision of the DL component as a concurrentTask for faster response.
+	     * @author Katerina Kalouli, 2019
+	     *
+	     */
 	    public class getDlDecisionConcurrentTask implements Callable<String> {
 			 private String dlDecision;
 		 
@@ -400,6 +400,12 @@ public class XplaiNLIServlet extends HttpServlet {
 		    }
 		}
 	    
+	    /**
+	     * Get the decision of the DL component by running the python script.
+	     * @param premise
+	     * @param hypothesis
+	     * @return
+	     */
 	    protected String getDLOutput(String premise, String hypothesis){
 	    	String dlDecision = "";
 	    	String s = null;
@@ -448,6 +454,13 @@ public class XplaiNLIServlet extends HttpServlet {
 	    	return dlDecision;
 	    }
 	    
+	    /**
+	     * Get the decision of the hybrid component by providing the features of the current pair
+	     * and running the python script.
+	     * @param bertLabel
+	     * @param inferenceDecision
+	     * @return
+	     */
 	    protected String getHybridOutput(String bertLabel, InferenceDecision inferenceDecision ){
 	    	String hyDecision = "";
 	    	String output = "";
@@ -526,6 +539,14 @@ public class XplaiNLIServlet extends HttpServlet {
 	    	return hyDecision;
 	    }
 	    
+	    /**
+	     * register an annotation to the DB. Not functional currently. 
+	     * @param database
+	     * @param type
+	     * @param ruleDec
+	     * @param dlDec
+	     * @param hyDec
+	     */
 	    protected void registerInDB(MongoDatabase database, String type, InferenceDecision ruleDec, String dlDec, String hyDec) {	
 	    	MongoCollection<Document> collection = database.getCollection(type);
 	    	//Gson gson = new Gson();
@@ -536,7 +557,10 @@ public class XplaiNLIServlet extends HttpServlet {
 	    	collection.insertOne(pair);
 	    	
 	    }
-	    
+	   
+	    /**
+	     * Assign each feature its value. 
+	     */
 	    protected void fillMapOfFeaturesValues(){
 			featuresValues.put("Pver", inferenceDecision.tHasVerCtx());
 			featuresValues.put("Hver", inferenceDecision.hHasVerCtx());
@@ -558,7 +582,9 @@ public class XplaiNLIServlet extends HttpServlet {
 			featuresValues.put("wordHeurN", wordHeurN);
 	    }
 	    
-	    
+	    /**
+	     * Implement the 4 explanations-heuristics for the DL model.
+	     */
 	    protected void checkForBertFeatures(){
 	    	// negation words
 	    	ArrayList<String> negationWords = new ArrayList<String>();
@@ -655,8 +681,10 @@ public class XplaiNLIServlet extends HttpServlet {
 	    	
 	    }
 	    
-	    
-	   
+	    /**
+	     * Create a json object with the decision of the 3 components and the features
+	     * used as explanations. To be read by the visualization component. 
+	     */
 	    @SuppressWarnings("unchecked")
 		protected void createJSONObject() {
 	    	JSONObject jsonFinal = new JSONObject();
@@ -674,7 +702,6 @@ public class XplaiNLIServlet extends HttpServlet {
 	    	decisionsArray.add(itemHybrid);	    	
 	    	jsonFinal.put("decisions", decisionsArray);
 	    	
-	    	//"features" = [  {"name":"feayure_name1", "attirbutes"=[ {"id":1, value: true}, {"id":2, value:false} ] }, {}  ],    	
 	    	// features array
 	    	JSONArray featuresArray = new JSONArray();
 	    	for (String key : featuresValues.keySet()) {
