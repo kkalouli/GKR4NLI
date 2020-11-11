@@ -1,4 +1,4 @@
-rootProject.name = 'project'
+rootProject.name = 'gkr4nli'
 include 'sem.graph'
 include 'sem.mapper'
 include 'gnli'
