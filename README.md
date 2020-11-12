@@ -65,7 +65,7 @@ Change the location and set the location path in which you installed the parent 
 
 ``` bert_vocab=/Users/kkalouli/Documents/project/sem.mapper/src/main/resources/vocab.txt ```  
 
-to point to the location of the *vocab.txt* file. You will also need to modify the *build.gradle* file of sem.mapper to import the model you want (*implementation 'com.robrua.nlp.models:easy-bert-uncased-L-12-H-768-A-12:1.0.0'* )
+to point to the location of the *vocab.txt* file. You will also need to modify the *build.gradle* files of sem.mapper and gnli to import the model you want (*implementation 'com.robrua.nlp.models:easy-bert-uncased-L-12-H-768-A-12:1.0.0'* )
 
 
 8. Go back into the cloned directory and find the *build.gradle* file of the *gnli* folder. Change the following line
