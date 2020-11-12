@@ -12,7 +12,7 @@ If you use this software in writing scientific papers, or you use this software 
 CD-ROMs) please include the above citation.
 
 # Demo
-If you would like to have a quick sense of how GKR4NLI looks like, check out our online demo (note that the online demo presents GKR4NLI as a component of the 
+If you would like to have a quick taste of how GKR4NLI looks like, check out our online demo (note that the online demo presents GKR4NLI as a component of the 
 hybrid system, and not as a stand-alone engine): http://bit.ly/XplaiNLI
 
 
