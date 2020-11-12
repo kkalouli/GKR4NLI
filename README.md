@@ -3,7 +3,8 @@
 This is the GKR4NLI symbolic NLI engine. It computes the inference relation between two sentences. It is based on a version of Natural Logic (Valencia, 1991;
 MacCartney & Manning, 2007) and on the Graphical Knowledge Representation (GKR; Kalouli & Crouch, 2018). Althought GKR4NLI is a stand-alone system, it was introduced
 as the symbolic component of Hy-NLI, a hybrid NLI engine. Find more details in our paper:
-*Kalouli, A.-L., R. Crouch and V. de Paiva. 2020. Hy-NLI: a Hybrid system for Natural Language Inference. In Proceedings of COLING 2020 (link coming soon).
+
+*Kalouli, A.-L., R. Crouch and V. de Paiva. 2020. Hy-NLI: a Hybrid system for Natural Language Inference. In Proceedings of COLING 2020 (link coming soon).*
 
 Author/developer: Aikaterini-Lida Kalouli (<aikaterini-lida.kalouli@uni-konstanz.de>) and Richard Crouch (<dick.crouch@gmail.com>)
 
