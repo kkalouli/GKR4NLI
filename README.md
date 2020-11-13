@@ -91,7 +91,15 @@ For Eclipse: import it as a gradle project
 
 In the subproject gnli there is a class named InferenceComputer.
 In the main method at the end of this class you can choose to run only one pair or a testsuite with pairs: just comment in or
-out the corresponding method. The testsuite should contain one pair per line and the two sentences of the pair should be separated by a tab.
+out the corresponding method. The testsuite should contain one pair per line and the two sentences of the pair should be separated by a tab. The pair should also be 
+annotated with one of E, C or N. So, the file should look like:
+```
+sentenceA \t sentenceB \t N \n
+sentenceC \t sentenceD \t E \n
+```
+etc
+(the inference label is not used anywhere during the computation -- the association rule mining learning is done offline --, but this input is more convenient for the later
+evaluation of the results)
 
 # Contact
 For troubleshooting, comments, ideas and discussions, please contact aikaterini-lida.kalouli(at)uni-konstanz.de or dick.crouch(at)gmail.com
