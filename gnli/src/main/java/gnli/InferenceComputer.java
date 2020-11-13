@@ -643,8 +643,15 @@ public class InferenceComputer {
 		InputStreamReader inputReader = new InputStreamReader(fileInput, "UTF-8");
 		BufferedReader br = new BufferedReader(inputReader);
 		// true stands for append = true (dont overwrite)
+		// writes the inference relation of a pair into a file (along with its justification and confidence)
 		FileWriter fileWriter =  new FileWriter(file.substring(0,file.indexOf(".txt"))+"_with_inference_relation.csv", true);
 		BufferedWriter writer = new BufferedWriter(fileWriter);
+		writer.write("ID\tSentenceA\tSentenceB\tGoldLabel\tGKR4NLILabel\tJustification\n");
+		// writes the semantic features of a pair into a file to be used for the further processing of the hybrid classifier
+		FileWriter fileWriter2 =  new FileWriter(file.substring(0,file.indexOf(".txt"))+"_with_semantic_features.csv", true);
+		BufferedWriter writer2 = new BufferedWriter(fileWriter2);
+		writer2.write("ID\tSentenceA\tSentenceB\tGoldLabel\tComplexCtxs\tcontraFlag\tVeridical\t"
+				+ "Antiveridical\tAveridical\tEquals\tSuperclass\tSubclass\tDisjoint\tGKR4NLILabel\n");
 		//FileOutputStream fileSer = new FileOutputStream(file.substring(0,file.indexOf(".txt"))+"_serialized_results.ser"); 
         //ObjectOutputStream writerSer = new ObjectOutputStream(fileSer); 
 		
@@ -693,10 +700,23 @@ public class InferenceComputer {
 					String spec = "";
 					if (decision.getJustifications() != null && !decision.getJustifications().isEmpty())
 						spec = decision.getJustifications().toString();	
-					writer.write(pair+"\t"+decision.getEntailmentRelation()+"\t"+decision.getMatchStrength()+"\t"+decision.getMatchConfidence()+"\t"+
-							decision.tHasComplexCtxs() + "\t" +decision.hHasComplexCtxs() + "\t" +"\t"+decision.isLooseContr()+
-							"\t"+decision.isLooseEntail()+"\t"+spec+"\n");
+					// write inference relation to file
+					writer.write(pair+"\t"+decision.getEntailmentRelation()+"\t"+spec+"\n");
 					writer.flush();
+					// compute and write semantic features to other file
+					String complexCtxs = (decision.hHasComplexCtxs() || decision.tHasComplexCtxs()) ? "1" : "0";
+					String contraCost = decision.hasContraFlag() ? "1" : "0";
+					String verid = (decision.hHasVerCtx() || decision.tHasVerCtx()) ? "1" : "0";
+					String antiverid = (decision.hHasAntiVerCtx() || decision.tHasAntiVerCtx()) ? "1" : "0";
+					String averid = (decision.hHasAverCtx() || decision.tHasAverCtx()) ? "1" : "0";
+					String equals = decision.hasEqualsRel() ? "1" : "0";
+					String superR = decision.hasSuperRel() ? "1" : "0";
+					String sub = decision.hasSubRel() ? "1" : "0";
+					String dis = decision.hasDisjointRel() ? "1" : "0";
+					writer2.write(pair+"\t"+complexCtxs + "\t"+ contraCost + "\t" + verid + "\t" + antiverid +
+							"\t" + averid + "\t" + equals + "\t" + superR + "\t" + sub + "\t" + dis + "\t" +
+							decision.getEntailmentRelation().toString().substring(0,1)+ "\n");
+					writer2.flush();
 					System.out.println("Processed pair "+ id);
 				}
 				else
@@ -720,6 +740,8 @@ public class InferenceComputer {
         
 		writer.close();
 		fileWriter.close();
+		writer2.close();
+		fileWriter2.close();
 		writerCtxPaths.close();
 		fileWriterCtxPaths.close();		
 		wnDict.close();
@@ -850,9 +872,9 @@ public class InferenceComputer {
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";
 		//String file = "/home/kkalouli/Documents/diss/test_heidel.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/to_check.txt";
-		//String file = "/home/kkalouli/Desktop/test.txt";
+		String file = "/Users/kkalouli/Desktop/test.txt";
 		//String file = "/Users/kkalouli/Documents/Corpora/FraCaS/single_premise/fracas_sent_only_single_premise.txt";
-		String file = "/home/kkalouli/Desktop/SICK_trial_and_train_both_dirs_corrected_only_a_and_Cb_and_Eb.txt";
+		//tring file = "/home/kkalouli/Desktop/SICK_trial_and_train_both_dirs_corrected_only_a_and_Cb_and_Eb.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/SICK_unique_sent_sanity_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
 		//String file = "/Users/kkalouli/Documents/QuestionsAtTheInterfaces/P8/heidelberg_collaboration/test_heidel.txt";
