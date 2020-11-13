@@ -3,7 +3,8 @@
 This is the GKR4NLI symbolic NLI engine. It computes the inference relation between two sentences. It is based on a version of Natural Logic (Valencia, 1991;
 MacCartney & Manning, 2007) and on the Graphical Knowledge Representation (GKR; Kalouli & Crouch, 2018). Althought GKR4NLI is a stand-alone system, it was introduced
 as the symbolic component of Hy-NLI, a hybrid NLI engine. Find more details in our paper:
-*Kalouli, A.-L., R. Crouch and V. de Paiva. 2020. Hy-NLI: a Hybrid system for Natural Language Inference. In Proceedings of COLING 2020 (link coming soon).
+
+*Kalouli, A.-L., R. Crouch and V. de Paiva. 2020. Hy-NLI: a Hybrid system for Natural Language Inference. In Proceedings of COLING 2020 (link coming soon).*
 
 Author/developer: Aikaterini-Lida Kalouli (<aikaterini-lida.kalouli@uni-konstanz.de>) and Richard Crouch (<dick.crouch@gmail.com>)
 
@@ -11,7 +12,7 @@ If you use this software in writing scientific papers, or you use this software 
 CD-ROMs) please include the above citation.
 
 # Demo
-If you would like to have a quick sense of how GKR4NLI looks like, check out our online demo (note that the online demo presents GKR4NLI as a component of the 
+If you would like to have a quick taste of how GKR4NLI looks like, check out our online demo (note that the online demo presents GKR4NLI as a component of the 
 hybrid system, and not as a stand-alone engine): http://bit.ly/XplaiNLI
 
 
@@ -64,7 +65,7 @@ Change the location and set the location path in which you installed the parent 
 
 ``` bert_vocab=/Users/kkalouli/Documents/project/sem.mapper/src/main/resources/vocab.txt ```  
 
-to point to the location of the *vocab.txt* file. You will also need to modify the *build.gradle* file of sem.mapper to import the model you want (*implementation 'com.robrua.nlp.models:easy-bert-uncased-L-12-H-768-A-12:1.0.0'* )
+to point to the location of the *vocab.txt* file. You will also need to modify the *build.gradle* files of sem.mapper and gnli to import the model you want (*implementation 'com.robrua.nlp.models:easy-bert-uncased-L-12-H-768-A-12:1.0.0'* )
 
 
 8. Go back into the cloned directory and find the *build.gradle* file of the *gnli* folder. Change the following line
@@ -90,7 +91,15 @@ For Eclipse: import it as a gradle project
 
 In the subproject gnli there is a class named InferenceComputer.
 In the main method at the end of this class you can choose to run only one pair or a testsuite with pairs: just comment in or
-out the corresponding method. The testsuite should contain one pair per line and the two sentences of the pair should be separated by a tab.
+out the corresponding method. The testsuite should contain one pair per line and the two sentences of the pair should be separated by a tab. The pair should also be 
+annotated with one of E, C or N. So, the file should look like:
+```
+sentenceA \t sentenceB \t N \n
+sentenceC \t sentenceD \t E \n
+```
+etc
+(the inference label is not used anywhere during the computation -- the association rule mining learning is done offline --, but this input is more convenient for the later
+evaluation of the results)
 
 # Contact
 For troubleshooting, comments, ideas and discussions, please contact aikaterini-lida.kalouli(at)uni-konstanz.de or dick.crouch(at)gmail.com
