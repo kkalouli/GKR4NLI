@@ -47,7 +47,7 @@ import sem.mapper.GKRServlet.getMxGraphConcurrentTask;
 
 
 /**
- * HttpServlet for running the demo. 
+ * HttpServlet for running the demo of XplaiNLI. 
  * @author Katerina Kalouli, 2019
  *
  */
@@ -412,7 +412,7 @@ public class XplaiNLIServlet extends HttpServlet {
 	    	//System.out.println(premise);
 	    	//System.out.println(hypothesis);
 	    	try {
-	                Process p = Runtime.getRuntime().exec(new String[]{"/home/kkalouli/Documents/virtEnv1/bin/python", "/home/kkalouli/Documents/project/semantic_processing/gnli/src/main/webapp/get_xlnet_inference_decision.py", premise, hypothesis});
+	                Process p = Runtime.getRuntime().exec(new String[]{"/home/kkalouli/Documents/virtEnv1/bin/python", "/home/kkalouli/Documents/project/semantic_processing/gnli/src/main/webapp/get_dl_inference_decision.py", premise, hypothesis});
 	                //System.out.println(p);
 	                BufferedReader stdInput = new BufferedReader(new 
 	                     InputStreamReader(p.getInputStream()));
@@ -431,8 +431,9 @@ public class XplaiNLIServlet extends HttpServlet {
 	                // read any errors from the attempted command
 	                /*System.out.println("Here is the standard error of the command (if any):\n");
 	                while ((s = stdError.readLine()) != null) {
-	                    //System.out.println(s);
-	                }*/
+	                    System.out.println(s);
+	                }
+	                System.out.println(dlDecision);*/
 	                
 	            }
 	            catch (IOException e) {
@@ -451,6 +452,8 @@ public class XplaiNLIServlet extends HttpServlet {
 	    		dlDecision = "NEUTRAL";
 	    	}
 	    	
+	    	//System.out.println("test");
+	    	//System.out.println(dlDecision);
 	    	return dlDecision;
 	    }
 	    
@@ -533,6 +536,7 @@ public class XplaiNLIServlet extends HttpServlet {
 	    			hyDecision = listOfFeats[listOfFeats.length-1].replace(" ", "");
 	    			listOfFeats = (String[]) ArrayUtils.remove(listOfFeats,listOfFeats.length-1);
 	    			listOfFeats = (String[]) ArrayUtils.remove(listOfFeats,3);
+	    			//System.out.println(listOfFeats);
 	    			featsOfHybrid = listOfFeats;
 	    		}
 	    	

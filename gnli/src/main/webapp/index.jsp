@@ -15,7 +15,7 @@ left: 0;
 right: 0;
 bottom: 0;
 width: 100%;
-background: rgba(0,0,0,0.75) url(images_default/loader1.gif) no-repeat center center;
+background: rgba(0,0,0,0.75) url(images_default/loader2.gif) no-repeat center center;
 z-index: 10000;
 }
 
@@ -47,7 +47,9 @@ z-index: 10000;
   <p>XplainNLI is an interactive, user-friendly, visualization interface for NLI. It computes inference with
                                            		a deep learning (DL), a symbolic and a hybrid approach and attempts to explain which features lead to the decision of
                                            		each component. The user can define their own heuristics as potential explanations for the decisions and also annotate
-                                           		the pair with the correct label. More details in our papers (see below). </p>
+                                           		the pair with the correct label. More details in our paper: </p>
+                                           		<p> <i> Kalouli, A.-L., R. Sevastjanova, R. Crouch, V. de Paiva and M. El-Assady. 2020. XplaiNLI: Explainable Natural Language Inferencethrough Visual Analytics. In Proceedings of the COLING 2020 System Demonstrations. </i></p>
+                                           		<p> Note that XplaiNLI targets explainability, rather than performance. If you are interested in the performance of our system, check out our demo on <a href=" http://bit.ly/Hy-NLI">Hy-NLI</a>  </p>
 </div>
 
 <div id="code" >
