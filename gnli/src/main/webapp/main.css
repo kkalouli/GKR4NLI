@@ -80,3 +80,16 @@ div.tooltip {
     border-radius: 4px;
     pointer-events: none;
 }
+
+.textItalic {
+   font-style: italic;
+}
+
+.visBox{
+   fill: white;
+   stroke: black
+}
+
+.modelLabel{
+   font-size: 24;
+}

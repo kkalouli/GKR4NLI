@@ -1,18 +1,39 @@
-var data=JSON.parse(document.getElementById('jsonFinal').innerHTML); 
+var data = JSON.parse(document.getElementById('jsonFinal').innerHTML);
 var premise = document.getElementById('premiseSent').innerHTML;
 var hypothesis = document.getElementById('hypothesisSent').innerHTML;
-console.log(data);
 var sentences = [premise, hypothesis];
 var classes = ["ENTAILMENT", "CONTRADICTION", "NEUTRAL"];
 var classToColor = {"ENTAILMENT": "#9bd3cb", "CONTRADICTION": "#FFABAB", "NEUTRAL": "#b1becd"};
-var ruleColor, bertColor;
+var ruleColor, dlColor;
 var featuresY = 205;
 var featureWidth = 30;
 var featureSize = 10;
-var featureBoundingBox = 50;
+var ruleBoundingBox = 50;
+var numberOfRules = 8;
+var numberOfDLRules = 6;
+var roundedCornerDegree = 3;
 
-// Define the div for the tooltip
-var div = d3.select("body").append("div")
+var paddingForSentences = {
+    textX: 70,
+    premiseY: 40,
+    hypothesisY: 75,
+    premiseWidth: 60,
+    hypothesisWidth: 80
+};
+
+var paddingForVisualization = {
+    labelX: 220,
+    premiseY: 55,
+    hypothesisY: 85,
+    ruleVisLineX: 520,
+    dlVisLineX: 770,
+    dlVisX: 650
+};
+
+var paddingForClasses = {barWidth: 150, labelX: 260, classX: -30, classY: 15, classHeight: 30, classYPadding: 20};
+
+// div for the tooltip
+var divForTooltip = d3.select("body").append("div")
     .attr("class", "tooltip")
     .style("opacity", 0);
 
@@ -33,36 +54,51 @@ var mapWithExplanations = {
     "Length Mismatch": "H is at least three words longer than P.",
     "Word Heuristics Entailment": "The pair contains at least one word associated with entailments according to the literature (for now: outdoors, instrument, outside, animal, something, sometimes, some, various). Feel free to test your own heuristics in the fields provided at the top of this demo. ",
     "Word Heuristics Contradiction": "The pair contains at least one word associated with contradictions according to the literature (for now: sleeping, tv, cat, any). Feel free to test your own heuristics in the fields provided at the top of this demo.  ",
-    "Word Heuristics Neutral": "The pair contains at least one word associated with neutral  pairs according to the literature (for now: tall, first, competition, sad, favorite, also, because, popular, many, most). Feel free to test your own heuristics in the fields provided at the top of this demo. "};
+    "Word Heuristics Neutral": "The pair contains at least one word associated with neutral  pairs according to the literature (for now: tall, first, competition, sad, favorite, also, because, popular, many, most). Feel free to test your own heuristics in the fields provided at the top of this demo. "
+};
 
 function getData() {
     d3.select("#visualization").select('svg').selectAll("*").remove();
     showClasses();
     showClassificationResults();
-    showVis();
+    displayVis();
 }
 
 getData();
 
-function showVis() {
+// on mouseeover, show the tooltip
+function mouseOver(explanationName, event) {
+    divForTooltip.style("opacity", 1);
+    divForTooltip.html(mapWithExplanations[explanationName])
+        .style("left", (event.pageX) + "px")
+        .style("top", (event.pageY - 28) + "px");
+}
 
+// on mouseeover, hide the tooltip
+function mouseOut() {
+    divForTooltip.style("opacity", 0);
+}
+
+// the main visualization with rules and dl components
+function displayVis() {
     var svg = d3.select("#visualization").select('svg');
 
-    //show sentences
-    svg.append("text").text("Premise: ").attr("x", 70).attr("y", 40);
-    svg.append("text").text("Hypothesis: ").attr("x", 70).attr("y", 75);
+    /*************************************sentences****************************************/
+    svg.append("text").text("Premise: ").attr("x", paddingForSentences.textX).attr("y", paddingForSentences.premiseY);
+    svg.append("text").text("Hypothesis: ").attr("x", paddingForSentences.textX).attr("y", paddingForSentences.hypothesisY);
 
-    svg.append("text").text(sentences[0]).attr("x", 130).attr("y", 40).style("font-style", "italic");
-    svg.append("text").text(sentences[1]).attr("x", 150).attr("y", 75).style("font-style", "italic");
+    svg.append("text").text(sentences[0]).attr("x", paddingForSentences.textX + paddingForSentences.premiseWidth).attr("y", paddingForSentences.premiseY).attr("class", "textItalic");
+    svg.append("text").text(sentences[1]).attr("x", paddingForSentences.textX + paddingForSentences.hypothesisWidth).attr("y", paddingForSentences.hypothesisY).attr("class", "textItalic");
+    /********************************************************************************************/
 
-    
-    svg.append("text").text("Premise").attr("x", 220).style("text-anchor", "end").attr("y", featuresY + 55).style("font-style", "italic");
-    svg.append("text").text("Hypothesis").attr("x", 220).style("text-anchor", "end").attr("y", featuresY + 85).style("font-style", "italic");
-
-    
-    svg.append("line").attr("x1", 520).attr("x2", 520).attr("y1", featuresY + 90).attr("y2", featuresY + 2 * featureBoundingBox + 30).style("stroke", "black");
-
-    svg.append("line").attr("x1", 770).attr("x2", 770).attr("y1", featuresY + 90).attr("y2", featuresY + 2 * featureBoundingBox + 30).style("stroke", function (d) {
+    /*************************************visualization****************************************/
+    // labels
+    svg.append("text").text("Premise").attr("x", paddingForVisualization.labelX).style("text-anchor", "end").attr("y", featuresY + paddingForVisualization.premiseY).attr("class", "textItalic");
+    svg.append("text").text("Hypothesis").attr("x", paddingForVisualization.labelX).style("text-anchor", "end").attr("y", featuresY + paddingForVisualization.hypothesisY).attr("class", "textItalic");
+    // connecting line for rule vis to classification results
+    svg.append("line").attr("x1", paddingForVisualization.ruleVisLineX).attr("x2", paddingForVisualization.ruleVisLineX).attr("y1", featuresY + 90).attr("y2", featuresY + 2 * ruleBoundingBox + 30).style("stroke", "black");
+    // connecting line for DL vis to classification results
+    svg.append("line").attr("x1", paddingForVisualization.dlVisLineX).attr("x2", paddingForVisualization.dlVisLineX).attr("y1", featuresY + 90).attr("y2", featuresY + 2 * ruleBoundingBox + 30).style("stroke", function (d) {
         var color = "none";
         if (data.rulesDL.length > 0) {
             color = "black";
@@ -70,45 +106,36 @@ function showVis() {
         return color;
     });
 
-    svg.append("rect").attr("width", featureBoundingBox * 8 - 10).attr("height", featureBoundingBox + 10).attr("x", 250).attr("y", featuresY + 35).style("fill", "white").style("stroke", "black").attr("rx", 3)
-        .on("mouseover", function(d) {
-            div.style("opacity", .9);
-            div.html(mapWithExplanations["FEATURE RECTANGLE EXPLANATION"])
-                .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY - 28) + "px");
+    // rule vis contains 8 rules
+    svg.append("rect").attr("width", ruleBoundingBox * numberOfRules - 10).attr("height", ruleBoundingBox + 10).attr("x", paddingForVisualization.labelX + 30).attr("y", featuresY + 35).attr("class", "visBox").attr("rx", roundedCornerDegree)
+        .on("mouseover", function () {
+            mouseOver("FEATURE RECTANGLE EXPLANATION", d3.event)
         })
-        .on("mouseout", function(d) {
-            div.style("opacity", 0);
+        .on("mouseout", mouseOut);
+    // DL vis contains 6 rules
+    svg.append("rect").attr("width", ruleBoundingBox * numberOfDLRules - 10).attr("height", ruleBoundingBox + 10).attr("x", paddingForVisualization.dlVisX).attr("y", featuresY + 35).attr("class", "visBox").attr("rx", roundedCornerDegree)
+        .on("mouseover", function () {
+            mouseOver("FEATURE RECTANGLE EXPLANATION", d3.event)
         })
-    svg.append("rect").attr("width", featureBoundingBox * 6 - 10).attr("height", featureBoundingBox + 10).attr("x", 650).attr("y", featuresY + 35).style("fill", "white").style("stroke", "black").attr("rx", 3)
-        .on("mouseover", function(d) {
-            div.style("opacity", .9);
-            div.html(mapWithExplanations["FEATURE RECTANGLE EXPLANATION"])
-                .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY - 28) + "px");
-        })
-        .on("mouseout", function(d) {
-            div.style("opacity", 0);
-        })
+        .on("mouseout", mouseOut);
 
-    // show features
+    //rules
     var g = svg.selectAll(".feature")
         .data(data.features)
         .enter()
         .append("g")
         .attr("transform", function (d, i) {
-            showAttributes(d3.select(this), d.attributes);
-            return "translate(" + (300 + i * featureBoundingBox) + "," + featureBoundingBox + ")"
+            return "translate(" + (300 + i * ruleBoundingBox) + "," + ruleBoundingBox + ")"
         })
-        .on("mouseover", function(d) {
-            div.style("opacity", .9);
-            div.html(mapWithExplanations[d.name])
-                .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY - 28) + "px");
+        .on("mouseover", function (d) {
+            return mouseOver(d.name, d3.event);
         })
-        .on("mouseout", function(d) {
-            div.style("opacity", 0);
-        })
+        .on("mouseout", mouseOut);
+
+    //attributes
+    g.each(function (d) {
+        showAttributes(d3.select(this), d.attributes);
+    });
 
     // show feature names
     g.append("text")
@@ -119,8 +146,10 @@ function showVis() {
         .attr("dy", 50)
         .attr("transform", "rotate(-65)")
         .attr("text-anchor", "start");
+    /**************************************************************************************/
 }
 
+// returns color according to the model's type
 function getColor(color, model, d) {
     data.decisions.forEach(function (value) {
         if (value[model] != undefined) {
@@ -132,50 +161,60 @@ function getColor(color, model, d) {
     return color;
 }
 
+// chow labels for different models
 function showClasses() {
+    var modelData = [{name: "Symbolic", x: -130}, {name: "Hybrid", x: 10}, {name: "Deep Learning", x: 130}];
     var svg = d3.select("#visualization").select('svg').append("g").attr("id", "resultG").attr("transform", "translate(" + 600 + "," + 250 + ")");
-    var barWidth = 150;
-    var labelX = 220;
-    var labelFontSize = 24;
-    svg.append("text").text("Symbolic").attr("x", -130).attr("y", labelX+40).style("font-size", labelFontSize);
-    svg.append("text").text("Hybrid").attr("x", 10).attr("y", labelX+40).style("font-size", labelFontSize);
-    svg.append("text").text("Deep Learning").attr("x", 130).attr("y", labelX+40).style("font-size", labelFontSize);
+    var paddingTop = 90;
+    // labels for the three models
+    svg.selectAll(".modelLabel")
+        .data(modelData)
+        .enter()
+        .append("text")
+        .text(function (d) {
+            return d.name;
+        })
+        .attr("x", function (d) {
+            return d.x;
+        })
+        .attr("y", paddingForClasses.labelX)
+        .attr("class", "modelLabel");
 
+    // classification results
     var g = svg.selectAll(".result").data(classes).enter().append("g").attr("transform", function (d, i) {
-        return "translate(" + -30 + "," + (i * 50 + 90) + ")"
+        return "translate(" + paddingForClasses.classX + "," + (i * (paddingForClasses.classHeight + paddingForClasses.classYPadding) + paddingTop) + ")"
     });
 
-    g.append("rect").attr("width", barWidth).attr("height", 30).style("fill", function (d) {
+    g.append("rect").attr("width", paddingForClasses.barWidth).attr("height", paddingForClasses.classHeight).style("fill", function (d) {
         return classToColor[d];
-    }).style("rx", 3).on({
-        "mouseover": function(d) {
-            d3.select(this).style("cursor", "pointer"); 
-          },
-          "mouseout": function(d) {
-            d3.select(this).style("cursor", "default"); 
-          },
-          "click": function(d) {
-        	  svg.append("text").text("Thanks for your feedback!").attr("x", -30).attr("y", labelX+80).style("font-size", 28).style('fill', '#9bd3cb');
-          }
-        }).on("mouseover", function(d) {
-        div.style("opacity", .9);
-        div.html(mapWithExplanations["CLASS EXPLANATION"])
-            .style("left", (d3.event.pageX) + "px")
-            .style("top", (d3.event.pageY - 28) + "px");
-    })
-        .on("mouseout", function(d) {
-            div.style("opacity", 0);
-        })
+    }).style("rx", roundedCornerDegree)
+        .on({
+            "mouseover": function () {
+                d3.select(this).style("cursor", "pointer");
+                mouseOver("CLASS EXPLANATION", d3.event)
+            },
+            "mouseout": function () {
+                d3.select(this).style("cursor", "default");
+                mouseOut();
+            },
+            "click": function () {
+                svg.append("text").text("Thanks for your feedback!")
+                    .attr("x", paddingForClasses.classX).attr("y", paddingForClasses.labelX + 40).style("font-size", 28).style('fill', '#9bd3cb');
+            }
+        });
 
-    g.append("line").attr("x1", -25).attr("x2", 0).attr("y1", 15).attr("y2", 15).style("stroke", function (d) {
+    // line connecting rule based model to the classification label
+    g.append("line").attr("x1", paddingForClasses.classX + 5).attr("x2", 0).attr("y1", paddingForClasses.classY).attr("y2", paddingForClasses.classY).style("stroke", function (d) {
         var color = "none";
         if (data.match === "R" || data.match === "B") {
             color = getColor(color, "rule", d);
         }
         return color;
     });
-    
-    g.append("line").attr("x1", barWidth).attr("x2", barWidth + 25).attr("y1", 15).attr("y2", 15).style("stroke", function (d) {
+
+    // line connecting DL model to the classification label
+    g.append("line").attr("x1", paddingForClasses.barWidth).attr("x2", paddingForClasses.barWidth + 25).attr("y1", paddingForClasses.classY)
+        .attr("y2", paddingForClasses.classY).style("stroke", function (d) {
         var color = "none";
         if (data.match === "DL" || data.match === "B") {
             color = getColor(color, "bert", d);
@@ -183,13 +222,12 @@ function showClasses() {
         return color;
     });
 
+    // classification result text label
     g.append("text").text(function (d) {
         return d;
-    }).attr("y", 20).attr("x", function (d) {
-        return barWidth/2;
-    })
-    .style("text-anchor", "middle")
-    .style("fill", "white").style("font-weight", function (d) {
+    }).attr("y", 20).attr("x", paddingForClasses.barWidth / 2)
+        .style("text-anchor", "middle")
+        .style("fill", "white").style("font-weight", function (d) {
         var weight = "normal";
         data.decisions.forEach(function (value) {
             if (value["hybrid"] != undefined) {
@@ -202,140 +240,145 @@ function showClasses() {
     });
 }
 
-
+// results are visualized in a "traffic light" representation
 function showClassificationResults() {
     var svg = d3.select("#visualization").select('#resultG');
+    var trafficLightBoxes = [{x: -105, y: 85, width: 50, height: 140}, {x: 145, y: 85, width: 50, height: 140}];
 
     var g = svg.selectAll(".result").data(classes).enter().append("g").attr("transform", function (d, i) {
         return "translate(" + -80 + "," + (105 + i * 50) + ")"
     });
 
-    g.append("circle").attr("r", featureSize).style("stroke", function (d) {
-        return "black";
-    }).style("fill", function (d) {
-        var color = "white";
-        data.decisions.forEach(function (value) {
-            if (value["rule"] != undefined) {
-                if (value["rule"] === d) {
-                    color = classToColor[d];
-                    ruleColor = color;
+    g.append("circle").attr("r", featureSize).attr("class", "visBox")
+        .style("fill", function (d) {
+            var color = "white";
+            data.decisions.forEach(function (value) {
+                if (value["rule"] != undefined) {
+                    if (value["rule"] === d) {
+                        color = classToColor[d];
+                        ruleColor = color;
+                    }
                 }
-            }
+            });
+            return color;
         });
-        return color;
-    });
 
-    g.append("circle").attr("r", featureSize).attr("cx", 250).style("stroke", function (d) {
-        return "black";
-    }).style("fill", function (d) {
+    g.append("circle").attr("r", featureSize).attr("cx", 250).attr("class", "visBox").style("fill", function (d) {
         var color = "white";
         data.decisions.forEach(function (value) {
             if (value["bert"] != undefined) {
                 if (value["bert"] === d) {
                     color = classToColor[d];
-                    bertColor = color;
+                    dlColor = color;
                 }
             }
         });
         return color;
     });
-    
-    
 
-    svg.append("rect").attr("width", 50).attr("height", 140).attr("x", -105).attr("y", 85).style("fill", "white").style("fill-opacity", 0).style("stroke", "black").attr("rx", 3)
-        .on("mouseover", function(d) {
-            div.style("opacity", .9);
-            div.html(mapWithExplanations["CLASS RECTANGLE EXPLANATION"])
-                .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY - 28) + "px");
+
+    // rectangles for "traffic light" vis
+    svg.selectAll(".trafficLightBoxes")
+        .data(trafficLightBoxes)
+        .enter()
+        .append("rect")
+        .attr("x", function (d) {
+            return d.x;
         })
-        .on("mouseout", function(d) {
-            div.style("opacity", 0);
+        .attr("y", function (d) {
+            return d.y;
         })
-    svg.append("rect").attr("width", 50).attr("height", 140).attr("x", 145).attr("y", 85).style("fill", "white").style("fill-opacity", 0).style("stroke", "black").attr("rx", 3)
-        .on("mouseover", function(d) {
-            div.style("opacity", .9);
-            div.html(mapWithExplanations["CLASS RECTANGLE EXPLANATION"])
-                .style("left", (d3.event.pageX) + "px")
-                .style("top", (d3.event.pageY - 28) + "px");
+        .attr("width", function (d) {
+            return d.width;
         })
-        .on("mouseout", function(d) {
-            div.style("opacity", 0);
+        .attr("height", function (d) {
+            return d.height;
         })
+        .attr("class", "visBox")
+        .style("fill-opacity", 0)
+        .attr("rx", roundedCornerDegree)
+        .on("mouseover", function () {
+            return mouseOver("CLASS RECTANGLE EXPLANATION", d3.event)
+        })
+        .on("mouseout", mouseOut);
 }
 
-function showAttributes(obj, d) {
+// attributes are displayed as circles
+function showAttributes(obj, attributes) {
     //show values for the attributes
-    d.forEach(function (val, i) {
-    	console.log(i);
-        obj.append("circle")
-            .attr("r", 8)
-            .attr("cy", i * featureWidth + featuresY)
-            .attr("cx", -featureWidth)
-            .style("stroke", function (d) {
-                return "black";
-            }).style("fill", function () {
+    obj.selectAll("attribute")
+        .data(attributes)
+        .enter()
+        .append("circle")
+        .attr("r", 8)
+        .attr("cy", function (d, i) {
+            return i * featureWidth + featuresY;
+        })
+        .attr("cx", -featureWidth)
+        .style("stroke", "black")
+        .style("fill", function (d) {
             var color = "none";
             var rulesdl = [];
-            data.rulesDL.forEach(function (value) {
-                rulesdl.push(value.id);
+            data.rulesDL.forEach(function (rule) {
+                rulesdl.push(rule.id);
             });
-            if (data.rulesSymbolic.indexOf(val.id) > -1) {
+            if (data.rulesSymbolic.indexOf(d.id) > -1) {
                 color = ruleColor;
-            } else if (rulesdl.indexOf(val.id) > -1) {
-                color = bertColor;
+            } else if (rulesdl.indexOf(d.id) > -1) {
+                color = dlColor;
             }
-            //	color = "#b1becd";
             return color;
-        }).style("opacity", function () {
+        })
+        .style("opacity", function (d) {
             var opacity = 1;
-            data.rulesDL.forEach(function (value) {
-                if (value.id === val.id) {
-                    if (value.value === true) {
-                        opacity = 1;
-                    } else {
+            data.rulesDL.forEach(function (rule) {
+                if (d.id === rule.id) {
+                    if (!d.value) {
                         opacity = 0.2;
                     }
                 }
             });
-            /*data.rulesHybrid.forEach(function (value) {
-                if (value === val.id) {
-                        opacity = 0.1;
-                }
-            });*/
             return opacity;
         });
-        obj.append("image")
-            .attr("xlink:href", function () {
-                if (val.value === true)
-                    return "tick.svg";
-            }).attr("y", i * featureWidth + featuresY - 5).attr("x", -featureWidth - 5)
-            .attr("width", featureSize).attr("height", featureSize)
 
-        obj.append("text")
-            .text(function () {
-                var t = "";
-                data.rulesHybrid.forEach(function (value) {
-                    if (value === val.id) {
-                        t = "H";
-                    }
-                });
-                return t;
-            })
-            .style("opacity", function () {
-                var o = 1;
-                data.rulesHybrid.forEach(function (value, c) {
-                    if (value === val.id) {
-                        o= 1 - 0.1*c;
-                    }
-                });
-                return o;
-            })
-            .attr("font-size", 10)
-            .attr("y", i * featureWidth + featuresY - 5)
-            .attr("x", -featureWidth + 6);
-    })
+    // if rules is learned, add checkbox
+    obj.selectAll("attribute")
+        .data(attributes)
+        .enter()
+        .append("image")
+        .attr("xlink:href", function (d) {
+            if (d.value)
+                return "tick.svg";
+        }).attr("y", function (d, i) {
+        return i * featureWidth + featuresY - 5
+    }).attr("x", -featureWidth - 5)
+        .attr("width", featureSize).attr("height", featureSize);
 
+    // show the probability/importance of the rule
+    obj.selectAll("attribute")
+        .data(attributes)
+        .enter().append("text")
+        .text(function (d) {
+            var t = "";
+            data.rulesHybrid.forEach(function (value) {
+                if (value === d.id) {
+                    t = "H";
+                }
+            });
+            return t;
+        })
+        .style("opacity", function (d) {
+            var o = 1;
+            data.rulesHybrid.forEach(function (value, c) {
+                if (value === d.id) {
+                    o = 1 - 0.1 * c;
+                }
+            });
+            return o;
+        })
+        .attr("font-size", 10)
+        .attr("y", function (d, i) {
+            return i * featureWidth + featuresY - 5
+        })
+        .attr("x", -featureWidth + 6);
 }
-
-
