@@ -100,6 +100,8 @@ public class InferenceChecker {
 		this.subRel = false;
 		this.disjointRel = false;
 		this.ruleUsed = 0;
+		textRootCtx = null;
+		hypRootCtx = null;
 
 
 	}
@@ -1002,7 +1004,7 @@ public class InferenceChecker {
 					continue;	
 				Set<SemanticNode<?>> inNeighbors = semGraph.getContextGraph().getInNeighbors(motherCtx);
 				// if the motherNode is at the same time the top node, i.e. does not have inNodes
-				if (inNeighbors == null || inNeighbors.isEmpty()){
+				if (inNeighbors == null || inNeighbors.isEmpty() ){
 					if (semGraph.equals(gnliGraph.getHypothesisGraph())){
 						this.hypRootCtx = motherCtx;
 					}
@@ -1013,10 +1015,14 @@ public class InferenceChecker {
 				} 
 				//
 				else {
-					if (semGraph.equals(gnliGraph.getHypothesisGraph())){
+					/* 16.03.2021: make sure that the RootCtx is still empty, before defining it to avoid
+					 making non-top contexts to RootCtx, e.g., this would be the case in embedded 
+					 structures like Mary refused to fail to close the window.*/
+					if (this.hypRootCtx == null && semGraph.equals(gnliGraph.getHypothesisGraph())){
 						this.hypRootCtx = inNeighbors.iterator().next();
 					}
-					else if (semGraph.equals(gnliGraph.getTextGraph())){
+					// added this.textRootCtx == null on 16.3.2021
+					else if (this.textRootCtx == null && semGraph.equals(gnliGraph.getTextGraph())){
 						this.textRootCtx = inNeighbors.iterator().next();
 					}
 					Set<SemanticNode<?>> edgesCtxToInReachCtx = semGraph.getContextGraph().getInReach(motherCtx);
@@ -1047,7 +1053,7 @@ public class InferenceChecker {
 	private Polarity computeEdgePolarity(List<SemanticEdge> shortestPath){
 		Polarity polar = null;
 		for (SemanticEdge verEdge : shortestPath){
-			if (verEdge.getLabel().equals("veridical") || verEdge.getLabel().equals("imperative")){
+			if (verEdge.getLabel().equals("veridical") || verEdge.getLabel().equals("imperative")  || verEdge.getLabel().equals("must")){
 				if (polar == null)
 					polar = Polarity.VERIDICAL;
 			}
@@ -1061,7 +1067,7 @@ public class InferenceChecker {
 			}
 			else if  (verEdge.getLabel().equals("averidical") || verEdge.getLabel().equals("coord_or") || 
 					verEdge.getLabel().equals("interrogative") || verEdge.getLabel().equals("may") ||
-					verEdge.getLabel().equals("might") || verEdge.getLabel().equals("must") ||
+					verEdge.getLabel().equals("might") || verEdge.getLabel().equals("can") ||
 					verEdge.getLabel().equals("ought") || verEdge.getLabel().equals("need") ||
 					verEdge.getLabel().equals("should")){
 				polar = Polarity.AVERIDICAL;

@@ -46,7 +46,7 @@ def flat_accuracy(preds, labels):
 
 
 # We need to add special tokens at the beginning and end of each sentence for BERT to work properly
-sentences = ["[CLS] " + premise + " [SEP]"  + hypothesis + "[SEP]" ]
+sentences = ["[CLS]  " + premise + "  [SEP] "  + hypothesis + " [SEP]" ]
 labels = [2]
 
 # Tokenize the input with the BERT tokenizer
