@@ -13,9 +13,9 @@ CD-ROMs) please include the above citation.
 
 # Demo
 If you would like to have a quick taste of how GKR4NLI looks like, check out our online demo (note that the online demo presents GKR4NLI as a component of the 
-hybrid system, and not as a stand-alone engine): http://bit.ly/Hy-NLI
+hybrid system, and not as a stand-alone engine): http://hynli.nlitoolkit.de/
 
-If you are interested in the explainability of GKR4NLI and of our hybrid system, check out our online demo: http://bit.ly/XplaiNLI
+If you are interested in the explainability of GKR4NLI and of our hybrid system, check out our online demo: http://xplainli.nlitoolkit.de/
 
 # License
 Copyright 2020 Aikaterini-Lida Kalouli and Richard Crouch. GKR is a free-software discributed under the conditions of the Apache License 2.0, without warranty. See LICENSE file for more details. You should have received a copy of the LICENSE file with the source code. If not, please visit http://www.apache.org/licenses/ for more information. 
