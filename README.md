@@ -103,4 +103,4 @@ etc
 evaluation of the results)
 
 # Contact
-For troubleshooting, comments, ideas and discussions, please contact aikaterini-lida.kalouli(at)uni-konstanz.de or dick.crouch(at)gmail.com
+For troubleshooting, comments, ideas and discussions, please contact kalouli(at)cis.lmu.de
