@@ -41,9 +41,19 @@ plugins {
 
 	
 	providedCompile 'javax.servlet:javax.servlet-api:3.1.0' 
-    testCompile 'junit:junit:4.12'
+    	testCompile 'junit:junit:4.12'
+			
+	}
 	
-		
+	task fatJar(type: Jar) {
+    		manifest {
+        		attributes 'Main-Class':'gnli.InferenceComputer'
+    		}
+   		baseName = project.name + '-all'
+     		from { 
+    		configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    		}
+    	with jar
 	}
 	
 		
