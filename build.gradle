@@ -7,7 +7,6 @@ allprojects {
         maven {
         url "https://mvnrepository.com/artifact/"
    		}
-    }
-    
+    }    
 
 }

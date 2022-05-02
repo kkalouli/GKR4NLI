@@ -65,10 +65,8 @@ plugins {
     		//configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     		configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     		}
-    
-    	with jar
-	}
-	
+
+
 	
 	task fatJarGKR(type: Jar) {
     	manifest {
