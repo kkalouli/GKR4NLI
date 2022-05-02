@@ -56,6 +56,18 @@ plugins {
     	with jar
 	}
 	
+	task fatJarGKR(type: Jar) {
+    		manifest {
+        		attributes 'Main-Class':'sem.mapper.DepGraphToSemanticGraph'
+    		}	
+   		baseName = project.name + '-only_gkr'
+     		from { 
+    		//configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    		configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    		}   
+    	with jar
+	}
+	
 		
 	gretty{
 	httpPort = 8088
