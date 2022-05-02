@@ -1,13 +1,22 @@
 plugins {
-    id 'war'  
-    id 'org.gretty' version '2.2.0'
+    id 'war' 
+    id 'java'
+    id 'eclipse'
+    //id 'org.gretty' version '2.2.0' 
 }
 
+
+    repositories {
+        jcenter()
+        maven {
+        url "https://mvnrepository.com/artifact/"
+   		}
+    }
 
 	dependencies {
 		
 	// compile all jars that are not found in repositories 
-	compile fileTree(dir: '/home/kkalouli/Documents/diss/GKR_libs/', include: ['*.jar'])	
+	compile fileTree(dir: '/Users/kkalouli/Documents/libraries/GKR_libs/', include: ['*.jar'])	
    	
     // https://mvnrepository.com/artifact/com.github.ontologyportal/sigma-nlp
 	//compile group: 'com.github.ontologyportal', name: 'sigma-nlp', version: '1.1'
@@ -42,15 +51,43 @@ plugins {
 	
 	providedCompile 'javax.servlet:javax.servlet-api:3.1.0' 
     testCompile 'junit:junit:4.12'
+    
+  	
+	}
 	
-		
+	
+	task fatJar(type: Jar) {
+    	manifest {
+        	attributes 'Main-Class':'gnli.InferenceComputer'
+    	}
+   		baseName = project.name + '-all'
+     	from { 
+    		//configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    		configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    		}
+    
+    	with jar
+	}
+	
+	
+	task fatJarGKR(type: Jar) {
+    	manifest {
+        	attributes 'Main-Class':'sem.mapper.DepGraphToSemanticGraph'
+    	}
+   		baseName = project.name + '-only_gkr'
+     	from { 
+    		//configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    		configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    		}
+    
+    	with jar
 	}
 	
 		
-	gretty{
-	httpPort = 8088
-	servletContainer = 'jetty9.4'
-	}
+	//gretty{
+	//httpPort = 8088
+	//servletContainer = 'jetty9.4'
+	//}
 	
 
 
