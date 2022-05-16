@@ -864,15 +864,15 @@ public class InferenceComputer {
 	 */
 	public static void main(String args[]) throws IOException {
 		InferenceComputer comp = new InferenceComputer();
-		String premise = "The writer is less pleasant than the girl.";	
-		String hypothesis = "The girl is not less pleasant than the writer.";
+		String premise = "An animal lives.";	
+		String hypothesis = "An organism is alive.";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/annotations/to_check.txt"; //AeBBnA_and_PWN_annotated_checked_only_corrected_labels_split_pairs.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_train_trial/SICK_trial_and_train_both_dirs_corrected_only_a_and_Cb_and_Eb.txt";
 		//String file = "/Users/kkalouli/Documents/Stanford/comp_sem/SICK/SICK_SemEval2014/sick_trial_and_train/to_check.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/SICK_test_annotated_both_dirs_corrected.txt";
 		//String file = "/home/kkalouli/Documents/diss/test_heidel.txt";
 		//String file = "/home/kkalouli/Documents/diss/SICK_test/to_check.txt";
-		String file = "/Users/kkalouli/Desktop/test.txt";
+		//String file = "/Users/kkalouli/Desktop/test.txt";
 		//String file = "/Users/kkalouli/Documents/Corpora/FraCaS/single_premise/fracas_sent_only_single_premise.txt";
 		//tring file = "/home/kkalouli/Desktop/SICK_trial_and_train_both_dirs_corrected_only_a_and_Cb_and_Eb.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/SICK_unique_sent_sanity_check.txt";
@@ -886,7 +886,22 @@ public class InferenceComputer {
 		//String file = "/home/kkalouli/Documents/diss/experiments/still_to_be_checked_only_NEUTRAL_low_jac_similarity_both_dirs.txt";
 		//String file = "/home/kkalouli/Documents/diss/experiments/heuristics_evaluation_set_cleaned.txt";
 		
-		//comp.computeInferenceOfPair(premise, hypothesis, "E", kb);
-		comp.computeInferenceOfTestsuite(file, semGraph, kb);	
+		/*String premise = "";
+		String hypothesis = "";
+		for (int i = 0; i < args.length; i++) {		
+			final String arg = args[i];
+			if (args.length >= i + 1) {
+				if (arg.equalsIgnoreCase("-p")) {
+					premise = args[i + 1];
+				}
+				else if (arg.equalsIgnoreCase("-h")) {
+					hypothesis = args[i + 1];
+				}
+			}
+			System.out.println(arg);
+		}*/
+		
+		comp.computeInferenceOfPair(premise, hypothesis, "E", kb);
+		//comp.computeInferenceOfTestsuite(file, semGraph, kb);	
 	}
 }

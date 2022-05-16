@@ -208,7 +208,7 @@ public class ContextMapper implements Serializable {
 	
 	/**
 	 * Check if there are any postintegration changes necessary.
-	 * Case 1: there is an implcative verb and its embedded verb is negated, e.g. She knew that he had not arrived yet.
+	 * Case 1: there is an implicative verb and its embedded verb is negated, e.g. She knew that he had not arrived yet.
 	 * In such cases there are still two top contexts involved: the top context of the implicative verb and the top context of the 
 	 * negated verb. Thus, the negated context has to be embedded into the implicative context. 
 	 * Case 2: there is an implicative verb with negation. In these cases an extra node has been added, called "negation". This node is only "storing" what is the
@@ -324,7 +324,7 @@ public class ContextMapper implements Serializable {
 		}
 		
 		// Case 2
-		SemanticNode<?> toRemove = null;
+		/*SemanticNode<?> toRemove = null;
 		//graph.displayContexts();
 		for (SemanticNode<?> n : graph.getContextGraph().getNodes()){
 			// check if there is a node called negation: this node comes with implicative contexts and the edge between this node and its child
@@ -348,7 +348,7 @@ public class ContextMapper implements Serializable {
 			}
 		}
 		// remove the negation node
-		graph.removeContextNode(toRemove);
+		graph.removeContextNode(toRemove);*/
 	}
 	
 	/**
