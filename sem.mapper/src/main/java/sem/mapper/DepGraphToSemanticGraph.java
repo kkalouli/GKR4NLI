@@ -909,15 +909,27 @@ public class DepGraphToSemanticGraph implements Serializable {
 			String text = strLine.split("\t")[1];
 	        if (!text.endsWith(".") && !text.endsWith("?") && !text.endsWith("!")){
 	        	text = text+".";
+	        }   
+	        sem.graph.SemanticGraph graph = null;
+	        try {
+		        graph = this.sentenceToGraph(text, text);       
+				//SemanticGraph stanGraph = parser.parseOnly(text);
+				//sem.graph.SemanticGraph graph = this.getGraph(stanGraph, text, text);
+				//System.out.println(graph.displayAsString());
+				writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
+				writer.flush();
+				System.out.println("Processed sentence "+ strLine.split("\t")[0]);
+				if (graph != null)
+					semanticGraphs.add(graph);
+	        } finally {
+	        	if (graph == null) {
+	        		writer.write(strLine+"\n"+"Could not process sentence.\n\n");
+					writer.flush();
+					System.out.println("Processed sentence "+ strLine.split("\t")[0]);
+	        		continue;
+	        	}
 	        }
-			SemanticGraph stanGraph = parser.parseOnly(text);
-			sem.graph.SemanticGraph graph = this.getGraph(stanGraph, text, text);
-			//System.out.println(graph.displayAsString());
-			writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
-			writer.flush();
-			System.out.println("Processed sentence "+ strLine.split("\t")[0]);
-			if (graph != null)
-				semanticGraphs.add(graph);
+
 		}
 		// serialize and write to file
 		try {
@@ -1090,9 +1102,9 @@ public class DepGraphToSemanticGraph implements Serializable {
 		DepGraphToSemanticGraph semConverter = new DepGraphToSemanticGraph();
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
 		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/HP_testsuite/HP_testsuite_shortened_active.txt");
-		//semConverter.processTestsuite("/home/kkalouli/Documents/diss/experiments/UD_corpus_cleaned.txt");
-		String sentence = "Mary must not go to the cinema."; //A family is watching a little boy who is hitting a baseball.";
+		semConverter.processTestsuite("/Users/kkalouli/Desktop/test.txt");
+		/*String sentence = "Mary must not go to the cinema."; //A family is watching a little boy who is hitting a baseball.";
 		String context = "The kid faked the illness.";
-		semConverter.processSentence(sentence, sentence+" "+context);
+		semConverter.processSentence(sentence, sentence+" "+context);*/
 	}
 }
