@@ -916,8 +916,13 @@ public class DepGraphToSemanticGraph implements Serializable {
 				//SemanticGraph stanGraph = parser.parseOnly(text);
 				//sem.graph.SemanticGraph graph = this.getGraph(stanGraph, text, text);
 				//System.out.println(graph.displayAsString());
-				writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
-				writer.flush();
+		        try {
+		        	writer.write(strLine+"\n"+graph.displayAsString()+"\n\n");
+		        	writer.flush();
+		        } catch (Exception e) {
+		        	writer.write(strLine+"\nCould not convert graph to string.\n\n");
+		        	writer.flush();
+		        }
 				System.out.println("Processed sentence "+ strLine.split("\t")[0]);
 				if (graph != null)
 					semanticGraphs.add(graph);
@@ -1103,8 +1108,8 @@ public class DepGraphToSemanticGraph implements Serializable {
 		//semConverter.deserializeFileWithComputedPairs("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/test.txt");
 		//semConverter.processTestsuite("/Users/kkalouli/Documents/Stanford/comp_sem/forDiss/HP_testsuite/HP_testsuite_shortened_active.txt");
 		semConverter.processTestsuite("/Users/kkalouli/Desktop/test.txt");
-		/*String sentence = "Mary must not go to the cinema."; //A family is watching a little boy who is hitting a baseball.";
-		String context = "The kid faked the illness.";
-		semConverter.processSentence(sentence, sentence+" "+context);*/
+		//String sentence = "Seeing Jon take control of the group, to the point of banishing Adrin, scared Ca'daan badly."; //A family is watching a little boy who is hitting a baseball.";
+		//String context = "The kid faked the illness.";
+		//semConverter.processSentence(sentence, sentence+" "+context);
 	}
 }
